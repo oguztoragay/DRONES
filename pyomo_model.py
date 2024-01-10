@@ -9,10 +9,10 @@ family1 = np.array([2, 3, 4])
 family2 = np.array([5, 6, 7])
 family3 = np.array([8, 9])
 
-#n_chargingstation = 1
+# n_chargingstation = 1
 n_drones = 2
-n_slot = 7 ############ 7 before
-monitor_time_matrix = np.array([3, 2, 2, 2, 1, 1, 1, 1, 1]) #Pj #[2, 1, 2, 3, 4, 5, 5]
+n_slot = 7  # 7 before
+monitor_time_matrix = np.array([3, 2, 2, 2, 1, 1, 1, 1, 1])  # Pj [2, 1, 2, 3, 4, 5, 5]
 Traveltime_demandnodes_matrix = np.array([[0, 3, 3, 3, 4, 4, 4, 1, 1],
                                           [3, 0, 0, 0, 1, 1, 1, 2, 2],
                                           [3, 0, 0, 0, 1, 1, 1, 2, 2],
@@ -21,46 +21,46 @@ Traveltime_demandnodes_matrix = np.array([[0, 3, 3, 3, 4, 4, 4, 1, 1],
                                           [4, 1, 1, 1, 0, 0, 0, 3, 3],
                                           [4, 1, 1, 1, 0, 0, 0, 3, 3],
                                           [1, 2, 2, 2, 3, 3, 3, 0, 0],
-                                          [1, 2, 2, 2, 3, 3, 3, 0, 0]]) #Sjk
-#max_intervisit_time_matrix = np.array([24, 5, 5, 5, 5]) #depot due date should be a large number.
+                                          [1, 2, 2, 2, 3, 3, 3, 0, 0]])  # Sjk
+# max_intervisit_time_matrix = np.array([24, 5, 5, 5, 5]) #depot due date should be a large number.
 
 B = 10000
 
-#UB = 24 # upper bound of dj for Z
-#LB = 0 # lower bound of dj for Z
+# UB = 24 # upper bound of dj for Z
+# LB = 0 # lower bound of dj for Z
 
-due_dates = np.array([0, 24, 24, 24, 24, 24, 24, 5, 10]) #dj
-Drone_Charge = 7 #8 before
-UB = 1000 # upper bound of C
-intervisit_time = 5 # 5 before MAX
+due_dates = np.array([0, 24, 24, 24, 24, 24, 24, 5, 10]) # dj
+Drone_Charge = 7  # 8 before
+UB = 1000  # upper bound of C
+intervisit_time = 5  # 5 before MAX
 # Try to keep the scale of Traveltime_demandnodes_matrix and intervisit_time compatable!
 # if drone visits a location at time 1 it should visit the same location by the time 6 at least once. check! YES
-
-for i in family1:
-    print(i)
+#
+# for i in family1:
+#     print(i)
 
 m = ConcreteModel(name="Parallel Machines")
 # model = LpProblem("Parallel machines",LpMinimize)
 
-Xjri_names = [str(j)+str(r)+str(i) for j in range(1, n_demandnode+1) for r in range (1, n_slot+1) for i in range (1, n_drones+1)]
-#if customer j is assigned to the r slot of the drone i
-#print("Xjri Indices:", Xjri_names)
+Xjri_names = [str(j)+str(r)+str(i) for j in range(1, n_demandnode+1) for r in range(1, n_slot+1) for i in range(1, n_drones + 1)]
+# if customer j is assigned to the r slot of the drone i
+# print("Xjri Indices:", Xjri_names)
 
-Yjkri_names = [str(j)+str(k)+str(r)+str(i) for j in range(1, n_demandnode+1) for k in range (1, n_demandnode+1) for r in range (1, n_slot+1) for i in range (1, n_drones+1)]
+Yjkri_names = [str(j)+str(k)+str(r)+str(i) for j in range(1, n_demandnode+1) for k in range(1, n_demandnode+1) for r in range(1, n_slot+1) for i in range(1, n_drones+1)]
 # if customer j is assigned to the r slot and customer k is assigned to r-1 slot of drone i
-#print("Yjkri Indices:", Yjkri_names)
+# print("Yjkri Indices:", Yjkri_names)
 
-Cri_names = [str(r)+str(i) for r in range (1, n_slot+1) for i in range (1, n_drones+1)]
-#The Completion time of the monitoring customer on the r slot of the drone i
-#print("Cri Indices:", Cri_names)
+Cri_names = [str(r)+str(i) for r in range(1, n_slot+1) for i in range(1, n_drones+1)]
+# The Completion time of the monitoring customer on the r slot of the drone i
+# print("Cri Indices:", Cri_names)
 
-Zri_names = [str(r)+str(i) for r in range (1, n_slot+1) for i in range (1, n_drones+1)]
-#The Completion time of the monitoring customer on the r slot of the drone i
-#print("Zri Indices:", Zri_names)
+Zri_names = [str(r)+str(i) for r in range(1, n_slot+1) for i in range(1, n_drones+1)]
+# The Completion time of the monitoring customer on the r slot of the drone i
+# print("Zri Indices:", Zri_names)
 
-Wri_names = [str(r)+str(i) for r in range (1, n_slot+1) for i in range (1, n_drones+1)]
-#The Completion time of the monitoring customer on the r slot of the drone i
-#print("Zri Indices:", Zri_names)
+Wri_names = [str(r)+str(i) for r in range(1, n_slot+1) for i in range(1, n_drones+1)]
+# The Completion time of the monitoring customer on the r slot of the drone i
+# print("Zri Indices:", Zri_names)
 
 Vjri_names = [str(j)+str(r)+str(i) for j in range(1, n_demandnode+1) for r in range (1, n_slot+1) for i in range (1, n_drones+1)]
 # Replacement for CriXjri
