@@ -12,6 +12,9 @@ family3 = np.array([8, 9])
 # n_chargingstation = 1
 n_drones = 2
 n_slot = 7  # 7 before
+demand_set = set(range(1, n_demandnode + 1)) # use index j for N locations
+drones_set = set(range(1, n_drones + 1)) # use index i for M drones
+slot_set = set(range(1, n_slot + 1)) # use index r for R slots in each drone
 monitor_time_matrix = np.array([3, 2, 2, 2, 1, 1, 1, 1, 1])  # Pj [2, 1, 2, 3, 4, 5, 5]
 Traveltime_demandnodes_matrix = np.array([[0, 3, 3, 3, 4, 4, 4, 1, 1],
                                           [3, 0, 0, 0, 1, 1, 1, 2, 2],
@@ -87,7 +90,7 @@ m.c = Var(n_slot, n_drones, domain=Integers)
 m.z = Var(n_slot, n_drones, domain=Binary)
 # Z = LpVariable.matrix("Z", Zri_names, cat="Binary")
 # allocation4 = np.array(Z).reshape(n_slot,n_drones)
-# #print("Consequtive assignment of charging on slot r of drone i: ")
+# #print("Consecutive assignment of charging on slot r of drone i: ")
 # #print(allocation4)
 
 m.w = Var(n_slot, n_drones, domain=Integers)
@@ -102,59 +105,88 @@ m.v = Var(n_demandnode, n_slot, n_drones, domain=Integers)
 # #print("dummy variable for customer j seved on slot r of drone i: ")
 # #print(allocation6)
 
-m.lmax = Var(domain=NonNegativeIntegers)
+m.lmax = Var(domain=NonNegativeReals) # We should discuss it
 # Lmax= LpVariable ("Lmax", cat="Integer", lowBound= 0)  # when calculating Lmax do not include depot!!!
 # #print(Lmax)
 
 #Completion = LpVariable ("Completion", cat="Continuous")  # when calculating Lmax do not include depot!!!
 #print(Completion)
 
-m.obj_func = Objective(m.lmax) #Completion
+m.obj_func = Objective(m.lmax, sense=minimize) #Completion
 # print(obj_func)
 # model +=  obj_func
 # print(model)
 
-#Constraint objective function
-#print(Completion == lpSum(allocation3[r][i] for r in range (n_slot) for i in range (n_drones)))
-#model += Completion == lpSum(allocation3[r][i] for r in range (n_slot) for i in range (n_drones))
+# Constraint objective function
+# print(Completion == lpSum(allocation3[r][i] for r in range (n_slot) for i in range (n_drones)))
+# model += Completion == lpSum(allocation3[r][i] for r in range (n_slot) for i in range (n_drones))
 
-#constratint 2 : each job should happen only once
-for j in range(1, n_demandnode):
-   # print (lpSum(allocation1[j][r][i] for r in range (0, n_slot) for i in range (0, n_drones)) == 1)
-    model += lpSum(allocation1[j][r][i] for r in range (0, n_slot) for i in range (0, n_drones)) == 1
+# # constraint2 : each job should happen only once
+# for j in range(1, n_demandnode):
+#    # print (lpSum(allocation1[j][r][i] for r in range (0, n_slot) for i in range (0, n_drones)) == 1)
+#     model += lpSum(allocation1[j][r][i] for r in range(0, n_slot) for i in range(0, n_drones)) == 1
 
-#constratint 3:
-#each slot on each drone can be empty or filled with a job or going to depot
+# Constraint 2:--------------------------------------------------------------------------
+m.cons2 = ConstraintList()
+for j in demand_set:
+    m.cons2.add(sum(sum(m.x[j, r, i] for r in slot_set) for i in drones_set) == 1)
+
+
+# constraint 3:--------------------------------------------------------------------------
+# each slot on each drone can be empty or filled with a job or going to depot
 # Later: Check being empty in the solution!!!!
-for r in range(n_slot):
-    for i in range(n_drones):
-       # print (lpSum(allocation1[j][r][i] for j in range(1,n_demandnode)) <= 1)
-        model += lpSum(allocation1[j][r][i] for j in range(1,n_demandnode)) <= 1
+# for r in range(n_slot):
+#     for i in range(n_drones):
+#        # print (lpSum(allocation1[j][r][i] for j in range(1,n_demandnode)) <= 1)
+#         model += lpSum(allocation1[j][r][i] for j in range(1,n_demandnode)) <= 1
 
-#constratint 4: only for depot X111?
-#each slot on each drone can be empty or filled with a job or going to depot
+m.cons3 = ConstraintList()
+for r in slot_set:
+    for i in drones_set:
+        m.cons3.add(sum(m.x[j, r, i] for j in demand_set) <= 1)
+
+# constraint4: only for depot X111?
+# each slot on each drone can be empty or filled with a job or going to depot
 # Later: Check being empty in the solution!!!!
-for r in range(1,n_slot):
-    for i in range(n_drones):
-       # print (allocation1[0][r][i] <= 1)
-        model += allocation1[0][r][i] <= 1
+# for r in range(1,n_slot):
+#     for i in range(n_drones):
+#        # print (allocation1[0][r][i] <= 1)
+#         model += allocation1[0][r][i] <= 1
 
+# constraint 4:-------------------------------------------------------------------------- No need to have this constraint
+m.cons4 = ConstraintList()
+for j in demand_set:
+    for r in slot_set:
+        for i in drones_set:
+            m.cons4.add(m.x[j, r, i] <= 1)
 
-#constratint 5: Depot cannot happen in the first slot of each drone
-for i in range(n_drones):
-   # print (allocation1[0][0][i] == 0)
-    model += allocation1[0][0][i] == 0
+# constraint 5: Depot cannot happen in the first slot of each drone
+# for i in range(n_drones):
+#    # print (allocation1[0][0][i] == 0)
+#     model += allocation1[0][0][i] == 0
 
-#constratint 6: no empty slots between jobs
-for r in range(1,n_slot):
-    for i in range(n_drones):
-        print (lpSum(allocation1[j][r][i] - allocation1[j][r-1][i] for j in range(n_demandnode)) <= 0)
-        model += lpSum(allocation1[j][r][i] - allocation1[j][r-1][i] for j in range(n_demandnode)) <= 0
+# Can be handled without a constraint... Pyomo magic
+for i in drones_set:
+    m.x[1, 1, i].fix(0)
+
+# constratint 6: no empty slots between jobs
+# for r in range(1,n_slot):
+#     for i in range(n_drones):
+#         print(lpSum(allocation1[j][r][i] - allocation1[j][r-1][i] for j in range(n_demandnode)) <= 0)
+#         model += lpSum(allocation1[j][r][i] - allocation1[j][r-1][i] for j in range(n_demandnode)) <= 0
+
+# constraint 6:--------------------------------------------------------------------------
+m.cons6 = ConstraintList()
+for r in slot_set[1, :]:
+    for i in drones_set:
+        m.cons6.add(sum(m.x[j, r, i] - m.x[j, r-1, i] for j in demand_set) <= 0)
 
 #constratint 7 : removes repeated solutions: drones are identical
 for i in range(n_drones-1):
    # print (lpSum(allocation1[j][r][i+1] - allocation1[j][r][i] for r in range (n_slot) for j in range(n_demandnode)) <= 0)
     model += lpSum(allocation1[j][r][i+1] - allocation1[j][r][i] for r in range (n_slot) for j in range(n_demandnode)) <= 0
+
+
 
 #Traveltime_demandnodes_matrix
 
