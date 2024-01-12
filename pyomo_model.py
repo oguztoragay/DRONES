@@ -1,6 +1,6 @@
 from pyomo.environ import ConcreteModel, Var, Constraint, ConstraintList, NonNegativeReals, Binary, Integers, NonNegativeIntegers, Param, Objective, minimize, SolverFactory, value, maximize
 import numpy as np
-from itertools import combinations
+from itertools import combinations, product
 from pyomo.util.infeasible import find_infeasible_constraints
 n_demandnode = 9  # plus depot = 6  Max visit numbers for each location:
 n_drones = 2
@@ -8,7 +8,8 @@ n_slot = 7
 demand_set = set(range(1, n_demandnode + 1))  # use index j for N locations
 drones_set = set(range(1, n_drones + 1))  # use index i for M drones
 slot_set = set(range(1, n_slot + 1))  # use index r for R slots in each drone
-demand_set_combin = set(combinations(demand_set, 2))
+demand_set_combin = list(combinations(demand_set, 2))
+demand_set_combin2 = [[i, j] for (i, j) in product(demand_set, demand_set)]
 monitor_time_matrix = np.array([3, 2, 2, 2, 1, 1, 1, 1, 1])  # Pj [2, 1, 2, 3, 4, 5, 5]
 t_matrix = np.array([[0, 3, 3, 3, 4, 4, 4, 1, 1],
                      [3, 0, 0, 0, 1, 1, 1, 2, 2],
@@ -21,10 +22,10 @@ t_matrix = np.array([[0, 3, 3, 3, 4, 4, 4, 1, 1],
                      [1, 2, 2, 2, 3, 3, 3, 0, 0]])  # Sjk
 
 B = 10000
-due_dates = np.array([0, 24, 24, 24, 24, 24, 24, 5, 10])  # dj
+due_dates = np.array([0, 0, 24, 24, 24, 24, 24, 24, 5, 10])  # dj
 Drone_Charge = 7  # 8 before
 UB = 1000  # upper bound of C
-i_matrix = 50  # 5 before MAX
+i_times = 5  # 5 before MAX
 
 m = ConcreteModel(name="Parallel Machines")
 m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)  # allocation 1
@@ -41,23 +42,22 @@ m.obj_func = Objective(expr=m.lmax, sense=minimize)
 # Constraint 2:-------------------------------------------------------------------------- (3) in the model
 m.cons2 = ConstraintList()
 for j in demand_set - {1}:
-    m.cons2.add(sum(m.x[j, r, i] for r in slot_set for i in drones_set) <= 1)
-m.cons2.pprint()
+    m.cons2.add(sum(m.x[j, r, i] for r in slot_set for i in drones_set) == 1)
+# m.cons2.pprint() OK
 
 # constraint 3:-------------------------------------------------------------------------- (4) in the model
 m.cons3 = ConstraintList()
 for r in slot_set:
-    for i in drones_set - {1, 2}:
-        m.cons3.add(sum(m.x[j, r, i] for j in demand_set) <= 1)
-# m.cons3.pprint()
+    for i in drones_set:
+        m.cons3.add(sum(m.x[j, r, i] for j in demand_set - {1}) <= 1)
+# m.cons3.pprint() OK
 
 # constraint 4:--------------------------------------------------- No need to have this constraint  (5) in the model
-# m.cons4 = ConstraintList()
-# for j in demand_set:
-#     for r in slot_set:
-#         for i in drones_set:
-#             m.cons4.add(m.x[j, r, i] <= 1)
-# m.cons4.pprint()
+m.cons4 = ConstraintList()
+for r in slot_set - {1}:
+    for i in drones_set:
+        m.cons4.add(m.x[1, r, i] <= 1)
+# m.cons4.pprint() OK
 
 # constraint 5: Depot cannot happen in the first slot of each drone ------------ (6) in the model
 # Can be handled without a constraint... Pyomo magic
@@ -68,38 +68,38 @@ for i in drones_set:
 m.cons6 = ConstraintList()
 for r in slot_set - {1}:
     for i in drones_set:
-        m.cons6.add(sum(m.x[j, r, i] - m.x[j, r-1, i] for j in demand_set - {1}) <= 0)
-# m.cons6.pprint()
+        m.cons6.add(sum(m.x[j, r, i] - m.x[j, r-1, i] for j in demand_set) <= 0)
+# m.cons6.pprint() OK
 
 # constraint 7:-------------------------------------------------------------------------- My interpretation (...) in the model
 m.cons7 = ConstraintList()
 for j in demand_set:
     for r in slot_set:
         m.cons7.add(sum(m.x[j, r, i] for i in drones_set) <= 1)
-# m.cons7.pprint()
+# m.cons7.pprint() OOOOOOOOK I believe
 
 # constraint 8:-------------------------------------------------------------------------- (9) in the model
 m.cons8 = ConstraintList()
 for i in drones_set:
     m.cons8.add(m.c[1, i] == sum((t_matrix[0][j-1] + monitor_time_matrix[j-1]) * m.x[j, 1, i] for j in demand_set - {1}))
-# m.cons8.pprint()
+# m.cons8.pprint() OK
 
 # constraint 9:-------------------------------------------------------------------------- (10a) in the model
 m.cons9 = ConstraintList()
 for i in drones_set:
     for r in slot_set - {1}:
-        m.cons9.add(m.c[r, i] == m.c[r-1, i] + sum(t_matrix[jk[0]-1, jk[1]-1]*m.y[jk[0], jk[1], r, i] for jk in demand_set_combin) + sum(monitor_time_matrix[j-1] * m.x[j, r, i] for j in demand_set))
-# m.cons9.pprint()
+        m.cons9.add(m.c[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set) + sum(monitor_time_matrix[j-1] * m.x[j, r, i] for j in demand_set))
+# m.cons9.pprint() OK
 
 # constraint 10 & 11:-------------------------------------------------------------------- (10b) & (10c)in the model
 m.cons10 = ConstraintList()
 m.cons11 = ConstraintList()
 for i in drones_set:
-    for jk in demand_set_combin:
+    for jk in demand_set_combin2:
         j = jk[0]
         k = jk[1]
         for r in slot_set - {1}:
-            m.cons10.add(m.x[j, r, i] + m.x[k, r-1, i] - 1 <= m.y[j, k, r, i])
+            m.cons10.add(m.x[j, r, i] + m.x[k, r-1, i] - m.y[j, k, r, i] <= 1)
             m.cons11.add(0.5*(m.x[j, r, i] + m.x[k, r-1, i]) >= m.y[j, k, r, i])
 # m.cons10.pprint()
 # m.cons11.pprint()
@@ -109,33 +109,33 @@ m.cons12 = ConstraintList()
 for r in slot_set:
     for i in drones_set:
         m.cons12.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set) - B * (1 - sum(m.x[j, r, i] for j in demand_set)))
-# m.cons12.pprint()
+# m.cons12.pprint() OK
 
 # constraint 13:--------------------------------------------------------------------------
 m.cons13 = ConstraintList()
 for i in drones_set:
     m.cons13.add(m.c[1, i] - Drone_Charge <= B*m.z[2, i])
-# m.cons13.pprint()
+# m.cons13.pprint() OK
 
 # constraint 15:--------------------------------------------------------------------------
 m.cons15 = ConstraintList()
 for i in drones_set:
-    for r in slot_set - {7}:
-        m.cons15.add(m.c[r, i] - sum(m.w[b, i] for b in slot_set) - Drone_Charge <= B*m.z[r+1, i])
-# m.cons15.pprint()
+    for r in slot_set - {1, 7}:
+        m.cons15.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - Drone_Charge <= B*m.z[r+1, i])
+# m.cons15.pprint() OK
 
 # constraint 17 & 18 & 19:---------------------------------------------------------------
 m.cons17 = ConstraintList()
 m.cons18 = ConstraintList()
 m.cons19 = ConstraintList()
 for i in drones_set:
-    for r in slot_set - {1}:
+    for r in slot_set - {1, 2}:
         m.cons17.add(m.w[r-1, i] >= m.c[r-1, i] - UB*(1 - m.z[r, i]))
         m.cons18.add(m.w[r-1, i] <= m.c[r-1, i])
         m.cons19.add(m.w[r-1, i] <= UB*m.z[r, i])
-# m.cons17.pprint()
-# m.cons18.pprint()
-# m.cons19.pprint()
+# m.cons17.pprint() OK
+# m.cons18.pprint() OK
+# m.cons19.pprint() OK
 
 # constraint 21:--------------------------------------------------------------------------
 # Can be handled without a constraint... Pyomo magic
@@ -144,32 +144,36 @@ for i in drones_set:
 
 m.cons210 = ConstraintList()
 for i in drones_set:
-    m.cons210.add(m.c[1, i] - Drone_Charge <= B*(m.w[1, i]))
-# m.cons210.pprint()
+    m.cons210.add(m.c[1, i] - Drone_Charge >= -B * (1 - m.z[2, i]))
+# m.cons210.pprint() OK
 
 m.cons211 = ConstraintList()
 for i in drones_set:
     for r in slot_set - {1, 7}:
-        m.cons211.add(m.c[r, i] - sum(m.w[b, i] for b in slot_set) - Drone_Charge >= -B*(1 - m.w[r + 1, i]))
-# m.cons211.pprint()
+        m.cons211.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - Drone_Charge >= -B*(1 - m.z[r + 1, i]))
+# m.cons211.pprint() OK
 
 # constraint 22:--------------------------------------------------------------------------
 m.cons22 = ConstraintList()
 for i in drones_set:
     for r in slot_set:
-        m.cons22.add(m.x[1, r, i] == m.w[r, i])
-# m.cons22.pprint()
+        m.cons22.add(m.x[1, r, i] == m.z[r, i])
+# m.cons22.pprint() OK
 
-m.cons_families = ConstraintList()
+m.cons_families_1 = ConstraintList()
+m.cons_families_2 = ConstraintList()
+m.cons_families_3 = ConstraintList()
 families = [[1, 2, 3], [4, 5, 6], [7, 8]]
 for f in families:
     for j in f:
-        m.cons_families.add(sum(m.v[j+1, r, i] - m.v[j, r, i] for r in slot_set for i in drones_set) <= i_matrix)
-        m.cons_families.add(sum(m.v[j+1, r, i] - m.v[j, r, i] for r in slot_set for i in drones_set) == 1)
-        for r in slot_set - {7}:
-            for i in drones_set:
-                m.cons_families.add(m.x[j+1, r+1, i] <= B*(1 - m.x[j, r, i]))
-m.cons_families.pprint()
+        m.cons_families_1.add(sum(m.v[j + 1, r, i] - m.v[j, r, i] for r in slot_set for i in drones_set) <= i_times)
+        m.cons_families_2.add(sum(m.v[j + 1, r, i] - m.v[j, r, i] for r in slot_set for i in drones_set) <= 1)
+        # for r in slot_set - {7}:
+        #     for i in drones_set:
+        #         m.cons_families_3.add(m.v[j, r, i] <= B*(1 - m.x[j, r, i]))
+# m.cons_families_1.pprint()
+# m.cons_families_2.pprint()
+# m.cons_families_3.pprint()
 
 #Job family constraint: #Dummy 1
 m.cons_dummy1 = ConstraintList()
@@ -196,11 +200,9 @@ msolver = SolverFactory('gurobi')  # The following parameter set considered Guro
 # msolver.options['Cuts'] = 3
 # msolver.options['Heuristics'] = 1
 # msolver.options['RINS'] = 10
-solution = msolver.solve(m, tee=False)
+solution = msolver.solve(m, tee=True)
 print(solution['Solver'].message)
 print(solution)
 print(value(m.obj_func))
 for constr, body_value, infeasible in find_infeasible_constraints(m):
     print(f"Constraint {constr.name} is infeasible: body_value={body_value}, infeasible={infeasible}")
-
-
