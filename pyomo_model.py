@@ -71,12 +71,12 @@ for r in slot_set - {1}:
         m.cons6.add(sum(m.x[j, r, i] - m.x[j, r-1, i] for j in demand_set) <= 0)
 # m.cons6.pprint() OK
 
-# constraint 7:-------------------------------------------------------------------------- My interpretation (...) in the model
+# constraint 7:------------------------------------------------------ My interpretation (...) in the model
 m.cons7 = ConstraintList()
 for j in demand_set:
     for r in slot_set:
         m.cons7.add(sum(m.x[j, r, i] for i in drones_set) <= 1)
-# m.cons7.pprint() OOOOOOOOK I believe
+# m.cons7.pprint() OK I believe
 
 # constraint 8:-------------------------------------------------------------------------- (9) in the model
 m.cons8 = ConstraintList()
