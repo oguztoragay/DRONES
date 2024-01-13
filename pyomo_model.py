@@ -8,7 +8,7 @@ from pyomo.util.infeasible import find_infeasible_constraints
 n_demandnode = 9  # plus depot = 6  Max visit numbers for each location:
 n_drones = 2
 
-datam = generate(n_demandnode, n_drones, 'rand')
+datam = generate(n_demandnode, n_drones, 'fixed')
 
 t_matrix, due_dates, m_time, n_slot, Drone_Charge, i_times = datam
 
