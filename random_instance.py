@@ -31,10 +31,10 @@ def generate(m, n, condition):
                              [1, 2, 2, 2, 3, 3, 3, 0, 0],
                              [1, 2, 2, 2, 3, 3, 3, 0, 0]])  # Sjk
 
-        due = np.array([0, 0, 24, 24, 24, 24, 24, 24, 5, 10])  # dj
+        due = np.array([0, 10, 20, 24, 8, 16, 24, 5, 10])  # dj
         charges = np.ones(n)*7
-        i_times = 5
-        slots = 7
+        i_times = 5  #max intervisit time
+        slots = 12
 
     return t_matrix, due, monitor_times, slots, charges, i_times
 
