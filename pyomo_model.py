@@ -5,7 +5,7 @@ from random_instance import generate
 from random_instance import mprint
 from pyomo.util.infeasible import find_infeasible_constraints
 
-n_demandnode = 9  # plus depot = 6  Max visit numbers for each location:
+n_demandnode = 9  # plus depot = 6  Max visit numbers for each location: (does it )
 n_drones = 2
 
 datam = generate(n_demandnode, n_drones, 'fixed')
@@ -29,7 +29,7 @@ m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)  # allo
 m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)  # allocation 2
 m.c = Var(slot_set, drones_set, domain=Integers, initialize=0)  # allocation 3
 m.z = Var(slot_set, drones_set, domain=Binary, initialize=0)  # allocation 4
-m.w = Var(slot_set, drones_set, domain=Integers, initialize=0)  # allocation 5
+m.w = Var(slot_set, drones_set, domain=NonNegativeIntegers, initialize=0)  # allocation 5
 m.v = Var(demand_set, slot_set, drones_set, domain=NonNegativeIntegers, initialize=0)  # allocation 6
 m.lmax = Var(initialize=0, bounds=(0, 1000))  # We should discuss it
 # Lmax= LpVariable ("Lmax", cat="Integer", lowBound= 0)  # when calculating Lmax do not include depot!!!
@@ -39,9 +39,12 @@ m.obj_func = Objective(expr=m.lmax, sense=minimize)
 # Constraint 2:-------------------------------------------------------------------------- (3) in the model
 m.cons2 = ConstraintList()
 for j in demand_set - {1}:
-    m.cons2.add(sum(m.x[j, r, i] for r in slot_set for i in drones_set) <= 1)
+    for i in drones_set:
+        m.cons2.add(sum(m.x[j, r, i] for r in slot_set) <= 1)
+        m.cons2.add(sum(m.x[j, r, i] for r in slot_set) >= 1)
 # m.cons2.pprint() OK
-# Nasrin's comment: Made it <=1
+# Nasrin's comment: Made it <=1 <---- this means some of the demands are OK to be skipped... ? I don't think we want that.
+# Oguz's comment: When I made it equality the model is infeasible but >= 1 will also generate the required situation
 
 # constraint 3:-------------------------------------------------------------------------- (4) in the model
 m.cons3 = ConstraintList()
@@ -93,7 +96,7 @@ for i in drones_set:
     for r in slot_set - {1}:
         m.cons9.add(m.c[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set) + sum(m_time[j-1] * m.x[j, r, i] for j in demand_set))
 # m.cons9.pprint() OK
-# Nasrin's comment: How to add j=!k????
+# Nasrin's comment: How to add j=!k???? Whenever j==k then t_matrix[j, k] is 0
 
 # constraint 10 & 11:-------------------------------------------------------------------- (10b) & (10c)in the model
 m.cons10 = ConstraintList()
@@ -107,7 +110,7 @@ for i in drones_set:
             m.cons11.add(0.5*(m.x[j, r, i] + m.x[k, r-1, i]) >= m.y[j, k, r, i])
 # m.cons10.pprint()
 # m.cons11.pprint()
-# Nasrin's comment: I didn't understand how you defined j=!k.
+# Nasrin's comment: I didn't understand how you defined j=!k. I defined demand_set_combin2 which is a list of all possible combinations from demand_set
 
 # constraint 12:-------------------------------------------------------------------------- (2) in the model
 m.cons12 = ConstraintList()
@@ -148,7 +151,9 @@ for i in drones_set:
 # Can be handled without a constraint... Pyomo magic
 for i in drones_set:
     m.w[1, i].fix(0)
-# Nasrin's comment: How about the following? W>=0
+# Nasrin's comment: How about the following? W>=0 <----- I changed the definition of w to be NonNegativeIntegers
+# You are right I printed w out and found that some of them got negative values in the optimal solution
+
 #for i in range(n_drones):
  #   for r in range(1,n_slot+1):
         #print(allocation5[r-1][i] >= 0)
@@ -185,9 +190,9 @@ for f in families:
         # for r in slot_set - {7}:
         #     for i in drones_set:
         #         m.cons_families_3.add(m.v[j, r, i] <= B*(1 - m.x[j, r, i]))
-#m.cons_families_1.pprint()
-#m.cons_families_2.pprint()
-#m.cons_families_3.pprint()
+# m.cons_families_1.pprint()
+# m.cons_families_2.pprint()
+# m.cons_families_3.pprint()
 # Nasrin's comment: Changed >=1 instead of <=1; Families are changed from 1 to 2; 1 is the depot. Also, changed the family ranges.
 
 #Job family constraint: #Dummy 1
@@ -204,12 +209,12 @@ for j in demand_set:
 # m.cons_dummy2.pprint()
 # m.cons_dummy3.pprint()
 
-#Nasrin's comment: Missing the last constrain
+#Nasrin's comment: Missing the last constraint  <--- The constraint numbers have changed in the last version of the overleaf document :)) Let's fix them...
 # constraint 23:-------------------------------------------------------------------------- (18) in the model
 m.cons23_families_1 = ConstraintList()
 m.cons23_families_2 = ConstraintList()
 m.cons23_families_3 = ConstraintList()
-families = [[2, 3], [5, 6], [8]]
+families = [[2, 3], [5, 6], [8]]  # <--- I still don't know what these families are and how to define them...
 for f in families:
     for j in f:
         for r in slot_set - {12}:
@@ -218,21 +223,28 @@ for f in families:
         # for r in slot_set - {7}:
         #     for i in drones_set:
         #         m.cons_families_3.add(m.v[j, r, i] <= B*(1 - m.x[j, r, i]))
-m.cons23_families_1.pprint()
-m.cons23_families_2.pprint()
-m.cons23_families_3.pprint()
+# m.cons23_families_1.pprint()
+# m.cons23_families_2.pprint()
+# m.cons23_families_3.pprint()
 
 # m.pprint()
 msolver = SolverFactory('gurobi')  # The following parameter set considered Gurobi as the solver
-# msolver.options['TimeLimit'] = 7200  # Time limit is set here
-# msolver.options['LogToConsole'] = 1
+msolver.options['TimeLimit'] = 7200  # Time limit is set here
+msolver.options['LogToConsole'] = 1
 # msolver.options['DisplayInterval'] = 100
-# msolver.options['Threads'] = 16
-# msolver.options['FeasibilityTol'] = 1e-5
-# msolver.options['MIPFocus'] = 2
-# msolver.options['Cuts'] = 3
-# msolver.options['Heuristics'] = 1
-# msolver.options['RINS'] = 10
+msolver.options['Threads'] = 16
+msolver.options['FeasibilityTol'] = 1e-5
+msolver.options['MIPFocus'] = 2
+msolver.options['Cuts'] = 3
+msolver.options['Heuristics'] = 1
+msolver.options['RINS'] = 10
 solution = msolver.solve(m, tee=True)
 mprint(m, solution, datam)
+
+
+# Based on the changes that I made on 01/19/2024 12:29 am:
+# The model takes longer to be solved (more than 1100s)
+# All the w values are nonnegative integers
+# Solution includes 5 as well when I modified the families
+# Optimal solution value is interestingly 19 which was 20 before
 

@@ -1,4 +1,4 @@
-from pyomo.environ import ConcreteModel, Var, Constraint, ConstraintList, NonNegativeReals, Binary, Integers, NonNegativeIntegers, Param, Objective, minimize, SolverFactory, value, maximize
+from pyomo.environ import value
 import numpy as np
 
 
@@ -11,7 +11,7 @@ def generate(m, n, condition):
     np.fill_diagonal(t_matrix, 0)
     t_matrix = t_matrix.reshape((m, m))
 
-    slots = 7 #np.random.randint(7, 8)
+    slots = 12 #np.random.randint(7, 8)
     charges = np.random.randint(13, 15, size=n)
     i_times = 2
     due = np.random.randint(15, 24, size=m+1)
@@ -31,7 +31,7 @@ def generate(m, n, condition):
                              [1, 2, 2, 2, 3, 3, 3, 0, 0],
                              [1, 2, 2, 2, 3, 3, 3, 0, 0]])  # Sjk
 
-        due = np.array([0, 10, 20, 24, 8, 16, 24, 5, 10])  # dj
+        due = np.array([0, 10, 20, 24, 8, 16, 24, 5, 10])  # dj <--- does n_demandnode = 9 includes depo as well?? I am confused about it...
         charges = np.ones(n)*7
         i_times = 5  #max intervisit time
         slots = 12
@@ -46,7 +46,7 @@ def mprint(m, solution, datam):
     print(solution['Solver'].message, '\n')
     print('The travel matrix is:\n', datam[0])
     print('\nDue dates are:\n', datam[1])
-    print('\nNumber of visits are:\n', datam[2])
+    print('\nMonitoring times are:\n', datam[2])
     print('\nOptimal objective value is:', value(m.obj_func))
     print('\nThe visiting assignments are as follow:')
     assign_list = np.zeros((len(datam[4]), datam[3]))
@@ -54,8 +54,12 @@ def mprint(m, solution, datam):
         if value(m.x[ind]) == 1:
             assign_list[ind[2]-1, ind[1]-1] = ind[0]
     print(assign_list)
-    for ind in m.c.index_set():
-        print('c', ind, '=', value(m.c[ind]))
+    list_c = sorted(list(m.c.index_set()), key = lambda x: x[1])
+    for ind in list_c:
+        print('c',ind,'=', value(m.c[ind]))
+    for ind in m.w.index_set():
+        if value(m.w[ind]):
+            print('w',ind,'=', value(m.w[ind]))
     # for ind in m.y.index_set():
     #     if value(m.y[ind]) == 1:
     #         print('y', ind, '=', value(m.y[ind]))
