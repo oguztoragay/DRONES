@@ -33,7 +33,7 @@ def generate(m, n, condition):
 
         due = np.array([0, 10, 20, 24, 8, 16, 24, 5, 10])  # dj <--- does n_demandnode = 9 includes depo as well?? I am confused about it...
         charges = np.ones(n)*7
-        i_times = 5  #max intervisit time
+        i_times = 10  #max intervisit time
         slots = 12
 
     return t_matrix, due, monitor_times, slots, charges, i_times

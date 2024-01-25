@@ -31,17 +31,16 @@ m.c = Var(slot_set, drones_set, domain=Integers, initialize=0)  # allocation 3
 m.z = Var(slot_set, drones_set, domain=Binary, initialize=0)  # allocation 4
 m.w = Var(slot_set, drones_set, domain=NonNegativeIntegers, initialize=0)  # allocation 5
 m.v = Var(demand_set, slot_set, drones_set, domain=NonNegativeIntegers, initialize=0)  # allocation 6
-m.lmax = Var(initialize=0, bounds=(0, 1000))  # We should discuss it
+m.lmax = Var(domain=NonNegativeIntegers, initialize=0, bounds=(0, 1000))  # We should discuss it
 # Lmax= LpVariable ("Lmax", cat="Integer", lowBound= 0)  # when calculating Lmax do not include depot!!!
 
 m.obj_func = Objective(expr=m.lmax, sense=minimize)
 
 # Constraint 2:-------------------------------------------------------------------------- (3) in the model
 m.cons2 = ConstraintList()
-for j in demand_set - {1}:
-    for i in drones_set:
-        m.cons2.add(sum(m.x[j, r, i] for r in slot_set) <= 1)
-        m.cons2.add(sum(m.x[j, r, i] for r in slot_set) >= 1)
+for j in demand_set-{1}:
+    m.cons2.add(sum(m.x[j, r, i] for r in slot_set for i in drones_set) == 1)
+        #m.cons2.add(sum(m.x[j, r, i] for r in slot_set) >= 1)
 # m.cons2.pprint() OK
 # Nasrin's comment: Made it <=1 <---- this means some of the demands are OK to be skipped... ? I don't think we want that.
 # Oguz's comment: When I made it equality the model is infeasible but >= 1 will also generate the required situation
@@ -76,11 +75,9 @@ for r in slot_set - {1}:
 
 # constraint 7:------------------------------------------------------ My interpretation (...) in the model
 m.cons7 = ConstraintList()
-#for j in demand_set:
-#    for r in slot_set:
 for i in drones_set - {2}: #M=2
         m.cons7.add(sum(m.x[j, r, i+1] - m.x[j,r,i] for j in demand_set for r in slot_set) <= 0)
-#m.cons7.pprint()
+m.cons7.pprint()
 # Nasrin's comment: for each i not r and j. corrected the code.
 
 # constraint 8:-------------------------------------------------------------------------- (9) in the model
@@ -94,8 +91,8 @@ for i in drones_set:
 m.cons9 = ConstraintList()
 for i in drones_set:
     for r in slot_set - {1}:
-        m.cons9.add(m.c[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set) + sum(m_time[j-1] * m.x[j, r, i] for j in demand_set))
-# m.cons9.pprint() OK
+        m.cons9.add(m.c[r, i] - m.c[r-1, i] - sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set) - sum(m_time[j-1] * m.x[j, r, i] for j in demand_set) == 0)
+m.cons9.pprint() #OK
 # Nasrin's comment: How to add j=!k???? Whenever j==k then t_matrix[j, k] is 0
 
 # constraint 10 & 11:-------------------------------------------------------------------- (10b) & (10c)in the model
@@ -117,7 +114,7 @@ m.cons12 = ConstraintList()
 for r in slot_set:
     for i in drones_set:
         m.cons12.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set) - B * (1 - sum(m.x[j, r, i] for j in demand_set)))
-# m.cons12.pprint() OK
+m.cons12.pprint() #OK
 
 
 # constraint 13:--------------------------------------------------------------------------
@@ -131,7 +128,7 @@ m.cons15 = ConstraintList()
 for i in drones_set:
     for r in slot_set - {1, 12}:
         m.cons15.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - Drone_Charge[i-1] <= B*m.z[r+1, i])
-#m.cons15.pprint() #OK
+m.cons15.pprint() #OK
 # Nasrin's comment: I changed the number of slots from 7 to 12. And changed b range from 1 to r-1.
 
 # constraint 17 & 18 & 19:---------------------------------------------------------------
