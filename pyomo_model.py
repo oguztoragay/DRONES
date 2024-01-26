@@ -7,18 +7,17 @@ from pyomo.util.infeasible import find_infeasible_constraints
 
 n_demandnode = 9  # plus depot = 6  Max visit numbers for each location: (does it )
 n_drones = 2
-families = [[2, 3], [5, 6], [8]]
 
-datam = generate(n_demandnode, n_drones, families, 'fixed')
+datam = generate(n_demandnode, n_drones, 'fixed')
 
-t_matrix, due_dates, m_time, n_slot, Drone_Charge, i_times, membership = datam
+t_matrix, due_dates, m_time, n_slot, Drone_Charge, i_times, membership, families, f = datam
 
-demand_set = set(range(1, n_demandnode + 1))  # use index j for N locations
+demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
 drones_set = set(range(1, n_drones + 1))  # use index i for M drones
 slot_set = set(range(1, n_slot + 1))  # use index r for R slots in each drone
 demand_set_combin = list(combinations(demand_set, 2))
 demand_set_combin2 = [[i, j] for (i, j) in product(demand_set, demand_set)]
-
+families = f
 
 # fixed values:
 B = 10000
@@ -32,7 +31,7 @@ m.c = Var(slot_set, drones_set, domain=Integers, initialize=0)  # allocation 3
 m.z = Var(slot_set, drones_set, domain=Binary, initialize=0)  # allocation 4
 m.w = Var(slot_set, drones_set, domain=NonNegativeIntegers, initialize=0)  # allocation 5
 m.v = Var(demand_set, slot_set, drones_set, domain=NonNegativeIntegers, initialize=0)  # allocation 6
-m.lmax = Var(domain=NonNegativeIntegers, initialize=0, bounds=(0, 1000))  # We should discuss it
+m.lmax = Var(domain=NonNegativeIntegers, initialize=0, bounds=(0, 100))  # We should discuss it
 # Lmax= LpVariable ("Lmax", cat="Integer", lowBound= 0)  # when calculating Lmax do not include depot!!!
 
 m.obj_func = Objective(expr=m.lmax, sense=minimize)
@@ -113,7 +112,7 @@ m.cons12 = ConstraintList()
 for r in slot_set:
     for i in drones_set:
         m.cons12.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set) - B * (1 - sum(m.x[j, r, i] for j in demand_set)))
-m.cons12.pprint() #OK
+# m.cons12.pprint() #OK
 
 
 # constraint 13:--------------------------------------------------------------------------
@@ -125,9 +124,9 @@ for i in drones_set:
 # constraint 15:--------------------------------------------------------------------------
 m.cons15 = ConstraintList()
 for i in drones_set:
-    for r in slot_set - {1, 12}:
+    for r in slot_set - {1, n_slot}:
         m.cons15.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - Drone_Charge[i-1] <= B*m.z[r+1, i])
-m.cons15.pprint() #OK
+# m.cons15.pprint() #OK
 # Nasrin's comment: I changed the number of slots from 7 to 12. And changed b range from 1 to r-1.
 
 # constraint 17 & 18 & 19:---------------------------------------------------------------
@@ -163,7 +162,7 @@ for i in drones_set:
 
 m.cons211 = ConstraintList()
 for i in drones_set:
-    for r in slot_set - {1, 12}:
+    for r in slot_set - {1, n_slot}:
         m.cons211.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - Drone_Charge[i-1] >= -B*(1 - m.z[r + 1, i]))
 #m.cons211.pprint() #OK
 # Nasrin's comment: I changed the number of slots from 7 to 12. And changed b range from 1 to r-1.
@@ -210,7 +209,7 @@ m.cons23_families_2 = ConstraintList()
 m.cons23_families_3 = ConstraintList()
 for f in families:
     for j in f:
-        for r in slot_set - {12}:
+        for r in slot_set - {n_slot}:
             for i in drones_set:
                 m.cons23_families_1.add(m.x[j + 1, r + 1, i] <= B*(1-m.x[j, r, i]))
         # for r in slot_set - {7}:
