@@ -1,10 +1,35 @@
 from pyomo.environ import value
 import numpy as np
+from itertools import combinations, product
+import random
 
 
-def generate(m, n, condition):
+def generate(m, n, f, condition):
     print('-------------------------------------------------------------------------------------------------')
-    t_matrix = np.random.randint(1, 4, size=(m, m))
+    # distances = random.sample(range(1, 5), (len(f), len(f)))
+    families = []
+    for fam in f:
+        families.append(fam + [fam[-1]+1])
+    families = [1] + families
+    pairs = list(combinations(range(len(f)+1), 2))
+    distances = {key: random.randint(1, 5) for key in pairs}
+    t_matrix = np.zeros((m, m))
+    for i in range(len(families)):
+        for j in range(len(families)):
+            if i==j:
+                nodes = families[i]
+                pairs = product(nodes-1, 2)
+
+                t_matrix[] =
+
+
+
+
+
+    for i in range(len(f)):
+        dd = f[i][-1]
+        for j in range(1, dd+1):
+            t_matrix[0, j] = distances[0]
     matrix_u = np.triu(t_matrix)
     matrix_l = matrix_u.T
     t_matrix = matrix_u + matrix_l
@@ -54,12 +79,12 @@ def mprint(m, solution, datam):
         if value(m.x[ind]) == 1:
             assign_list[ind[2]-1, ind[1]-1] = ind[0]
     print(assign_list)
-    list_c = sorted(list(m.c.index_set()), key = lambda x: x[1])
+    list_c = sorted(list(m.c.index_set()), key=lambda x: x[1])
     for ind in list_c:
-        print('c',ind,'=', value(m.c[ind]))
+        print('c', ind, '=', value(m.c[ind]))
     for ind in m.w.index_set():
         if value(m.w[ind]):
-            print('w',ind,'=', value(m.w[ind]))
+            print('w', ind, '=', value(m.w[ind]))
     # for ind in m.y.index_set():
     #     if value(m.y[ind]) == 1:
     #         print('y', ind, '=', value(m.y[ind]))
