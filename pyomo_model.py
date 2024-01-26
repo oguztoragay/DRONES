@@ -39,9 +39,9 @@ m.obj_func = Objective(expr=m.lmax, sense=minimize)
 
 # Constraint 2:-------------------------------------------------------------------------- (3) in the model
 m.cons2 = ConstraintList()
-for j in demand_set-{1}:
+for j in demand_set-{1,12}:
     m.cons2.add(sum(m.x[j, r, i] for r in slot_set for i in drones_set) == 1)
-m.cons2.pprint()
+#m.cons2.pprint()
 
 # constraint 3:-------------------------------------------------------------------------- (4) in the model
 m.cons3 = ConstraintList()
@@ -65,10 +65,10 @@ for i in drones_set:
     m.x[1, 1, i].fix(0)
 
 # constraint 6:-------------------------------------------------------------------------- (7) in the model
-m.cons6 = ConstraintList()
-for r in slot_set - {1}:
-    for i in drones_set:
-        m.cons6.add(sum(m.x[j, r, i] - m.x[j, r-1, i] for j in demand_set) <= 0)
+# m.cons6 = ConstraintList()
+# for r in slot_set - {1}:
+#     for i in drones_set:
+#         m.cons6.add(sum(m.x[j, r, i] - m.x[j, r-1, i] for j in demand_set) <= 0)
 # m.cons6.pprint() OK
 
 # constraint 7:------------------------------------------------------ My interpretation (...) in the model
@@ -118,6 +118,8 @@ for r in slot_set:
 m.cons13 = ConstraintList()
 for i in drones_set:
     m.cons13.add(m.c[1, i] - Drone_Charge[i-1] <= B*m.z[2, i])
+    # TODO: goes to depot more than once 111
+    # fixme
 #m.cons13.pprint() #OK
 
 # constraint 15:--------------------------------------------------------------------------
@@ -179,7 +181,7 @@ m.cons_families_3 = ConstraintList()
 for f in families:
     for j in f:
         m.cons_families_1.add(sum(m.v[j + 1, r, i] - m.v[j, r, i] for r in slot_set for i in drones_set) <= i_times)
-        m.cons_families_2.add(sum(m.v[j + 1, r, i] - m.v[j, r, i] for r in slot_set for i in drones_set) >= 0)
+        m.cons_families_2.add(sum(m.v[j + 1, r, i] - m.v[j, r, i] for r in slot_set for i in drones_set) >= 0) #@@@@@@@@@@@@@@@@@@@@@ >=1
         # TODO: 4-3, 3-2 should be 4-2
         # fixme
         # for r in slot_set - {7}:
@@ -212,7 +214,9 @@ for f in families:
     for j in f:
         for r in slot_set - {n_slot}:
             for i in drones_set:
-                m.cons23_families_1.add(m.x[j + 1, r + 1, i] <= B*(1-m.x[j, r, i]))
+                m.cons23_families_1.add(sum(m.x[jj, r + 1, i] for jj in range(j+1, len(demand_set))) <= B*(1-m.x[j, r, i]))
+                # TODO: 4-3, 3-2 should be 4-2
+                # fixme
         # for r in slot_set - {7}:
         #     for i in drones_set:
         #         m.cons_families_3.add(m.v[j, r, i] <= B*(1 - m.x[j, r, i]))
@@ -220,10 +224,16 @@ for f in families:
 # m.cons23_families_2.pprint()
 # m.cons23_families_3.pprint()
 
+# constraint 24:--------------------------------------------------------------
+m.cons24 = ConstraintList()
+for r in slot_set:
+    for i in drones_set:
+        m.cons24.add(m.x[12, r , i] == 1- sum(m.x[j, r , i] for j in demand_set-{12}))
+        # TODO over multiple drone: keep the sequence
 # m.pprint()
 
 msolver = SolverFactory('gurobi')  # The following parameter set considered Gurobi as the solver
-msolver.options['TimeLimit'] = 7200  # Time limit is set here
+msolver.options['TimeLimit'] = 300 #7200  # Time limit is set here
 msolver.options['LogToConsole'] = 1
 # msolver.options['DisplayInterval'] = 100
 msolver.options['Threads'] = 16
