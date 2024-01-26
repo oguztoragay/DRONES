@@ -29,14 +29,18 @@ def generate(m, n, f, condition):
     np.fill_diagonal(t_matrix, 0)
     t_matrix = t_matrix.reshape((m, m))
 
-    slots = np.random.randint(7, 8)
+    slots = np.random.randint(6, 8)
     charges = np.random.randint(13, 15, size=n)
     i_times = 2
-    due = np.random.randint(15, 24, size=m+1)
-    # TODO: form the due as random set of numbers for each families and generate due differences incrementally for each node in each family
-    # fixme: it won't serve the purpose if each node has a different due without considering the maximum time between each pair of visits
+    due = random.sample(range(4, 9), len(families))
     due[0] = 0
-    # due[1] = 0
+    due_date = []
+    membership = []
+    for i in range(len(families)):
+        for j in range(len(families[i])):
+            due_date.append(due[i]*(j+1))
+            membership.append(i)
+    due = due_date
     monitor_times = np.array(np.random.randint(1, 3, size=(1, m)).ravel())
 
     if condition == 'fixed':
@@ -56,7 +60,7 @@ def generate(m, n, f, condition):
         i_times = 10  #max intervisit time
         slots = 12
 
-    return t_matrix, due, monitor_times, slots, charges, i_times
+    return t_matrix, due, monitor_times, slots, charges, i_times, membership
 
 
 def mprint(m, solution, datam):
@@ -70,18 +74,24 @@ def mprint(m, solution, datam):
     print('\nOptimal objective value is:', value(m.obj_func))
     print('\nThe visiting assignments are as follow:')
     assign_list = np.zeros((len(datam[4]), datam[3]))
+    assign_families = np.zeros((len(datam[4]), datam[3]))
     for ind in m.x.index_set():
         if value(m.x[ind]) == 1:
             assign_list[ind[2]-1, ind[1]-1] = ind[0]
+            assign_families[ind[2] - 1, ind[1] - 1] = datam[6][ind[0]-1] + 1
     print(assign_list)
+    print("\nOr in terms of families:")
+    print(assign_families)
     list_c = sorted(list(m.c.index_set()), key=lambda x: x[1])
+    c_values = []
     for ind in list_c:
-        print('c', ind, '=', value(m.c[ind]))
+        c_values.append(value(m.c[ind]))
+        # print('c', ind, '=', value(m.c[ind]))
+    c_values = np.reshape(c_values, (len(datam[4]), datam[3]))
+    print("\nThe c values are as follow:")
+    print(c_values)
     for ind in m.w.index_set():
         if value(m.w[ind]):
             print('w', ind, '=', value(m.w[ind]))
-    # for ind in m.y.index_set():
-    #     if value(m.y[ind]) == 1:
-    #         print('y', ind, '=', value(m.y[ind]))
-    #
+
 

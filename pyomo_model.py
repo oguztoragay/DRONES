@@ -11,7 +11,7 @@ families = [[2, 3], [5, 6], [8]]
 
 datam = generate(n_demandnode, n_drones, families, 'fixed')
 
-t_matrix, due_dates, m_time, n_slot, Drone_Charge, i_times = datam
+t_matrix, due_dates, m_time, n_slot, Drone_Charge, i_times, membership = datam
 
 demand_set = set(range(1, n_demandnode + 1))  # use index j for N locations
 drones_set = set(range(1, n_drones + 1))  # use index i for M drones
@@ -44,7 +44,6 @@ for j in demand_set-{1}:
         #m.cons2.add(sum(m.x[j, r, i] for r in slot_set) >= 1)
 # m.cons2.pprint() OK
 # Nasrin's comment: Made it <=1 <---- this means some of the demands are OK to be skipped... ? I don't think we want that.
-# Oguz's comment: When I made it equality the model is infeasible but >= 1 will also generate the required situation
 
 # constraint 3:-------------------------------------------------------------------------- (4) in the model
 m.cons3 = ConstraintList()
@@ -78,7 +77,7 @@ for r in slot_set - {1}:
 m.cons7 = ConstraintList()
 for i in drones_set - {2}: #M=2
         m.cons7.add(sum(m.x[j, r, i+1] - m.x[j,r,i] for j in demand_set for r in slot_set) <= 0)
-m.cons7.pprint()
+# m.cons7.pprint()
 # Nasrin's comment: for each i not r and j. corrected the code.
 
 # constraint 8:-------------------------------------------------------------------------- (9) in the model
@@ -93,8 +92,7 @@ m.cons9 = ConstraintList()
 for i in drones_set:
     for r in slot_set - {1}:
         m.cons9.add(m.c[r, i] - m.c[r-1, i] - sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set) - sum(m_time[j-1] * m.x[j, r, i] for j in demand_set) == 0)
-m.cons9.pprint() #OK
-# Nasrin's comment: How to add j=!k???? Whenever j==k then t_matrix[j, k] is 0
+# m.cons9.pprint() #OK
 
 # constraint 10 & 11:-------------------------------------------------------------------- (10b) & (10c)in the model
 m.cons10 = ConstraintList()
@@ -206,12 +204,10 @@ for j in demand_set:
 # m.cons_dummy2.pprint()
 # m.cons_dummy3.pprint()
 
-#Nasrin's comment: Missing the last constraint  <--- The constraint numbers have changed in the last version of the overleaf document :)) Let's fix them...
 # constraint 23:-------------------------------------------------------------------------- (18) in the model
 m.cons23_families_1 = ConstraintList()
 m.cons23_families_2 = ConstraintList()
 m.cons23_families_3 = ConstraintList()
-families = [[2, 3], [5, 6], [8]]  # <--- I still don't know what these families are and how to define them...
 for f in families:
     for j in f:
         for r in slot_set - {12}:
@@ -225,6 +221,7 @@ for f in families:
 # m.cons23_families_3.pprint()
 
 # m.pprint()
+
 msolver = SolverFactory('gurobi')  # The following parameter set considered Gurobi as the solver
 msolver.options['TimeLimit'] = 7200  # Time limit is set here
 msolver.options['LogToConsole'] = 1
@@ -238,10 +235,4 @@ msolver.options['RINS'] = 10
 solution = msolver.solve(m, tee=True)
 mprint(m, solution, datam)
 
-
-# Based on the changes that I made on 01/19/2024 12:29 am:
-# The model takes longer to be solved (more than 1100s)
-# All the w values are nonnegative integers
-# Solution includes 5 as well when I modified the families
-# Optimal solution value is interestingly 19 which was 20 before
 
