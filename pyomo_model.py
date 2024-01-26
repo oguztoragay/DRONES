@@ -7,8 +7,9 @@ from pyomo.util.infeasible import find_infeasible_constraints
 
 n_demandnode = 9  # plus depot = 6  Max visit numbers for each location: (does it )
 n_drones = 2
+families = [[2, 3], [5, 6], [8]]
 
-datam = generate(n_demandnode, n_drones, 'fixed')
+datam = generate(n_demandnode, n_drones, families, 'fixed')
 
 t_matrix, due_dates, m_time, n_slot, Drone_Charge, i_times = datam
 
@@ -179,7 +180,6 @@ for i in drones_set:
 m.cons_families_1 = ConstraintList()
 m.cons_families_2 = ConstraintList()
 m.cons_families_3 = ConstraintList()
-families = [[2, 3], [5, 6], [8]]
 for f in families:
     for j in f:
         m.cons_families_1.add(sum(m.v[j + 1, r, i] - m.v[j, r, i] for r in slot_set for i in drones_set) <= i_times)
