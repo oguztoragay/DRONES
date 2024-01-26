@@ -8,7 +8,7 @@ from pyomo.util.infeasible import find_infeasible_constraints
 n_demandnode = 9  # plus depot = 6  Max visit numbers for each location: (does it )
 n_drones = 2
 
-datam = generate(n_demandnode, n_drones, 'fixed')
+datam = generate(n_demandnode, n_drones, 'SB')
 
 t_matrix, due_dates, m_time, n_slot, Drone_Charge, i_times, membership, families, f = datam
 
@@ -27,22 +27,21 @@ UB = 1000  # upper bound of C
 m = ConcreteModel(name="Parallel Machines")
 m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)  # allocation 1
 m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)  # allocation 2
-m.c = Var(slot_set, drones_set, domain=Integers, initialize=0)  # allocation 3
+m.c = Var(slot_set, drones_set, domain= NonNegativeReals, initialize=0)  # allocation 3
 m.z = Var(slot_set, drones_set, domain=Binary, initialize=0)  # allocation 4
-m.w = Var(slot_set, drones_set, domain=NonNegativeIntegers, initialize=0)  # allocation 5
-m.v = Var(demand_set, slot_set, drones_set, domain=NonNegativeIntegers, initialize=0)  # allocation 6
-m.lmax = Var(domain=NonNegativeIntegers, initialize=0, bounds=(0, 100))  # We should discuss it
+m.w = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # allocation 5
+m.v = Var(demand_set, slot_set, drones_set,domain= NonNegativeReals, initialize=0)  # allocation 6
+m.lmax = Var(initialize=0, bounds=(0, 100))  # We should discuss it
 # Lmax= LpVariable ("Lmax", cat="Integer", lowBound= 0)  # when calculating Lmax do not include depot!!!
 
 m.obj_func = Objective(expr=m.lmax, sense=minimize)
+# m.obj_func = Objective(expr=sum(m.c[r, i] for r in slot_set for i in drones_set), sense=minimize)
 
 # Constraint 2:-------------------------------------------------------------------------- (3) in the model
 m.cons2 = ConstraintList()
 for j in demand_set-{1}:
     m.cons2.add(sum(m.x[j, r, i] for r in slot_set for i in drones_set) == 1)
-        #m.cons2.add(sum(m.x[j, r, i] for r in slot_set) >= 1)
-# m.cons2.pprint() OK
-# Nasrin's comment: Made it <=1 <---- this means some of the demands are OK to be skipped... ? I don't think we want that.
+m.cons2.pprint()
 
 # constraint 3:-------------------------------------------------------------------------- (4) in the model
 m.cons3 = ConstraintList()
@@ -111,7 +110,7 @@ for i in drones_set:
 m.cons12 = ConstraintList()
 for r in slot_set:
     for i in drones_set:
-        m.cons12.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set) - B * (1 - sum(m.x[j, r, i] for j in demand_set)))
+        m.cons12.add(m.lmax >= m.c[r, i] - due_dates[j-1] * sum(m.x[j, r, i] for j in demand_set) - B * (1 - sum(m.x[j, r, i] for j in demand_set)))
 # m.cons12.pprint() #OK
 
 
@@ -180,7 +179,9 @@ m.cons_families_3 = ConstraintList()
 for f in families:
     for j in f:
         m.cons_families_1.add(sum(m.v[j + 1, r, i] - m.v[j, r, i] for r in slot_set for i in drones_set) <= i_times)
-        m.cons_families_2.add(sum(m.v[j + 1, r, i] - m.v[j, r, i] for r in slot_set for i in drones_set) >= 1)
+        m.cons_families_2.add(sum(m.v[j + 1, r, i] - m.v[j, r, i] for r in slot_set for i in drones_set) >= 0)
+        # TODO: 4-3, 3-2 should be 4-2
+        # fixme
         # for r in slot_set - {7}:
         #     for i in drones_set:
         #         m.cons_families_3.add(m.v[j, r, i] <= B*(1 - m.x[j, r, i]))
@@ -232,6 +233,9 @@ msolver.options['Cuts'] = 3
 msolver.options['Heuristics'] = 1
 msolver.options['RINS'] = 10
 solution = msolver.solve(m, tee=True)
+for constr, body_value, infeasible in find_infeasible_constraints(m):
+    print(f"Constraint {constr.name} is infeasible: body_value={body_value}, infeasible={infeasible}")
+
 mprint(m, solution, datam)
 
 

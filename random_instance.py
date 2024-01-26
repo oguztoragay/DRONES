@@ -60,6 +60,7 @@ def generate(m, n, condition):
                              [1, 2, 2, 2, 3, 3, 3, 0, 0]])  # Sjk
 
         due = np.array([0, 10, 20, 24, 8, 16, 24, 5, 10])  # dj
+        # due = np.array([0, 24, 24, 24, 24, 24, 24, 24, 24])
         charges = np.ones(n)*7
         i_times = 10  #max intervisit time
         slots = 12
@@ -73,7 +74,7 @@ def generate(m, n, condition):
         for i in families:
             list1.append(i)
         families = list1
-        monitor_times = np.array(list(chain(*[[0.03], [0.03]*2, [0.01]*3, [0.02]*2, [0.05]*3])))  # Pj [2, 1, 2, 3, 4, 5, 5]
+        monitor_times = np.array(list(chain(*[[1], [0.03]*2, [0.01]*3, [0.02]*2, [0.05]*3])))  # Pj [2, 1, 2, 3, 4, 5, 5]
         m = len(monitor_times)
         distances = np.array([[0, 0.0632, 0.0117, 0.0225, 0.1443],
                              [0.0352, 0, 0.0376, 0.0392, 0.1304],
@@ -89,10 +90,18 @@ def generate(m, n, condition):
                 for ii in i_mem:
                     for jj in j_mem:
                         t_matrix[ii - 1, jj - 1] = distances[(i, j)]
-        due = np.array([0, 5, 10, 5, 10, 15, 6, 12, 10, 14, 23])  # dj
-        charges = np.ones(n) * 10
-        i_times = 15  # max intervisit time
-        slots = 16
+
+        membership = []
+        for i in range(len(families)):
+            for j in range(len(families[i])):
+                due_date.append(due[i] * (j + 1))
+                membership.append(i)
+
+        due = np.array([0, 5, 10, 5, 10, 15, 6, 12, 10, 14, 23])
+        # due = np.array([0, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24])# dj
+        charges = np.ones(n) * 0.4
+        i_times = 20  # max intervisit time
+        slots = 8
 
     return t_matrix, due, monitor_times, slots, charges, i_times, membership, families, f
 
