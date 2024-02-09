@@ -39,7 +39,7 @@ m.obj_func = Objective(expr=m.lmax, sense=minimize)
 
 # Constraint 2:-------------------------------------------------------------------------- (3) in the model
 m.cons2 = ConstraintList()
-for j in demand_set-{1,12}:
+for j in demand_set-{1, 12}:
     m.cons2.add(sum(m.x[j, r, i] for r in slot_set for i in drones_set) == 1)
 #m.cons2.pprint()
 
@@ -110,7 +110,7 @@ for i in drones_set:
 m.cons12 = ConstraintList()
 for r in slot_set:
     for i in drones_set:
-        m.cons12.add(m.lmax >= m.c[r, i] - due_dates[j-1] * sum(m.x[j, r, i] for j in demand_set) - B * (1 - sum(m.x[j, r, i] for j in demand_set)))
+        m.cons12.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set) - B * (1 - sum(m.x[j, r, i] for j in demand_set)))
 # m.cons12.pprint() #OK
 
 
@@ -206,6 +206,7 @@ for j in demand_set:
 # m.cons_dummy2.pprint()
 # m.cons_dummy3.pprint()
 
+
 # constraint 23:-------------------------------------------------------------------------- (18) in the model
 m.cons23_families_1 = ConstraintList()
 m.cons23_families_2 = ConstraintList()
@@ -228,16 +229,23 @@ for f in families:
 m.cons24 = ConstraintList()
 for r in slot_set:
     for i in drones_set:
-        m.cons24.add(m.x[12, r , i] == 1- sum(m.x[j, r , i] for j in demand_set-{12}))
+        m.cons24.add(m.x[len(due_dates), r, i] == 1 - sum(m.x[j, r, i] for j in demand_set-{len(due_dates)}))
         # TODO over multiple drone: keep the sequence
 # m.pprint()
 
+# m.cons25 = ConstraintList()
+# for r in slot_set:
+#     for i in drones_set:
+#         m.cons25.add(m.v[2, r, i] + 0.0001 <= m.v[3, r, i])
+        # m.cons25.add(m.v[4, r, i] + 0.0001 <= m.v[5, r, i])
+        # m.cons25.add(m.v[5, r, i] < m.v[6, r, i])
+
 msolver = SolverFactory('gurobi')  # The following parameter set considered Gurobi as the solver
-msolver.options['TimeLimit'] = 300 #7200  # Time limit is set here
+msolver.options['TimeLimit'] = 300 # 7200  # Time limit is set here
 msolver.options['LogToConsole'] = 1
 # msolver.options['DisplayInterval'] = 100
-msolver.options['Threads'] = 16
-msolver.options['FeasibilityTol'] = 1e-5
+msolver.options['Threads'] = 24
+msolver.options['FeasibilityTol'] = 1e-7
 msolver.options['MIPFocus'] = 2
 msolver.options['Cuts'] = 3
 msolver.options['Heuristics'] = 1
