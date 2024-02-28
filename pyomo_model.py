@@ -5,10 +5,10 @@ from random_instance import generate
 from random_instance import mprint
 from pyomo.util.infeasible import find_infeasible_constraints
 
-n_demandnode = 9  # plus depot = 6  Max visit numbers for each location: (does it )
+n_demandnode = 21  # plus depot = 6  Max visit numbers for each location: (does it )
 n_drones = 2
 
-datam = generate(n_demandnode, n_drones, 'SB')
+datam = generate(n_demandnode, n_drones, 'SB_RS')
 
 t_matrix, due_dates, m_time, n_slot, Drone_Charge, i_times, membership, families, f = datam
 
@@ -27,10 +27,12 @@ UB = 1000  # upper bound of C
 m = ConcreteModel(name="Parallel Machines")
 m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)  # allocation 1
 m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)  # allocation 2
-m.c = Var(slot_set, drones_set, domain= NonNegativeReals, initialize=0)  # allocation 3
+m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # allocation 3
+m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
 m.z = Var(slot_set, drones_set, domain=Binary, initialize=0)  # allocation 4
 m.w = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # allocation 5
-m.v = Var(demand_set, slot_set, drones_set,domain= NonNegativeReals, initialize=0)  # allocation 6
+m.v = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # allocation 6
+m.e = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
 m.lmax = Var(initialize=0, bounds=(0, 100))  # We should discuss it
 # Lmax= LpVariable ("Lmax", cat="Integer", lowBound= 0)  # when calculating Lmax do not include depot!!!
 
@@ -39,7 +41,7 @@ m.obj_func = Objective(expr=m.lmax, sense=minimize)
 
 # Constraint 2:-------------------------------------------------------------------------- (3) in the model
 m.cons2 = ConstraintList()
-for j in demand_set-{1, 12}:
+for j in demand_set-{1, 21}:
     m.cons2.add(sum(m.x[j, r, i] for r in slot_set for i in drones_set) == 1)
 #m.cons2.pprint()
 
@@ -91,6 +93,18 @@ for i in drones_set:
     for r in slot_set - {1}:
         m.cons9.add(m.c[r, i] - m.c[r-1, i] - sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set) - sum(m_time[j-1] * m.x[j, r, i] for j in demand_set) == 0)
 # m.cons9.pprint() #OK
+
+for i in drones_set:
+    m.s[1, i].fix(0)
+
+# constraint 9:-------------------------------------------------------------------------- (10a) in the model
+m.cons91 = ConstraintList()
+for i in drones_set:
+    for r in slot_set - {1}:
+        m.cons91.add(m.s[r, i] - m.c[r-1, i] == 0)
+# m.cons9.pprint() #OK
+
+
 
 # constraint 10 & 11:-------------------------------------------------------------------- (10b) & (10c)in the model
 m.cons10 = ConstraintList()
@@ -177,11 +191,12 @@ for i in drones_set:
 
 m.cons_families_1 = ConstraintList()
 m.cons_families_2 = ConstraintList()
-m.cons_families_3 = ConstraintList()
+# m.cons_families_3 = ConstraintList()
 for f in families:
     for j in f:
         m.cons_families_1.add(sum(m.v[j + 1, r, i] - m.v[j, r, i] for r in slot_set for i in drones_set) <= i_times)
         m.cons_families_2.add(sum(m.v[j + 1, r, i] - m.v[j, r, i] for r in slot_set for i in drones_set) >= 0) #@@@@@@@@@@@@@@@@@@@@@ >=1
+
         # TODO: 4-3, 3-2 should be 4-2
         # fixme
         # for r in slot_set - {7}:
@@ -191,7 +206,12 @@ for f in families:
 # m.cons_families_2.pprint()
 # m.cons_families_3.pprint()
 # Nasrin's comment: Changed >=1 instead of <=1; Families are changed from 1 to 2; 1 is the depot. Also, changed the family ranges.
-
+m.cons28feb = ConstraintList()
+for f in families:
+    for j in f:
+        for i in drones_set-{2}:
+            m.cons28feb.add(sum(m.e[j + 1, r, i+1] - m.v[j, r, i] for r in slot_set) >= 0)
+            m.cons28feb.add(sum(m.e[j + 1, r, i] - m.v[j, r, i+1] for r in slot_set) >= 0)
 #Job family constraint: #Dummy 1
 m.cons_dummy1 = ConstraintList()
 m.cons_dummy2 = ConstraintList()
@@ -205,6 +225,16 @@ for j in demand_set:
 # m.cons_dummy1.pprint()
 # m.cons_dummy2.pprint()
 # m.cons_dummy3.pprint()
+# m.cons_dummy1 = ConstraintList()
+# m.cons_dummy2 = ConstraintList()
+# m.cons_dummy3 = ConstraintList()
+# for j in demand_set:
+#     for r in slot_set:
+#         for i in drones_set:
+            m.cons_dummy1.add(m.e[j, r, i] <= UB * m.x[j, r, i])
+            m.cons_dummy2.add(m.e[j, r, i] <= m.s[r, i])
+            m.cons_dummy3.add(m.e[j, r, i] >= m.s[r, i] - UB*(1 - m.x[j, r, i]))
+
 
 
 # constraint 23:-------------------------------------------------------------------------- (18) in the model
@@ -241,12 +271,12 @@ for r in slot_set:
         # m.cons25.add(m.v[5, r, i] < m.v[6, r, i])
 
 msolver = SolverFactory('gurobi')  # The following parameter set considered Gurobi as the solver
-msolver.options['TimeLimit'] = 300 # 7200  # Time limit is set here
+msolver.options['TimeLimit'] = 1000 # 7200  # Time limit is set here
 msolver.options['LogToConsole'] = 1
 # msolver.options['DisplayInterval'] = 100
 msolver.options['Threads'] = 24
 msolver.options['FeasibilityTol'] = 1e-7
-msolver.options['MIPFocus'] = 2
+msolver.options['MIPFocus'] = 3
 msolver.options['Cuts'] = 3
 msolver.options['Heuristics'] = 1
 msolver.options['RINS'] = 10
