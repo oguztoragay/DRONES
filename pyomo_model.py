@@ -8,7 +8,7 @@ from pyomo.util.infeasible import find_infeasible_constraints
 # n_demandnode = 12  # +Depot and +Idle
 n_drones = 2
 
-datam = generate(n_drones, 'SB')
+datam = generate(n_drones, 'SB_RS_LA')
 
 t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
 
@@ -215,15 +215,14 @@ for j in demand_set:
 
 # constraint 23:-------------------------------------------------------------------------- (18) in the model
 m.cons23_families_1 = ConstraintList()
-m.cons23_families_2 = ConstraintList()
-m.cons23_families_3 = ConstraintList()
+# m.cons23_families_2 = ConstraintList()
+# m.cons23_families_3 = ConstraintList()
 for f in families:
     for j in f:
         for r in slot_set - {n_slot}:
             for i in drones_set:
                 m.cons23_families_1.add(sum(m.x[jj, r + 1, i] for jj in range(j+1, len(demand_set))) <= B*(1-m.x[j, r, i]))
-                # TODO: 4-3, 3-2 should be 4-2
-                # fixme
+
         # for r in slot_set - {7}:
         #     for i in drones_set:
         #         m.cons_families_3.add(m.v[j, r, i] <= B*(1 - m.x[j, r, i]))
@@ -236,7 +235,6 @@ m.cons24 = ConstraintList()
 for r in slot_set:
     for i in drones_set:
         m.cons24.add(m.x[len(due_dates)-1, r, i] == 1 - sum(m.x[j, r, i] for j in demand_set-{len(due_dates)-1}))
-        # TODO over multiple drone: keep the sequence
 # m.cons24.pprint()
 
 # m.cons25 = ConstraintList()
@@ -250,11 +248,11 @@ msolver = SolverFactory('gurobi')  # The following parameter set considered Guro
 # msolver.options['TimeLimit'] = 300 # Time limit is set here
 msolver.options['LogToConsole'] = 1
 # msolver.options['DisplayInterval'] = 100
-msolver.options['Threads'] = 20
+msolver.options['Threads'] = 24
 msolver.options['FeasibilityTol'] = 1e-7
 msolver.options['MIPFocus'] = 3
-msolver.options['Cuts'] = 2
-msolver.options['Heuristics'] = 0
+msolver.options['Cuts'] = 3
+msolver.options['Heuristics'] = 1
 msolver.options['RINS'] = 10
 solution = msolver.solve(m, tee=True)
 for constr, body_value, infeasible in find_infeasible_constraints(m):
