@@ -8,9 +8,9 @@ from pyomo.util.infeasible import find_infeasible_constraints
 # n_demandnode = 12  # +Depot and +Idle
 n_drones = 2
 
-datam = generate(n_drones, 'SB_RS')
+datam = generate(n_drones, 'SB')
 
-t_matrix, due_dates, m_time, n_slot, Drone_Charge, i_times, membership, families, f = datam
+t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
 
 demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
 drones_set = set(range(1, n_drones + 1))  # use index i for M drones
@@ -109,7 +109,7 @@ for r in slot_set:
 # constraint 13:--------------------------------------------------------------------------
 m.cons13 = ConstraintList()
 for i in drones_set:
-    m.cons13.add(m.c[1, i] - Drone_Charge[i-1] <= B*m.z[2, i])
+    m.cons13.add(m.c[1, i] - drone_Charge[i-1] <= B*m.z[2, i])
     # TODO: goes to depot more than once 111
     # fixme
 #m.cons13.pprint() #OK
@@ -118,7 +118,7 @@ for i in drones_set:
 m.cons15 = ConstraintList()
 for i in drones_set:
     for r in slot_set - {1, n_slot}:
-        m.cons15.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - Drone_Charge[i-1] <= B*m.z[r+1, i])
+        m.cons15.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - drone_Charge[i-1] <= B*m.z[r+1, i])
 # m.cons15.pprint() #OK
 # Nasrin's comment: I changed the number of slots from 7 to 12. And changed b range from 1 to r-1.
 
@@ -148,13 +148,13 @@ for i in drones_set:
 
 m.cons210 = ConstraintList()
 for i in drones_set:
-    m.cons210.add(m.c[1, i] - Drone_Charge[i-1] >= -B * (1 - m.z[2, i]))
+    m.cons210.add(m.c[1, i] - drone_Charge[i-1] >= -B * (1 - m.z[2, i]))
 #m.cons210.pprint() #OK
 
 m.cons211 = ConstraintList()
 for i in drones_set:
     for r in slot_set - {1, n_slot}:
-        m.cons211.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - Drone_Charge[i-1] >= -B*(1 - m.z[r + 1, i]))
+        m.cons211.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - drone_Charge[i-1] >= -B*(1 - m.z[r + 1, i]))
 #m.cons211.pprint() #OK
 # Nasrin's comment: I changed the number of slots from 7 to 12. And changed b range from 1 to r-1.
 
@@ -185,7 +185,7 @@ for f in families:
 m.cons28feb = ConstraintList()
 for f in families:
     for j in f:
-        for i in drones_set-{2}:
+        for i in drones_set-{len(drones_set)}:
             m.cons28feb.add(sum(m.e[j + 1, r, i+1] - m.v[j, r, i] for r in slot_set) >= 0)
             m.cons28feb.add(sum(m.e[j + 1, r, i] - m.v[j, r, i+1] for r in slot_set) >= 0)
 #Job family constraint: #Dummy 1
@@ -235,9 +235,9 @@ for f in families:
 m.cons24 = ConstraintList()
 for r in slot_set:
     for i in drones_set:
-        m.cons24.add(m.x[len(due_dates), r, i] == 1 - sum(m.x[j, r, i] for j in demand_set-{len(due_dates)}))
+        m.cons24.add(m.x[len(due_dates)-1, r, i] == 1 - sum(m.x[j, r, i] for j in demand_set-{len(due_dates)-1}))
         # TODO over multiple drone: keep the sequence
-# m.pprint()
+# m.cons24.pprint()
 
 # m.cons25 = ConstraintList()
 # for r in slot_set:
@@ -250,7 +250,7 @@ msolver = SolverFactory('gurobi')  # The following parameter set considered Guro
 # msolver.options['TimeLimit'] = 300 # Time limit is set here
 msolver.options['LogToConsole'] = 1
 # msolver.options['DisplayInterval'] = 100
-msolver.options['Threads'] = 24
+msolver.options['Threads'] = 20
 msolver.options['FeasibilityTol'] = 1e-7
 msolver.options['MIPFocus'] = 3
 msolver.options['Cuts'] = 2

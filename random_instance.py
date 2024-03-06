@@ -4,7 +4,7 @@ from itertools import combinations, chain, repeat
 import random
 
 
-def generate(n, condition):
+def generate(ndrones, condition):
     t_matrix = []
     due_date = []
     monitor_times = []
@@ -55,7 +55,7 @@ def generate(n, condition):
     #     monitor_times = np.array(np.random.randint(1, 3, size=(1, m)).ravel())
 
     if condition == 'fixed':
-        n = 2
+        # n = 2
         f = [[2, 3], [5, 6], [8]]
         families = [[1], [2, 3, 4], [5, 6, 7], [8, 9], [10]]
         monitor_times = np.array([3, 2, 2, 2, 1, 1, 1, 1, 1, 0.01])  # Pj [2, 1, 2, 3, 4, 5, 5]
@@ -71,7 +71,7 @@ def generate(n, condition):
                              [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0]])  # Sjk
 
         due_date = np.array([0, 10, 20, 24, 8, 16, 24, 5, 10, 100])  # dj
-        charges = np.ones(n)*5
+        charges = np.ones(ndrones)*5
         i_times = 3 #max intervisit time
         slots = 8
         membership = [1, 2, 2, 2, 3, 3, 3, 4, 4, 5]
@@ -117,7 +117,7 @@ def generate(n, condition):
         # due = np.array([0, 0.05, 0.10, 0.05, 0.10, 0.15, 0.06, 0.12, 0.10, 0.14, 0.23, 0.24])
         # due = np.array([0, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24])# dj
 
-        charges = np.ones(n) * 0.4
+        charges = np.ones(ndrones) * 0.4
         i_times = 3  # max intervisit time
         slots = 8
 
@@ -164,7 +164,7 @@ def generate(n, condition):
                 due_date.append(due[i] * (j + 1))
                 membership.append(i+1)
 
-        charges = np.ones(n) * 2
+        charges = np.ones(ndrones) * 2
         i_times = 5 # max intervisit time
         slots = 15
         max_need_charge = max([distances[j][i] for i in range(len(distances[j])) for j in range(len(distances[1]))]) * 2
