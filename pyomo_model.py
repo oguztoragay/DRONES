@@ -246,7 +246,7 @@ for r in slot_set:
 
 msolver = SolverFactory('gurobi')  # The following parameter set considered Gurobi as the solver
 # msolver.options['TimeLimit'] = 300 # Time limit is set here
-msolver.options['LogToConsole'] = 1
+msolver.options['LogToConsole'] = 10
 # msolver.options['DisplayInterval'] = 100
 msolver.options['Threads'] = 24
 msolver.options['FeasibilityTol'] = 1e-7
