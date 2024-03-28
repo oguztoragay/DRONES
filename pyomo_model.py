@@ -55,7 +55,7 @@ for i in drones_set:
 
 # constraint 5:-------------------------------------------------------------------------- (5) in new model
 m.cons5 = ConstraintList()
-for i in drones_set:
+for i in drones_set-{3}: # HERE IS THE PROBLEM WITH THE MULTIPLE DRONES....OOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO
     for r in slot_set - {1}:
         m.cons5.add(m.c[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set) + sum(m_time[j-1] * m.x[j, r, i] for j in demand_set))
 
@@ -77,7 +77,7 @@ for i in drones_set:
         for jk in demand_set_combin2:
             j = jk[0]
             k = jk[1]
-            m.cons8.add(m.x[j, r, i] + m.x[k, r-1, i] <= 1 + m.y[j, k, r, i])
+            m.cons8.add(m.x[j, r, i] + m.x[k, r-1, i] -1 <= m.y[j, k, r, i])
             m.cons9.add(m.y[j, k, r, i] <= 0.5*(m.x[j, r, i] + m.x[k, r-1, i]))
 
 # constraint 10:-------------------------------------------------------------------------- (10) in new model

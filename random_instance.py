@@ -171,7 +171,7 @@ def generate(ndrones, condition):
 
         charges = np.ones(ndrones) * 5
         i_times = 10  # max intervisit time
-        slots = 30
+        slots = 20
         max_need_charge = max([distances[j][i] for i in range(len(distances[j])) for j in range(len(distances[1]))]) * 2
 
     return t_matrix, due_date, monitor_times, slots, charges, i_times, membership, families, f
@@ -199,6 +199,10 @@ def mprint(m, solution, datam):
     print("\nOr in terms of families:")
     print(assign_families)
     list_c = sorted(list(m.c.index_set()), key=lambda x: x[1])
+    list_y = sorted(list(m.y.index_set()), key=lambda x: (x[3], x[2]))
+    for ind in list_y:
+        if value(m.y[ind]) == 1:
+            print(ind, value(m.y[ind]))
     c_values = []
     s_values = []
     for ind in list_c:
