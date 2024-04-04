@@ -1,5 +1,7 @@
 from pyomo.environ import value
 import numpy as np
+from itertools import combinations, chain, repeat
+import random
 
 
 def generate(ndrones, condition):
@@ -13,24 +15,47 @@ def generate(ndrones, condition):
     families = []
     f =[]
     print('-------------------------------------------------------------------------------------------------')
-    if condition == 'mini_fixed':
-        f = [[2], [4, 5]]
-        families = [[1], [2, 3], [4, 5, 6], [7]]
-        monitor_times = np.array([3, 2, 2, 1, 1, 1, 0.01])
-        t_matrix = np.array([[0, 3, 3, 4, 4, 4,  0.1],
-                             [3, 0, 0, 1, 1, 1,  0.1],
-                             [3, 0, 0, 1, 1, 1,  0.1],
-                             [4, 1, 1, 0, 0, 0,  0.1],
-                             [4, 1, 1, 0, 0, 0,  0.1],
-                             [4, 1, 1, 0, 0, 0,  0.1],
-                             [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0]])  # Sjk
+    # if condition == 'random':
+    #     f = [[2, 3], [5, 6], [8]]
+    #     families = []
+    #     for fam in f:
+    #         families.append(fam + [fam[-1]+1])
+    #     list1 = [[1]]
+    #     for i in families:
+    #         list1.append(i)
+    #     families = list1.append([axari])
+    #     pairs = list(combinations(range(len(f)+1), 2))
+    #     distances = {key: random.randint(1, 5) for key in pairs}
+    #     t_matrix = np.zeros((m, m))
+    #     for i in range(len(families)):
+    #         for j in range(i+1, len(families)):
+    #             i_mem = families[i]
+    #             j_mem = families[j]
+    #             for ii in i_mem:
+    #                 for jj in j_mem:
+    #                     t_matrix[ii-1, jj-1] = distances[(i, j)]
+    #     matrix_u = np.triu(t_matrix)
+    #     matrix_l = matrix_u.T
+    #     t_matrix = matrix_u + matrix_l
+    #     np.fill_diagonal(t_matrix, 0)
+    #     t_matrix = t_matrix.reshape((m, m))
+    #
+    #     slots = np.random.randint(6, 8)
+    #     charges = np.random.randint(13, 15, size=n)
+    #     i_times = 2
+    #     due = random.sample(range(4, 9), len(families))
+    #     due[0] = 0
+    #     due_date = []
+    #     membership = []
+    #     for i in range(len(families)):
+    #         for j in range(len(families[i])):
+    #             due_date.append(due[i]*(j+1))
+    #             membership.append(i)
+    #     due = due_date
+    #     monitor_times = np.array(np.random.randint(1, 3, size=(1, m)).ravel())
 
-        due_date = np.array([0, 10, 20, 8, 16, 24, 30])  # dj
-        charges = np.ones(ndrones)*5
-        i_times = 3 #max intervisit time
-        slots = 4
-        membership = [1, 2, 2, 3, 3, 3, 4]
     if condition == 'fixed':
+        # n = 2
         f = [[2, 3], [5, 6], [8]]
         families = [[1], [2, 3, 4], [5, 6, 7], [8, 9], [10]]
         monitor_times = np.array([3, 2, 2, 2, 1, 1, 1, 1, 1, 0.01])  # Pj [2, 1, 2, 3, 4, 5, 5]
@@ -45,7 +70,7 @@ def generate(ndrones, condition):
                              [1, 2, 2, 2, 3, 3, 3, 0, 0, 0.1],
                              [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0]])  # Sjk
 
-        due_date = np.array([0, 10, 20, 24, 8, 16, 24, 5, 10, 30])  # dj
+        due_date = np.array([0, 10, 20, 24, 8, 16, 24, 5, 10, 100])  # dj
         charges = np.ones(ndrones)*5
         i_times = 3 #max intervisit time
         slots = 8
@@ -81,15 +106,19 @@ def generate(ndrones, condition):
                 for ii in i_mem:
                     for jj in j_mem:
                         t_matrix[ii - 1, jj - 1] = distances[(i, j)]
-        due = np.array([0, 0.1, 0.23, 0.03, 0.15, 0.3, 0.46, 0.8, 0.7, 1.5, 1.7, 15])
+        # due = np.array([0, 0.05, 0.10, 0.05, 0.10, 0.15, 0.06, 0.12, 0.10, 0.14, 0.23, 0.24])
+        due = np.array([0, 0.1, 0.23, 0.03, 0.15, 0.3, 0.16, 1.8, 0.7, 1.5, 1.7, 15])
         membership = []
         for i in range(len(families)):
             for j in range(len(families[i])):
                 due_date.append(due[i])
                 membership.append(i + 1)
-        due_date = due
+
+        # due = np.array([0, 0.05, 0.10, 0.05, 0.10, 0.15, 0.06, 0.12, 0.10, 0.14, 0.23, 0.24])
+        # due = np.array([0, 24, 24, 24, 24, 24, 24, 24, 24, 24, 24])# dj
+
         charges = np.ones(ndrones) * 0.4
-        i_times = 4  # max intervisit time
+        i_times = 3  # max intervisit time
         slots = 8
 
     if condition == 'SB_RS':
@@ -103,6 +132,7 @@ def generate(ndrones, condition):
             list1.append(i)
         families = list1
         families.append([21])
+        # print([len(i) + 1 for i in families])
         monitor_times = list(np.repeat(monitoring, [len(i) for i in families]))
         m = len(monitor_times)
         distances = np.array([[0, 0.0632, 0.0117, 0.0225, 0.1443, 0.4696, 0.1890, 0.3619, 0.3260, 0.08],
@@ -124,6 +154,8 @@ def generate(ndrones, condition):
                 for ii in i_mem:
                     for jj in j_mem:
                         t_matrix[ii - 1, jj - 1] = distances[(i, j)]
+        # due = np.array([0, 0.05, 0.10, 0.05, 0.10, 0.15, 0.06, 0.12, 0.10, 0.14, 0.23, 0.24])
+        # due = np.array([0, 0.1, 0.23, 0.03, 0.8, 0.3, 0.16, 1.8, 0.7, 1.5, 1.7, 2.0, 2.2, 2.5, 2.7, 0])
         due = np.array([0, 0.3, 0.69, 0.29, 2.4, 0.9, 0.48, 5.4, 2.1, 12])
         due_date = []
         membership = []
@@ -138,7 +170,7 @@ def generate(ndrones, condition):
         max_need_charge = max([distances[j][i] for i in range(len(distances[j])) for j in range(len(distances[1]))]) * 2
 
     if condition == 'SB_RS_LA':
-        f = [[2], [4, 5], [7], [9, 10], [12, 13], [15], [17], [19], [21, 22, 23, 24],[26, 27, 28], [30, 31, 32, 33],[35, 36, 37], [39, 40, 41, 42], [44, 45, 46], [48, 49, 50], [52, 53, 54]]
+        f = [[2], [4, 5], [7], [9, 10], [12, 13], [15], [17], [19], [21, 22, 23, 24],[26,27,28], [30,31,32,33],[35,36,37], [39,40,41,42], [44,45,46], [48,49,50], [52,53,54]]
         monitoring = [1, 0.03, 0.01, 0.02, 0.05, 0.04, 0.03, 0.02, 0.02, 0.03, 0.03, 0.10, 0.05, 0.05, 0.03, 0.05, 0.06, 0]
         families = []
         for fam in f:
@@ -178,7 +210,9 @@ def generate(ndrones, condition):
                 for ii in i_mem:
                     for jj in j_mem:
                         t_matrix[ii - 1, jj - 1] = distances[(i, j)]
-        due = np.array([0, 0.3, 0.69, 0.29, 2.4, 0.9, 0.48, 5.4, 2.1, 0.3, 0.7, 0.9, 1.2, 1.9, 2.4, 2.8, 3.1, 15])
+        # due = np.array([0, 0.05, 0.10, 0.05, 0.10, 0.15, 0.06, 0.12, 0.10, 0.14, 0.23, 0.24])
+        # due = np.array([0, 0.1, 0.23, 0.03, 0.8, 0.3, 0.16, 1.8, 0.7, 1.5, 1.7, 2.0, 2.2, 2.5, 2.7, 0])
+        due = np.array([0, 0.3, 0.69, 0.29, 2.4, 0.9, 0.48, 5.4, 2.1, 0.3, 0.7, 0.9, 1.2, 1.9, 2.4, 2.8, 3.1, 12])
         due_date = []
         membership = []
         for i in range(len(families)):
@@ -202,18 +236,13 @@ def mprint(m, solution, datam):
     print(solution['Solver'].message)
     print('Current objective value is:', value(m.obj_func))
     print('\nThe visiting assignments are as follow:')
-    assign_list = np.zeros((len(datam[4]), datam[3]), dtype=int)
-    assign_families = np.zeros((len(datam[4]), datam[3]), dtype=int)
-    assign_dues = np.zeros((len(datam[4]), datam[3]), dtype=int)
+    assign_list = np.zeros((len(datam[4]), datam[3]))
+    assign_families = np.zeros((len(datam[4]), datam[3]))
     for ind in m.x.index_set():
         if value(m.x[ind]) == 1:
             assign_list[ind[2]-1, ind[1]-1] = ind[0]
-            assign_dues[ind[2]-1, ind[1]-1] = datam[1][ind[0]-1]
             assign_families[ind[2]-1, ind[1]-1] = datam[6][ind[0]-1] + 1
-    for i in range(0, assign_list.shape[0]):
-        print(*assign_list[i], sep=' --> ')
-    print("\nOr in terms of due_dates:")
-    print(assign_dues)
+    print(assign_list)
     print("\nOr in terms of families:")
     print(assign_families)
     list_c = sorted(list(m.c.index_set()), key=lambda x: x[1])
