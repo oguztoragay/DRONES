@@ -13,6 +13,23 @@ def generate(ndrones, condition):
     families = []
     f =[]
     print('-------------------------------------------------------------------------------------------------')
+    if condition == 'mini_fixed':
+        f = [[2], [4, 5]]
+        families = [[1], [2, 3], [4, 5, 6], [7]]
+        monitor_times = np.array([3, 2, 2, 1, 1, 1, 0.01])
+        t_matrix = np.array([[0, 3, 3, 4, 4, 4,  0.1],
+                             [3, 0, 0, 1, 1, 1,  0.1],
+                             [3, 0, 0, 1, 1, 1,  0.1],
+                             [4, 1, 1, 0, 0, 0,  0.1],
+                             [4, 1, 1, 0, 0, 0,  0.1],
+                             [4, 1, 1, 0, 0, 0,  0.1],
+                             [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0]])  # Sjk
+
+        due_date = np.array([0, 10, 20, 8, 16, 24, 30])  # dj
+        charges = np.ones(ndrones)*5
+        i_times = 3 #max intervisit time
+        slots = 4
+        membership = [1, 2, 2, 3, 3, 3, 4]
     if condition == 'fixed':
         f = [[2, 3], [5, 6], [8]]
         families = [[1], [2, 3, 4], [5, 6, 7], [8, 9], [10]]
@@ -185,15 +202,16 @@ def mprint(m, solution, datam):
     print(solution['Solver'].message)
     print('Current objective value is:', value(m.obj_func))
     print('\nThe visiting assignments are as follow:')
-    assign_list = np.zeros((len(datam[4]), datam[3]))
-    assign_families = np.zeros((len(datam[4]), datam[3]))
-    assign_dues = np.zeros((len(datam[4]), datam[3]))
+    assign_list = np.zeros((len(datam[4]), datam[3]), dtype=int)
+    assign_families = np.zeros((len(datam[4]), datam[3]), dtype=int)
+    assign_dues = np.zeros((len(datam[4]), datam[3]), dtype=int)
     for ind in m.x.index_set():
         if value(m.x[ind]) == 1:
             assign_list[ind[2]-1, ind[1]-1] = ind[0]
             assign_dues[ind[2]-1, ind[1]-1] = datam[1][ind[0]-1]
             assign_families[ind[2]-1, ind[1]-1] = datam[6][ind[0]-1] + 1
-    print(assign_list)
+    for i in range(0, assign_list.shape[0]):
+        print(*assign_list[i], sep=' --> ')
     print("\nOr in terms of due_dates:")
     print(assign_dues)
     print("\nOr in terms of families:")

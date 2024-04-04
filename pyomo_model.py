@@ -5,8 +5,8 @@ from itertools import combinations, product
 from random_instance import generate
 from random_instance import mprint
 
-n_drones = 2
-datam = generate(n_drones, 'SB')
+n_drones = 3
+datam = generate(n_drones, 'mini_fixed')
 t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
 
 demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
@@ -42,7 +42,7 @@ for j in demand_set-{1, idle}:
 m.cons2 = ConstraintList()
 for i in drones_set:
     for r in slot_set:
-        m.cons2.add(sum(m.x[j, r, i] for j in demand_set) <= 1)
+        m.cons2.add(sum(m.x[j, r, i] for j in demand_set) == 1)
 
 # constraint 3:-------------------------------------------------------------------------- (3) in new model
 for i in drones_set:
@@ -57,7 +57,8 @@ for i in drones_set:
 m.cons5 = ConstraintList()
 for i in drones_set:
     for r in slot_set - {1}:
-        m.cons5.add(m.c[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set) + sum(m_time[j-1] * m.x[j, r, i] for j in demand_set))
+        m.cons5.add(m.c[r, i] == m.c[r - 1, i] + sum(t_matrix[k - 1, j - 1] * m.y[j, k, r, i] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
+# m.cons5.pprint()
 
 # constraint 6:-------------------------------------------------------------------------- (6) in new model
 for i in drones_set:
@@ -178,6 +179,7 @@ for r in slot_set:
     for i in drones_set:
         m.cons31.add(m.x[len(due_dates)-1, r, i] == 1 - sum(m.x[j, r, i] for j in demand_set-{len(due_dates)-1}))
 
+m.pprint()
 msolver = SolverFactory('gurobi')
 msolver.options['Threads'] = 24
 msolver.options['FeasibilityTol'] = 1e-7
