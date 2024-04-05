@@ -12,7 +12,7 @@ import logging
 
 def func(argv):
     file_instance = argv[1]
-    mip_max_it_time = 30
+    mip_max_it_time = 16
     max_free_jobs = 106
     max_opt_execs = 1
     total_time = 100

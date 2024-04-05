@@ -5,7 +5,7 @@ from itertools import combinations, product
 from random_instance import generate
 from random_instance import mprint
 
-n_drones = 3
+n_drones = 2
 datam = generate(n_drones, 'mini_fixed')
 t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
 
@@ -21,7 +21,7 @@ B = 10000
 UB = 1000
 
 # Pyomo model for the problem-----------------------------------------------------------
-m = ConcreteModel(name="Parallel Machines")
+m = ConcreteModel(name="Parallel Machines1")
 m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
 m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)
 m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
@@ -179,7 +179,20 @@ for r in slot_set:
     for i in drones_set:
         m.cons31.add(m.x[len(due_dates)-1, r, i] == 1 - sum(m.x[j, r, i] for j in demand_set-{len(due_dates)-1}))
 
-m.pprint()
+# m.pprint()
+num_of_cons = {}
+total_cons = 0
+for c in m.component_objects(Constraint):
+    num_of_cons[c.name] = len(c)
+    total_cons += len(c)
+print(total_cons)
+num_of_var = {}
+total_var = 0
+for c in m.component_objects(Var):
+    num_of_var[c.name] = len(c)
+    total_var += len(c)
+print(total_var)
+
 msolver = SolverFactory('gurobi')
 msolver.options['Threads'] = 24
 msolver.options['FeasibilityTol'] = 1e-7
@@ -189,5 +202,5 @@ msolver.options['Heuristics'] = 0
 msolver.options['RINS'] = 10
 solution = msolver.solve(m, tee=True)
 mprint(m, solution, datam)
-
+print(num_of_var)
 
