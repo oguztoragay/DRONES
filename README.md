@@ -5,3 +5,5 @@
 (2) 12 Jan 2024: A new script has been added to generate random instances of the problem based on the number of nodes and number of drones.
 
 (3) 27 Jan 2024: The idea of having idle time for the drons have been implemented. A new branch has been created for SB small instance (capable of solving the model to optimality)
+
+(4) 09 Apr 2024: The branches have been converted to folders in the main branch of the repository
