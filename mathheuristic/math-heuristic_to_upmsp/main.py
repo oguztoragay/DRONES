@@ -1,7 +1,7 @@
 import sys
 import timeit
 import os
-
+from pathlib import Path, PurePath
 from problem import Problem
 from solution import Solution
 from heuristic import Heuristic
@@ -15,12 +15,12 @@ def func(argv):
     mip_max_it_time = 16
     max_free_jobs = 106
     max_opt_execs = 1
-    total_time = 100
+    total_time = 30
     seed = -1
     file_inst = file_instance.split('/')[-1]
-    output = "math-heuristic_to_upmsp/" + file_inst
+    output = "solutions\\Sol_" + file_inst
     i = 2
-    save_result = 'results'
+    save_result = 'solutions'
     while i < len(argv):
         if '-mip_max_it_time' == argv[i]:
             i += 1
@@ -43,7 +43,7 @@ def func(argv):
         i += 1
 
     time_start = timeit.default_timer()
-    problem = Problem(directory=file_instance)
+    problem = Problem(directory=argv[0]+'\\'+file_instance)
     solution = construtive_random(problem)
     objetive_initial = solution.makespan
     heuristic = Heuristic(problem, solution)
@@ -76,42 +76,43 @@ def func(argv):
     #Save Solution
     #Path(output).mkdir(parents=True, exist_ok=True)
     #Gets and creates the output path (if needed)
-    create_path = False
-    output_path = ""
-    for i in range(len(output) - 1, 0, -1):
-        if output[i] == '/':
-            output_path = output[0:i + 1]
-            path = True
-            break
+    create_path = True
+    output_path = output
+    # for i in range(len(output) - 1, 0, -1):
+    #     if output[i] == '/':
+    #         output_path = output[0:i + 1]
+    #         path = True
+    #         break
     if create_path:
         directory = os.path.dirname(output_path)
         if not os.path.exists(directory):
             os.makedirs(directory)
     heuristic.solution.write(output)
 
-    # Save Results
-    total_time = heuristic_time + elapsed_time
-
-    results_file_name = '%s/I_%d_%d_S_1-%d_%d.csv' % (save_result, job, machine, num, instance)
-    try:
-        file = open(results_file_name, 'a+')
-    except FileNotFoundError:
-        file = open(results_file_name, 'w+')
-    file.write(
-        '%d;%.2f;%d;%.2f;%d;%.2f\n' %
-        (
-            objective_initial,  # A
-            elapsed_time,  # B
-            objective_final,  # C
-            heuristic_time,  # D
-            heuristic.cont,  # E
-            total_time  # F
-        )
-    )
-    file.close()
+    # # Save Results
+    # total_time = heuristic_time + elapsed_time
+    #
+    # results_file_name = '%s/I_%d_%d_S_2-%d_%d.csv' % (save_result, job, machine, num, instance)
+    # try:
+    #     file = open(results_file_name, 'a+')
+    # except FileNotFoundError:
+    #     file = open(results_file_name, 'w+')
+    # file.write(
+    #     '%.2f;%d;%.2f;%d;%.2f\n' %
+    #     (
+    #         elapsed_time,  # B
+    #         objective_final,  # C
+    #         heuristic_time,  # D
+    #         heuristic.cont,  # E
+    #         total_time  # F
+    #     )
+    # )
+    # file.close()
 
 
 if __name__ == '__main__':
     logging.disable(sys.maxsize)
-    argv = ['C:/Users/oguzt/PycharmProjects/DRONES/math-heuristic_to_upmsp/main.py', 'C:/Users/oguzt/PycharmProjects/DRONES/math-heuristic_to_upmsp/I_12_5_S_1-124_10.txt']
+    dir = str(os.getcwd())
+    # dir3 = Path.cwd()
+    argv = [dir, 'I_100_10_S_1-9_1.txt']
     func(argv)

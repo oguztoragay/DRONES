@@ -53,7 +53,7 @@ class Problem:
                             '_S_1-'+num+'_'+instance+'.txt')
             else:
                 file = open(directory)
-                d = directory.split('/')[-1].split('_')
+                d = directory.split('\\')[-1].split('_')
                 job = int(d[1])
                 machine = int(d[2])
                 num = int(d[4].split('-')[-1])
