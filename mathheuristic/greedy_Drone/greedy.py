@@ -6,37 +6,41 @@ from random_instance import generate
 def greedy_drone(instance):
     print('----------------------- Greedy Drone -----------------------')
     # 0=t_matrix, 1=due_date, 2=monitor_times, 3=slots, 4=charges, 5=i_times, 6=membership, 7=families, 8=f
+    instance[1][0] = instance[1][-1]
     node_keys = list(range(1,instance[7][-1][0]+1))
     data_dic = {} #[node, due, monitor, family]
     for i in node_keys:
         data_dic[i] = [i, instance[1][i-1], instance[2][i-1], instance[6][i-1]]
-    # due_date = instance[1]
-    # monitor_times = instance[2]
-    # families = instance[7]
-    slots = instance[3]
-    # assignments = {}
-    assignments = np.zeros([len(instance[4]), instance[3]])
+    idle = instance[7][-1][0]
+    assignments = np.ones([len(instance[4]), instance[3]], dtype=int)*idle
     kk = random_drone(instance, assignments)
     up_bound = 0
     for i in data_dic.keys():
         up_bound += data_dic[i][1]
+    data_dic = dict(sorted(data_dic.items(), key=lambda item: item[1][1]))
+    to_assign = list(data_dic.keys())
+    print(to_assign)
+    for i in data_dic.keys():
+        print(data_dic[i])
+    while to_assign:
+        nn = to_assign.pop(0)
+        dr = random.randint(0,assignments.shape[0]-1)
+        slt = [i for i in range(len(assignments[dr])) if assignments[dr][i] == idle].pop(0)
+        assignments[dr][slt] = int(nn)
+        print(nn)
+    print('A', assignments)
+    evaluate_assignment(instance, assignments, data_dic)
 
-    ddd = dict(sorted(data_dic.items(), key=lambda item: item[1][1]))
-    print(ddd)
-    evaluate_assignment(instance, kk)
-
-def evaluate_assignment(instance, assignments):
+def evaluate_assignment(instance, assignments, data_dic):
     c_time = np.zeros(assignments.shape)
     tightness = np.zeros(assignments.shape)
-    due = list([instance[1][-1]])
-    due = due +[i for i in instance[1][1:]]
     for i in range(assignments.shape[0]):
         for j in range(assignments.shape[1]):
-            c_time[i,j] = instance[2][assignments[i][j]-1] + c_time[i,j-1] + instance[0][i-1][assignments[i][j]-1]
-            tightness[i,j] = due[assignments[i][j]-1] - c_time[i,j]
-    # print('A', assignments)
-    # print('C', c_time)
-    # print('L:', tightness)
+            c_time[i,j] = data_dic[assignments[i][j]][2] + c_time[i,j-1] + instance[0][i-1][assignments[i][j]-1]
+            tightness[i,j] = data_dic[assignments[i][j]][0] - c_time[i,j]
+    print('A', assignments)
+    print('C', c_time)
+    print('L:', tightness)
     l_max = -1*tightness.min()
     print('l_max', l_max)
 
