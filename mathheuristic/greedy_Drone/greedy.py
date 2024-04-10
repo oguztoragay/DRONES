@@ -6,16 +6,23 @@ from random_instance import generate
 def greedy_drone(instance):
     print('----------------------- Greedy Drone -----------------------')
     # 0=t_matrix, 1=due_date, 2=monitor_times, 3=slots, 4=charges, 5=i_times, 6=membership, 7=families, 8=f
-    due_date = instance[1]
-    monitor_times = instance[2]
-    families = instance[7]
+    node_keys = list(range(1,instance[7][-1][0]+1))
+    data_dic = {} #[node, due, monitor, family]
+    for i in node_keys:
+        data_dic[i] = [i, instance[1][i-1], instance[2][i-1], instance[6][i-1]]
+    # due_date = instance[1]
+    # monitor_times = instance[2]
+    # families = instance[7]
     slots = instance[3]
     # assignments = {}
-    assignments = []
-    for i in range(len(instance[4])):
-        assignments.append(np.zeros([slots]))
+    assignments = np.zeros([len(instance[4]), instance[3]])
     kk = random_drone(instance, assignments)
-    up_bound = sum(due_date)
+    up_bound = 0
+    for i in data_dic.keys():
+        up_bound += data_dic[i][1]
+
+    ddd = dict(sorted(data_dic.items(), key=lambda item: item[1][1]))
+    print(ddd)
     evaluate_assignment(instance, kk)
 
 def evaluate_assignment(instance, assignments):
@@ -40,13 +47,13 @@ def random_drone(instance, assignments):
     nodes = list(chain.from_iterable(instance[7]))
     nodes.extend([instance[7][-1][0]] * (total_slots-len(due_date)))
     random.shuffle(nodes)
-    assignments = np.reshape(nodes, (len(instance[4]), instance[3]))
-    return assignments
+    assigned = np.reshape(nodes, assignments.shape)
+    return assigned
 
 if __name__ == '__main__':
     np.set_printoptions(suppress=True)
-    # random.seed(1)
-    ndrones = 3
+    random.seed(1)
+    ndrones = 4
     condition = 'mini_fixed'
     inst = generate(ndrones, condition)
     greedy_drone(instance=inst)
