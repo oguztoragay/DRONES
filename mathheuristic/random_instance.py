@@ -190,7 +190,7 @@ def generate(ndrones, condition):
         i_times = 5  # max intervisit time
         slots = 20
         max_need_charge = max([distances[j][i] for i in range(len(distances[j])) for j in range(len(distances[1]))]) * 2
-
+    print('***** An instance with %d number of drones, %d number of slots has been generated.' % (ndrones, slots))
     return t_matrix, due_date, monitor_times, slots, charges, i_times, membership, families, f
 
 
@@ -224,6 +224,9 @@ def mprint(m, solution, datam):
         s_values.append(value(m.s[ind]))
     c_values = np.reshape(c_values, (len(datam[4]), datam[3]))
     s_values = np.reshape(s_values, (len(datam[4]), datam[3]))
+    m.assign_list = assign_list
+    m.c_values = c_values
+    m.s_values = s_values
     print("\nThe c values are as follow:")
     print(c_values)
     print("\nThe s values are as follow:")
@@ -231,3 +234,19 @@ def mprint(m, solution, datam):
     for ind in m.w.index_set():
         if value(m.w[ind]):
             print('w', ind, '=', value(m.w[ind]))
+    print('\nThe solution looks ----- %s -----' %check_solution(m,datam))
+
+def check_solution(m, datam):
+    a_l = m.assign_list.tolist()
+    c_l = m.c_values.tolist()
+    s_l = m.s_values.tolist()
+    condition = True
+    for i in datam[8]:
+        fam = i
+        for mem in fam:
+            # ind = [[ii,jj] for ii in range(len(a_l)) for jj in range(len(a_l[ii])) if a_l[ii][jj]==mem][0]
+            ind = [(i, sub.index(mem)) for (i, sub) in enumerate(a_l) if mem in sub][0]
+            if c_l[ind[0]][ind[1]] < s_l[ind[0]][ind[1]]:
+                condition = False
+                break
+    return condition
