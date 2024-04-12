@@ -5,15 +5,18 @@ from random_instance import generate
 
 def greedy_drone(instance):
     print('----------------------- Greedy Drone -----------------------')
-    # 0=t_matrix, 1=due_date, 2=monitor_times, 3=slots, 4=charges, 5=i_times, 6=membership, 7=families, 8=f
-    instance[1][0] = instance[1][-1]
-    node_keys = list(range(1,instance[7][-1][0]+1))
+    fam_mat = {}
+    for i in range(1,len(instance[7])-1):
+        fam_mat[i] = instance[7][i]
+    node_keys = list(range(2,instance[7][-1][0]+1))
     data_dic = {} #[node, due, monitor, family]
     for i in node_keys:
         data_dic[i] = [i, instance[1][i-1], instance[2][i-1], instance[6][i-1]]
     idle = instance[7][-1][0]
     assignments = np.ones([len(instance[4]), instance[3]], dtype=int)*idle
+    assignments2 = list(np.zeros([len(instance[4]), instance[3]], dtype=int))
     kk = random_drone(instance, assignments)
+    assignments2 = kk
     up_bound = 0
     for i in data_dic.keys():
         up_bound += data_dic[i][1]
@@ -22,10 +25,27 @@ def greedy_drone(instance):
     print(to_assign)
     while to_assign:
         nn = to_assign.pop(0)
+        possible_list = possibles(node = nn,assigned = assignments2, data_dic=data_dic)
+        print(possible_list)
         dr = random.randint(0,assignments.shape[0]-1)
         slt = [i for i in range(len(assignments[dr])) if assignments[dr][i] == idle].pop(0)
         assignments[dr][slt] = int(nn)
     evaluate_assignment(instance, assignments, data_dic)
+
+
+def possibles(node, assigned, data_dic):
+    assigned = [[3, 0, 0, 0],[5, 2, 0, 0], [0, 0, 0, 0], [2, 4, 6, 0]]
+    pos_list = list(np.zeros(np.size(assigned, 0), dtype=int))
+    for i in range(ndrones):
+        pos_list[i] = np.argmin(assigned[i])
+    for i in range(len(pos_list)):
+        if pos_list[i]:
+            if data_dic[assigned[i][int(pos_list[i])-1]][-1] == data_dic[node][-1]:
+                print('these two node from the same family')
+    return pos_list
+
+
+
 
 def evaluate_assignment(instance, assignments, data_dic):
     c_time = np.zeros(assignments.shape)

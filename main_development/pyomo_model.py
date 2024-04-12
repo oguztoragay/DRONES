@@ -7,7 +7,7 @@ from random_instance import generate
 from random_instance import mprint
 
 n_drones = 5
-datam = generate(n_drones, 'SB_RS_LA')
+datam = generate(n_drones, 'SB')
 t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
 
 demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
@@ -76,16 +76,17 @@ for i in drones_set:
 # constraint 8 & 9:-------------------------------------------------------------------- (8) & (9) in new model
 m.cons8 = ConstraintList()
 m.cons9 = ConstraintList()
-# for i in drones_set:
-#     for r in slot_set - {1}:
-for jk in demand_set_combin:
-    j = jk[0]
-    k = jk[1]
-    # m.cons8.add(m.x[j, r, i] + m.x[k, r-1, i] <= 1 + m.y[j, k, r, i])
-    # m.cons9.add(m.y[j, k, r, i] <= 0.5*(m.x[j, r, i] + m.x[k, r-1, i]))
-    m.cons8.add(m.x[j, r, i] + m.x[k, r - 1, i] <= 1 + m.yy[j, k])
-    m.cons9.add(m.yy[j, k] <= 0.5 * (m.x[j, r, i] + m.x[k, r - 1, i]))
-
+for i in drones_set:
+    for r in slot_set - {1}:
+        for jk in demand_set_combin:
+            j = jk[0]
+            k = jk[1]
+            # m.cons8.add(m.x[j, r, i] + m.x[k, r-1, i] <= 1 + m.y[j, k, r, i])
+            # m.cons9.add(m.y[j, k, r, i] <= 0.5*(m.x[j, r, i] + m.x[k, r-1, i]))
+            m.cons8.add(m.x[j, r, i] + m.x[k, r - 1, i] <= 1 + m.yy[j, k])
+            m.cons9.add(m.yy[j, k] <= 0.5 * (m.x[j, r, i] + m.x[k, r - 1, i]))
+m.cons8.pprint()
+m.cons9.pprint()
 # constraint 10:-------------------------------------------------------------------------- (10) in new model
 m.cons10 = ConstraintList()
 for r in slot_set:
