@@ -1,4 +1,5 @@
 # Cleaned on 03/25/2024 (oguz)
+# Multi-drone capable
 
 from pyomo.environ import ConcreteModel, Var, Constraint, ConstraintList, NonNegativeReals, Binary, Integers, NonNegativeIntegers, Param, Objective, minimize, SolverFactory, value, maximize
 from itertools import combinations, product

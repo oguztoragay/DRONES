@@ -6,8 +6,8 @@ from itertools import combinations, product
 from random_instance import generate
 from random_instance import mprint
 
-n_drones = 3
-datam = generate(n_drones, 'SB_RS')
+n_drones = 5
+datam = generate(n_drones, 'SB_RS_LA')
 t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
 
 demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
@@ -198,12 +198,13 @@ print('***** Total number of variables:%8d' %total_var)
 print('***** Total number of constraints:%8d' %total_cons)
 print('***** Variables =',num_of_var)
 print('***** Constraints =',num_of_cons)
+print('-------------------------------------------------------------------------------------------------\n')
 msolver = SolverFactory('gurobi')
 msolver.options['Threads'] = 24
 msolver.options['FeasibilityTol'] = 1e-7
 msolver.options['MIPFocus'] = 2
 msolver.options['Cuts'] = 3
-msolver.options['Heuristics'] = 0.5
+msolver.options['Heuristics'] = 0.9
 msolver.options['RINS'] = 5
 solution = msolver.solve(m, tee=True)
 mprint(m, solution, datam)

@@ -20,15 +20,11 @@ def greedy_drone(instance):
     data_dic = dict(sorted(data_dic.items(), key=lambda item: item[1][1]))
     to_assign = list(data_dic.keys())
     print(to_assign)
-    for i in data_dic.keys():
-        print(data_dic[i])
     while to_assign:
         nn = to_assign.pop(0)
         dr = random.randint(0,assignments.shape[0]-1)
         slt = [i for i in range(len(assignments[dr])) if assignments[dr][i] == idle].pop(0)
         assignments[dr][slt] = int(nn)
-        print(nn)
-    print('A', assignments)
     evaluate_assignment(instance, assignments, data_dic)
 
 def evaluate_assignment(instance, assignments, data_dic):
