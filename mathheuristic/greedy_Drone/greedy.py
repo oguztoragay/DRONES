@@ -20,6 +20,9 @@ def greedy_drone(instance):
     data_dic = dict(sorted(data_dic.items(), key=lambda item: item[1][1]))
     to_assign = list(data_dic.keys())
     times = {}
+    for i in range(instance[4].shape[0]):
+        for j in range(instance[3]):
+            times[(i,j)] = [0, 0]
 
     print(to_assign)
     while to_assign:
@@ -28,6 +31,11 @@ def greedy_drone(instance):
         drone = random.choice([i for i in range(len(possible_list[1])) if possible_list[1][i]])
         slot = possible_list[0][drone]
         assignments[drone][slot] = int(nn)
+        #######################################
+        if slot not in times:
+            times[(drone,slot)] = [times[(drone,slot-1)][1] + instance[0][assignments[drone][slot-1]][nn],times[(drone,slot-1)] + data_dic[nn][3]]
+        print(possible_list[0])
+        print(possible_list[1])
         # update_sc(instance=instance, assignments=assignments, data_dic=data_dic, idle=idle)
     evaluate_assignment(instance, assignments, data_dic)
 
