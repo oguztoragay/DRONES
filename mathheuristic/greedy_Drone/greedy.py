@@ -20,8 +20,8 @@ def greedy_drone(instance):
     data_dic = dict(sorted(data_dic.items(), key=lambda item: item[1][1]))
     to_assign = list(data_dic.keys())
     times = {}
-    for i in range(instance[4].shape[0]):
-        for j in range(instance[3]):
+    for i in range(instance[4].shape[0]): # (i, j) represents (drone, slot)
+        for j in range(-1, instance[3]):
             times[(i,j)] = [0, 0]
 
     print(to_assign)
@@ -31,13 +31,11 @@ def greedy_drone(instance):
         drone = random.choice([i for i in range(len(possible_list[1])) if possible_list[1][i]])
         slot = possible_list[0][drone]
         assignments[drone][slot] = int(nn)
-        #######################################
-        if slot not in times:
-            times[(drone,slot)] = [times[(drone,slot-1)][1] + instance[0][assignments[drone][slot-1]][nn],times[(drone,slot-1)] + data_dic[nn][3]]
+        times[(drone,slot)] = [times[(drone,slot-1)][1] + instance[0][assignments[drone][slot-1]][nn-1],times[(drone,slot-1)][1] + instance[0][assignments[drone][slot-1]][nn-1] + data_dic[nn][3]]
         print(possible_list[0])
-        print(possible_list[1])
+        # print(possible_list[1])
         # update_sc(instance=instance, assignments=assignments, data_dic=data_dic, idle=idle)
-    evaluate_assignment(instance, assignments, data_dic)
+    evaluate_assignment(instance, assignments, times, data_dic)
 
 # def update_sc(instance, assignments, data_dic, idle):
 #     for i in range(len(assignments)):
@@ -59,11 +57,11 @@ def possibles(node, assigned, data_dic, idle):
     return pos_list, pos_list_bin, assigned
 
 
-def evaluate_assignment(instance, assignments, data_dic):
-    c_time = np.zeros(assignments.shape)
-    tightness = np.zeros(assignments.shape)
-    for i in range(assignments.shape[0]):
-        for j in range(assignments.shape[1]):
+def evaluate_assignment(instance, assignments, times, data_dic):
+    c_time = np.zeros(np.shape(assignments))
+    tightness = np.zeros(np.shape(assignments))
+    for i in range(np.shape(assignments)[0]):
+        for j in range(np.shape(assignments)[1]):
             c_time[i,j] = data_dic[assignments[i][j]][2] + c_time[i,j-1] + instance[0][i-1][assignments[i][j]-1]
             tightness[i,j] = data_dic[assignments[i][j]][0] - c_time[i,j]
     print('A', assignments)
