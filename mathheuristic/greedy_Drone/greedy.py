@@ -53,13 +53,14 @@ def possibles(node, assigned, data_dic, idle):
         if pos_list[i]:
             if data_dic[assigned[i][int(pos_list[i])-1]][3] == data_dic[node][3]:
                 print('these two nodes are from the same family')
+                pos_list[i] = int(pos_list[i])
                 pos_list_bin[i] = 0
     return pos_list, pos_list_bin, assigned
 
 
 def evaluate_assignment(instance, assignments, times, data_dic):
-    c_time = np.zeros(np.shape(assignments))
-    tightness = np.zeros(np.shape(assignments))
+    c_time = np.zeros(len(data_dic.keys()))
+    s_time = np.zeros(len(data_dic.keys()))
     for i in range(np.shape(assignments)[0]):
         for j in range(np.shape(assignments)[1]):
             c_time[i,j] = data_dic[assignments[i][j]][2] + c_time[i,j-1] + instance[0][i-1][assignments[i][j]-1]
