@@ -48,7 +48,11 @@ def possibles(node, assigned, data_dic, idle):
     pos_list = list(np.zeros(np.size(assigned, 0), dtype=int))
     pos_list_bin = list(np.ones(np.size(assigned, 0), dtype=int))
     for i in range(ndrones):
-        pos_list[i] = np.argmin(assigned[i])
+        pos_list[i] = np.argmin(assigned[i], 0)
+        ## fix this part to look at zeros not min
+        ## over the drones in the possibilities to check the families
+        ## When is not possible put IDLE and +1 the slot.
+
     for i in range(len(pos_list)):
         if pos_list[i]:
             if data_dic[assigned[i][int(pos_list[i])-1]][3] == data_dic[node][3]:
@@ -59,17 +63,17 @@ def possibles(node, assigned, data_dic, idle):
 
 
 def evaluate_assignment(instance, assignments, times, data_dic):
-    c_time = np.zeros(len(data_dic.keys()))
-    s_time = np.zeros(len(data_dic.keys()))
-    for i in range(np.shape(assignments)[0]):
-        for j in range(np.shape(assignments)[1]):
-            c_time[i,j] = data_dic[assignments[i][j]][2] + c_time[i,j-1] + instance[0][i-1][assignments[i][j]-1]
-            tightness[i,j] = data_dic[assignments[i][j]][0] - c_time[i,j]
-    print('A', assignments)
-    print('C', c_time)
-    print('L:', tightness)
-    l_max = -1*tightness.min()
-    print('l_max', l_max)
+    # c_time = np.zeros(len(data_dic.keys()))
+    # s_time = np.zeros(len(data_dic.keys()))
+    # for i in range(np.shape(assignments)[0]):
+    #     for j in range(np.shape(assignments)[1]):
+    #         c_time[i,j] = data_dic[assignments[i][j]][2] + c_time[i,j-1] + instance[0][i-1][assignments[i][j]-1]
+    #         tightness[i,j] = data_dic[assignments[i][j]][0] - c_time[i,j]
+    # print('A', assignments)
+    # print('C', c_time)
+    # print('L:', tightness)
+    # l_max = -1*tightness.min()
+    print('l_max')#, l_max)
 
 
 def random_drone(instance, assignments):
@@ -85,7 +89,7 @@ if __name__ == '__main__':
     np.set_printoptions(suppress=True)
     random.seed(1)
     ndrones = 3
-    condition = 'mini_fixed'
+    condition = 'SB'
     inst = generate(ndrones, condition)
     greedy_drone(instance=inst)
 
