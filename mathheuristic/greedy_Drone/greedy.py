@@ -7,7 +7,7 @@ from random_instance import generate
 #### Times defined the start time and conclusion time of the visit assigned to (i,j) --> (drone, slot) position of the drone.
 def greedy_drone(instance):
     print('----------------------- Greedy Drone -----------------------')
-    fam_mat = {}
+    fam_mat = {} # families = {1: [2, 3], 2: [4, 5, 6]}
     for i in range(1,len(instance[7])-1):
         fam_mat[i] = instance[7][i]
     node_keys = list(range(2,instance[7][-1][0]+1))
@@ -25,40 +25,41 @@ def greedy_drone(instance):
     while to_assign:
         nn = to_assign.pop(0)
         possible_list = possibles(nn,assignments,data_dic,idle)
-        drone = random.choice([i for i in range(len(possible_list[1])) if possible_list[1][i]])
-        slot = possible_list[0][drone]
+        drone = random.randint(0,len(possible_list)-1)
+        slot = possible_list[drone]
         assignments[drone][slot] = int(nn)
         times[(drone,slot)] = [times[(drone,slot-1)][1] + instance[0][assignments[drone][slot-1]][nn-1],times[(drone,slot-1)][1] + instance[0][assignments[drone][slot-1]][nn-1] + data_dic[nn][2]]
-        update_sc(instance, assignments, data_dic, idle, times)
+        data_dic[nn][4:6] = times[(drone,slot)]
+        # update_sc(instance, assignments, data_dic, idle, times)
     # evaluate_assignment(instance, assignments, times, data_dic)
 
-def update_sc(instance, assignments, data_dic, idle, times):
-    for i in range(len(assignments)):
-        for j in range(len(assignments[0])):
-            data_dic[assignments[i][j]][4] = data_dic[assignments[i][j]][2] + times[i, j - 1] + instance[0][i - 1][assignments[i][j] - 1]
-            data_dic[assignments[i, j]][4] = data_dic[assignments[i][j]][2] + times[i, j - 1] + instance[0][i - 1][assignments[i][j] - 1]
+# def update_sc(instance, assignments, data_dic, idle, times):
+#     for i in range(len(assignments)):
+#         for j in range(len(assignments[0])):
+#             data_dic[assignments[i][j]][4] = data_dic[assignments[i][j]][2] + times[i, j - 1] + instance[0][i - 1][assignments[i][j] - 1]
+#             data_dic[assignments[i, j]][4] = data_dic[assignments[i][j]][2] + times[i, j - 1] + instance[0][i - 1][assignments[i][j] - 1]
 
 def possibles(node, assigned, data_dic, idle):
-    pos_list = list(np.zeros(np.size(assigned, 0), dtype=int))
-    pos_list_bin = list(np.ones(np.size(assigned, 0), dtype=int))
+    pos_slots = list(np.zeros(np.size(assigned, 0), dtype=int))
     for i in range(ndrones):
-        # pos_list[i] = np.argmin(assigned[i], 0)
         try:
-            pos_list[i] = assigned[i].index(0)
+            pos_slots[i] = assigned[i].index(0)
         except ValueError:
-            pos_list[i] = len(assigned[i])
+            pos_slots[i] = len(assigned[i])
 
-        ## fix this part to look at zeros not min
         ## over the drones in the possibles to check the families
         ## When is not possible put IDLE and +1 the slot.
-
-    for i in range(len(pos_list)):
-        if pos_list[i]:
-            if data_dic[assigned[i][int(pos_list[i])-1]][3] == data_dic[node][3]:
+    mojud = [0 for _ in range(len(assigned))]
+    for i in range(len(pos_slots)):
+        mojud[i] = assigned[i][pos_slots[i]-1]
+    for i in range(len(pos_slots)):
+        if pos_slots[i] > 0:
+            if data_dic[mojud[i]][3] == data_dic[node][3]:
                 print('these two nodes have the same family')
-                pos_list[i] = i+1
-                assigned[i][pos_list[i]] = idle
-    return pos_list, pos_list_bin, assigned
+                # assigned[i][pos_slots[i]] = idle
+                pos_slots[i] += 1
+
+    return pos_slots
 
 
 # def evaluate_assignment(instance, assignments, times, data_dic):
