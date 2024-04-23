@@ -8,6 +8,8 @@ from random_instance import generate
 def greedy_drone(instance):
     print('----------------------- Greedy Drone -----------------------')
     fam_mat = {} # families = {1: [2, 3], 2: [4, 5, 6]}
+    # SB families f = [[2], [4, 5], [7], [9, 10]]
+    families = instance[6]
     for i in range(1,len(instance[7])-1):
         fam_mat[i] = instance[7][i]
     node_keys = list(range(2,instance[7][-1][0]+1))
@@ -23,8 +25,9 @@ def greedy_drone(instance):
         for j in range(-1, instance[3]):
             times[(i,j)] = [0, 0]
     while to_assign:
+        remain = len(to_assign)
         nn = to_assign.pop(0)
-        possible_list = possibles(nn,assignments,data_dic,idle)
+        possible_list = possibles(nn, assignments, data_dic, idle, families, remain)
         drone = random.randint(0,len(possible_list)-1)
         slot = possible_list[drone]
         assignments[drone][slot] = int(nn)
@@ -39,27 +42,44 @@ def greedy_drone(instance):
 #             data_dic[assignments[i][j]][4] = data_dic[assignments[i][j]][2] + times[i, j - 1] + instance[0][i - 1][assignments[i][j] - 1]
 #             data_dic[assignments[i, j]][4] = data_dic[assignments[i][j]][2] + times[i, j - 1] + instance[0][i - 1][assignments[i][j] - 1]
 
-def possibles(node, assigned, data_dic, idle):
+def possibles(node, assigned, data_dic, idle, families, remain):
     pos_slots = list(np.zeros(np.size(assigned, 0), dtype=int))
-    for i in range(ndrones):
-        try:
-            pos_slots[i] = assigned[i].index(0)
-        except ValueError:
-            pos_slots[i] = len(assigned[i])
+    if remain == idle-1:
+        return pos_slots
+    else:
+        for i in range(ndrones):
+            try:
+                pos_slots[i] = assigned[i].index(0)
+            except ValueError:
+                pos_slots[i] = len(assigned[i])
+            ## over the drones in the possibles to check the families
+            ## When is not possible put IDLE and +1 the slot.
+        min_slot = {}
+        for i in range(len(pos_slots)):
+            in_drone_families = [families[assigned[i][nd]] for nd in range(len(assigned[i]))]
+            largest_appearance = max([index for index, value in enumerate(in_drone_families) if value == families[node - 1]], default=-1)
+            min_slot[i] =largest_appearance
+        min_slot_max = max(min_slot.values()) + 1
+        pos_slots = [max(i , min_slot_max) for i in pos_slots]
+            # if largest_appearance > -1:
+            #     pos_slots = [max(_+1,largest_appearance+1) for _ in pos_slots]
+            #     pos_slots[i] = largest_appearance + 1
+        print('wait')
+        # mojud = [0 for _ in range(len(assigned))]
+        # for i in range(len(pos_slots)):
+        #     mojud[i] = assigned[i][pos_slots[i]-1]
+        # for i in mojud:
+        #     if families[i-1] == families[node-1]:
+        #         pos_slots = [i+1 for i in pos_slots]
+        # for i in range(len(pos_slots)):
+        #     if pos_slots[i] > 1 and mojud[i] != 0:
+        #         if data_dic[mojud[i]][3] == data_dic[node][3]:
+        #             print('these two nodes have the same family')
+        #             # assigned[i][pos_slots[i]] = idle
+        #             # pos_slots[i] += 1
 
-        ## over the drones in the possibles to check the families
-        ## When is not possible put IDLE and +1 the slot.
-    mojud = [0 for _ in range(len(assigned))]
-    for i in range(len(pos_slots)):
-        mojud[i] = assigned[i][pos_slots[i]-1]
-    for i in range(len(pos_slots)):
-        if pos_slots[i] > 0:
-            if data_dic[mojud[i]][3] == data_dic[node][3]:
-                print('these two nodes have the same family')
-                # assigned[i][pos_slots[i]] = idle
-                pos_slots[i] += 1
 
-    return pos_slots
+        return pos_slots
 
 
 # def evaluate_assignment(instance, assignments, times, data_dic):
@@ -89,7 +109,7 @@ if __name__ == '__main__':
     np.set_printoptions(suppress=True)
     random.seed(1)
     ndrones = 3
-    condition = 'mini_fixed'
+    condition = 'SB'
     inst = generate(ndrones, condition)
     greedy_drone(instance=inst)
 
