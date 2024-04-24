@@ -5,11 +5,13 @@ from pyomo.environ import ConcreteModel, Var, Constraint, ConstraintList, NonNeg
 from itertools import combinations, product
 from random_instance import generate
 from random_instance import mprint
+from greedy import greedy_sol
 
 n_drones = 3
-datam = generate(n_drones, 'SB_RS')
+datam = generate(n_drones, 'SB')
 t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
-
+sol, tries = greedy_sol(n_drones, datam)
+print(sol[0])
 demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
 drones_set = set(range(1, n_drones + 1))  # use index i for M drones
 slot_set = set(range(1, n_slot + 1))  # use index r for R slots in each drone
@@ -24,8 +26,8 @@ UB = 10000
 # Pyomo model for the problem-----------------------------------------------------------
 m = ConcreteModel(name="Parallel Machines1")
 m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
-# m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)
-m.yy = Var(demand_set, demand_set, domain=Binary, initialize=0)
+m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)
+# m.yy = Var(demand_set, demand_set, domain=Binary, initialize=0)
 m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
 m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
 m.z = Var(slot_set, drones_set, domain=Binary, initialize=0)
@@ -59,8 +61,8 @@ for i in drones_set:
 m.cons5 = ConstraintList()
 for i in drones_set:
     for r in slot_set - {1}:
-        # m.cons5.add(m.c[r, i] == m.c[r - 1, i] + sum(t_matrix[k - 1, j - 1] * m.y[j, k, r, i] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
-        m.cons5.add(m.c[r, i] == m.c[r - 1, i] + sum(t_matrix[k - 1, j - 1] * m.yy[j, k] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
+        m.cons5.add(m.c[r, i] == m.c[r - 1, i] + sum(t_matrix[k - 1, j - 1] * m.y[j, k, r, i] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
+        # m.cons5.add(m.c[r, i] == m.c[r - 1, i] + sum(t_matrix[k - 1, j - 1] * m.yy[j, k] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
 # constraint 6:-------------------------------------------------------------------------- (6) in new model
 for i in drones_set:
     m.s[1, i].fix(0)
@@ -69,22 +71,21 @@ for i in drones_set:
 m.cons7 = ConstraintList()
 for i in drones_set:
     for r in slot_set - {1}:
-        # m.cons7.add(m.s[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set))
-        m.cons7.add(m.s[r, i] == m.c[r - 1, i] + sum(
-            t_matrix[k - 1, j - 1] * m.yy[j, k] for j in demand_set for k in demand_set))
+        m.cons7.add(m.s[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set))
+        # m.cons7.add(m.s[r, i] == m.c[r - 1, i] + sum(t_matrix[k - 1, j - 1] * m.yy[j, k] for j in demand_set for k in demand_set))
 
 # constraint 8 & 9:-------------------------------------------------------------------- (8) & (9) in new model
 m.cons8 = ConstraintList()
 m.cons9 = ConstraintList()
-# for i in drones_set:
-#     for r in slot_set - {1}:
-for jk in demand_set_combin:
-    j = jk[0]
-    k = jk[1]
-    # m.cons8.add(m.x[j, r, i] + m.x[k, r-1, i] <= 1 + m.y[j, k, r, i])
-    # m.cons9.add(m.y[j, k, r, i] <= 0.5*(m.x[j, r, i] + m.x[k, r-1, i]))
-    m.cons8.add(m.x[j, r, i] + m.x[k, r - 1, i] <= 1 + m.yy[j, k])
-    m.cons9.add(m.yy[j, k] <= 0.5 * (m.x[j, r, i] + m.x[k, r - 1, i]))
+for i in drones_set:
+    for r in slot_set - {1}:
+        for jk in demand_set_combin:
+            j = jk[0]
+            k = jk[1]
+            m.cons8.add(m.x[j, r, i] + m.x[k, r-1, i] <= 1 + m.y[j, k, r, i])
+            m.cons9.add(m.y[j, k, r, i] <= 0.5*(m.x[j, r, i] + m.x[k, r-1, i]))
+            # m.cons8.add(m.x[j, r, i] + m.x[k, r - 1, i] <= 1 + m.yy[j, k])
+            # m.cons9.add(m.yy[j, k] <= 0.5 * (m.x[j, r, i] + m.x[k, r - 1, i]))
 
 # constraint 10:-------------------------------------------------------------------------- (10) in new model
 m.cons10 = ConstraintList()

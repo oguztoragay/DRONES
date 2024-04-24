@@ -1,18 +1,16 @@
 import numpy as np
 import random
-from itertools import chain
 from random_instance import generate
 
 #### Start and conclusion times defined for each visit node which are saved in data_dic
 #### Times defined the start time and conclusion time of the visit assigned to (i,j) --> (drone, slot) position of the drone.
-def greedy_drone(instance):
+def greedy_drone(ndrones, instance):
     print('----------------------- Greedy Drone -----------------------')
-    fam_mat = {} # families = {1: [2, 3], 2: [4, 5, 6]}
-    # SB families f = [[2], [4, 5], [7], [9, 10]]
+    fam_mat = {}
     families = instance[6]
     for i in range(1,len(instance[7])-1):
         fam_mat[i] = instance[7][i]
-    node_keys = list(range(2,instance[7][-1][0]+1))
+    node_keys = list(range(2,instance[7][-1][0]))
     data_dic = {} #[node, due, monitor, family, start, complete]
     for i in node_keys:
         data_dic[i] = [i, instance[1][i-1], instance[2][i-1], instance[6][i-1], 1000, 1000]
@@ -27,16 +25,15 @@ def greedy_drone(instance):
     while to_assign:
         remain = len(to_assign)
         nn = to_assign.pop(0)
-        possible_list = possibles(nn, assignments, data_dic, idle, families, remain)
+        possible_list = possibles(nn, assignments, data_dic, idle, families, remain, ndrones)
         drone = random.randint(0,len(possible_list)-1)
         slot = possible_list[drone]
         assignments[drone][slot] = int(nn)
         times[(drone,slot)] = [times[(drone,slot-1)][1] + instance[0][assignments[drone][slot-1]][nn-1],times[(drone,slot-1)][1] + instance[0][assignments[drone][slot-1]][nn-1] + data_dic[nn][2]]
         data_dic[nn][4:6] = times[(drone,slot)]
-    for i in range(len(assignments)):
-        print(assignments[i])
+    return assignments, times, data_dic
 
-def possibles(node, assigned, data_dic, idle, families, remain):
+def possibles(node, assigned, data_dic, idle, families, remain, ndrones):
     pos_slots = list(np.zeros(np.size(assigned, 0), dtype=int))
     if remain == idle-1:
         return pos_slots
@@ -56,10 +53,16 @@ def possibles(node, assigned, data_dic, idle, families, remain):
         return pos_slots
 
 
-if __name__ == '__main__':
+def greedy_sol(s, ins):
     np.set_printoptions(suppress=True)
-    # random.seed(1)
-    ndrones = 3
-    condition = 'SB'
-    inst = generate(ndrones, condition)
-    greedy_drone(instance=inst)
+    ndrones = s
+    inst = ins
+    tries = 1
+    while True:
+        try:
+            generated = greedy_drone(ndrones, instance=inst)
+            break
+        except:
+            tries += 1
+            continue
+    return generated, tries

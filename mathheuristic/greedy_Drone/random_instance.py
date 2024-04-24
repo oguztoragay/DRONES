@@ -90,7 +90,7 @@ def generate(ndrones, condition):
         due_date = due
         charges = np.ones(ndrones) * 0.4
         i_times = 4  # max intervisit time
-        slots = 8
+        slots = 7
 
     if condition == 'SB_RS':
         f = [[2], [4, 5], [7], [9, 10], [12, 13], [15], [17], [19]]
