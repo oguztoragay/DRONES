@@ -4,7 +4,7 @@ from random_instance import generate
 
 #### Start and conclusion times defined for each visit node which are saved in data_dic
 #### Times defined the start time and conclusion time of the visit assigned to (i,j) --> (drone, slot) position of the drone.
-def greedy_drone(ndrones, instance):
+def greedy_drone(ndrones, instance, tries):
     print('----------------------- Greedy Drone -----------------------')
     fam_mat = {}
     families = instance[6]
@@ -18,6 +18,9 @@ def greedy_drone(ndrones, instance):
     assignments = [[0 for _ in range(instance[3])] for _ in range(len(instance[4]))]
     data_dic = dict(sorted(data_dic.items(), key=lambda item: item[1][1]))
     to_assign = list(data_dic.keys())
+    if tries > 10:
+        random.shuffle(to_assign)
+    # print(to_assign)
     times = {}
     for i in range(instance[4].shape[0]): # (i, j) represents (drone, slot)
         for j in range(-1, instance[3]):
@@ -60,9 +63,13 @@ def greedy_sol(s, ins):
     tries = 1
     while True:
         try:
-            generated = greedy_drone(ndrones, instance=inst)
+            generated = greedy_drone(ndrones, inst, tries)
             break
         except:
             tries += 1
             continue
     return generated, tries
+
+# To try this file by itself....
+# ss = greedy_sol(3, generate(3, 'SB'))
+# print(ss[0])

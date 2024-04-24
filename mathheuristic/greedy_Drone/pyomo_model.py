@@ -7,11 +7,14 @@ from random_instance import generate
 from random_instance import mprint
 from greedy import greedy_sol
 
-n_drones = 3
+n_drones = 4
 datam = generate(n_drones, 'SB')
 t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
 sol, tries = greedy_sol(n_drones, datam)
-print(sol[0])
+print('Greedy Generated Successfully!------------------------------')
+for i in range(0, len(sol[0])):
+    print(*sol[0][i], sep=' --> ')
+print('------------------------------------------------------------')
 demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
 drones_set = set(range(1, n_drones + 1))  # use index i for M drones
 slot_set = set(range(1, n_slot + 1))  # use index r for R slots in each drone
@@ -25,7 +28,7 @@ UB = 10000
 
 # Pyomo model for the problem-----------------------------------------------------------
 m = ConcreteModel(name="Parallel Machines1")
-m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
+m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=1)
 m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)
 # m.yy = Var(demand_set, demand_set, domain=Binary, initialize=0)
 m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
