@@ -1,27 +1,27 @@
-# Cleaned on 03/25/2024 (oguz)
-# Multi-drone capable
-
-from pyomo.environ import ConcreteModel, Var, Constraint, ConstraintList, NonNegativeReals, Binary, Integers, NonNegativeIntegers, Param, Objective, minimize, SolverFactory, value, maximize
-from itertools import combinations, product
+import localsolver
+from localsolver.modeler import *
 from random_instance import generate
 from random_instance import mprint
+from itertools import combinations, product
 
-n_drones = 5
-datam = generate(n_drones, 'SB_RS')
-t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
-demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
-drones_set = set(range(1, n_drones + 1))  # use index i for M drones
-slot_set = set(range(1, n_slot + 1))  # use index r for R slots in each drone
-demand_set_combin = list(combinations(demand_set, 2))
-demand_set_combin2 = [[i, j] for (i, j) in product(demand_set, demand_set) if i!=j]
-families = f
-idle = len(demand_set)
 
-B = 10000
-UB = 10000
+with localsolver.LocalSolver() as ls:
+    n_drones = 5
+    datam = generate(n_drones, 'SB_RS')
+    t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
+    demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
+    drones_set = set(range(1, n_drones + 1))  # use index i for M drones
+    slot_set = set(range(1, n_slot + 1))  # use index r for R slots in each drone
+    demand_set_combin = list(combinations(demand_set, 2))
+    demand_set_combin2 = [[i, j] for (i, j) in product(demand_set, demand_set) if i!=j]
+    families = f
+    idle = len(demand_set)
+
+    B = 10000
+    UB = 10000
 
 # Pyomo model for the problem-----------------------------------------------------------
-m = ConcreteModel(name="Parallel Machines1")
+    m = ls.model
 m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=1)
 # m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)
 # m.yy = Var(demand_set, demand_set, domain=Binary, initialize=0)
@@ -185,30 +185,3 @@ m.cons31 = ConstraintList()
 for r in slot_set:
     for i in drones_set:
         m.cons31.add(m.x[len(due_dates)-1, r, i] == 1 - sum(m.x[j, r, i] for j in demand_set-{len(due_dates)-1}))
-
-# m.pprint()
-num_of_cons = {}
-total_cons = 0
-for c in m.component_objects(Constraint):
-    num_of_cons[c.name] = len(c)
-    total_cons += len(c)
-
-num_of_var = {}
-total_var = 0
-for c in m.component_objects(Var):
-    num_of_var[c.name] = len(c)
-    total_var += len(c)
-print('***** Total number of variables:%8d' %total_var)
-print('***** Total number of constraints:%8d' %total_cons)
-print('***** Variables =',num_of_var)
-print('***** Constraints =',num_of_cons)
-msolver = SolverFactory('gurobi')
-# msolver = SolverFactory('scip', solver_io='nl', executable='C:/Users/oguzt/Desktop/solvers/scip/scip.exe', tee=True)
-msolver.options['Threads'] = 24
-msolver.options['FeasibilityTol'] = 1e-7
-msolver.options['MIPFocus'] = 2
-msolver.options['Cuts'] = 3
-msolver.options['Heuristics'] = 0.5
-msolver.options['RINS'] = 5
-solution = msolver.solve(m, tee=True)
-mprint(m, solution, datam)

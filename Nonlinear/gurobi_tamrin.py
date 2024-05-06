@@ -6,6 +6,7 @@ from gurobipy import GRB
 from shapely.geometry import LineString
 import pandas as pd
 import time
+from pyomo.opt import ProblemFormat
 
 def GBNLPpyo():
     # --------------------------------------------------------------------------------------------------------------------------------------------------
@@ -44,9 +45,10 @@ def GBNLPpyo():
     #     m.addQConstr(x[i] >= s[i] * y[i])
     # -----------------------------------------------------------------------------------------
     for i in LN:
-        m.addQConstr(sum(x[i] for i in [2, 3]) >= x[i] * y[i]**2, "FuncPieces=1000")
+        m.addQConstr(sum(x[i] for i in [2, 3]) >= x[i] * y[i], "FuncPieces=1000")
     # ----------------------------------------------------------
     m.update()
+    m.write('NewModel.lp')
     QPstart = time.time()
     m.optimize()
     Obj1 = m.objVal
