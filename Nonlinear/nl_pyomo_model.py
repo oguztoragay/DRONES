@@ -6,7 +6,7 @@ from itertools import combinations, product
 from random_instance import generate
 from random_instance import mprint
 
-n_drones = 5
+n_drones = 3
 datam = generate(n_drones, 'SB_RS')
 t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
 demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
@@ -52,14 +52,14 @@ for i in drones_set:
 # constraint 4:-------------------------------------------------------------------------- (4) in new model
 m.cons4 = ConstraintList()
 for i in drones_set:
-    m.cons4.add(m.c[1, i] == sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set - {1, idle}))
+    m.cons4.add(m.c[1, i] == sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set - {1})) # , idle
 
 # constraint 5:-------------------------------------------------------------------------- (5) in new model
 m.cons5 = ConstraintList()
 for i in drones_set:
     for r in slot_set - {1}:
-        m.cons5.add(m.c[r, i] == m.c[r - 1, i] + sum(t_matrix[k - 1, j - 1] * m.x[j, r, i] * m.x[k, r-1, i] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
-        # m.cons5.add(m.c[r, i] == m.c[r - 1, i] + sum(t_matrix[k - 1, j - 1] * m.yy[j, k] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
+        m.cons5.add(m.c[r, i] == m.s[r, i] + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
+
 # constraint 6:-------------------------------------------------------------------------- (6) in new model
 for i in drones_set:
     m.s[1, i].fix(0)
@@ -69,7 +69,6 @@ m.cons7 = ConstraintList()
 for i in drones_set:
     for r in slot_set - {1}:
         m.cons7.add(m.s[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.x[j, r, i]*m.x[k, r-1, i] for j in demand_set for k in demand_set))
-        # m.cons7.add(m.s[r, i] == m.c[r - 1, i] + sum(t_matrix[k - 1, j - 1] * m.yy[j, k] for j in demand_set for k in demand_set))
 
 # constraint 8 & 9:-------------------------------------------------------------------- (8) & (9) in new model
 # m.cons8 = ConstraintList()
@@ -88,7 +87,7 @@ for i in drones_set:
 m.cons10 = ConstraintList()
 for r in slot_set:
     for i in drones_set:
-        m.cons10.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set) - B * (1 - sum(m.x[j, r, i] for j in demand_set)))
+        m.cons10.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set)) # - B * (1 - sum(m.x[j, r, i] for j in demand_set))
 
 # constraint 11 and 12:-------------------------------------------------------------------------- (11) & (12) in new model
 m.cons11 = ConstraintList()
@@ -208,7 +207,7 @@ msolver.options['Threads'] = 24
 msolver.options['FeasibilityTol'] = 1e-7
 msolver.options['MIPFocus'] = 2
 msolver.options['Cuts'] = 3
-msolver.options['Heuristics'] = 0.5
+msolver.options['Heuristics'] = 1
 msolver.options['RINS'] = 5
 solution = msolver.solve(m, tee=True)
 mprint(m, solution, datam)

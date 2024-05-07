@@ -90,7 +90,7 @@ def generate(ndrones, condition):
         due_date = due
         charges = np.ones(ndrones) * 0.4
         i_times = 4  # max intervisit time
-        slots = 7
+        slots = 6
 
     if condition == 'SB_RS':
         f = [[2], [4, 5], [7], [9, 10], [12, 13], [15], [17], [19]]
@@ -219,15 +219,18 @@ def mprint(m, solution, datam):
     list_c = sorted(list(m.c.index_set()), key=lambda x: x[1])
     c_values = []
     s_values = []
+    cs_values = []
     for ind in list_c:
         c_values.append(value(m.c[ind]))
         s_values.append(value(m.s[ind]))
+        cs_values.append(value(m.c[ind])-datam[1][assign_list[ind[1]-1, ind[0]-1]-1])
     c_values = np.reshape(c_values, (len(datam[4]), datam[3]))
     s_values = np.reshape(s_values, (len(datam[4]), datam[3]))
+    cs_values = np.reshape(cs_values, (len(datam[4]), datam[3]))
     print("\nThe c values are as follow:")
     print(c_values)
     print("\nThe s values are as follow:")
     print(s_values)
-    for ind in m.w.index_set():
-        if value(m.w[ind]):
-            print('w', ind, '=', value(m.w[ind]))
+    print("\nThe c-due values are as follow:")
+    print(cs_values)
+
