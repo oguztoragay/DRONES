@@ -3,6 +3,7 @@ from localsolver.modeler import *
 from random_instance import generate
 from random_instance import mprint
 from itertools import combinations, product
+import math
 
 
 with localsolver.LocalSolver() as ls:
@@ -22,7 +23,7 @@ with localsolver.LocalSolver() as ls:
 
 # Pyomo model for the problem-----------------------------------------------------------
     m = ls.model
-m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=1)
+    m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=1)
 # m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)
 # m.yy = Var(demand_set, demand_set, domain=Binary, initialize=0)
 m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)

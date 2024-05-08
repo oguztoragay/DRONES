@@ -6,7 +6,7 @@ from itertools import combinations, product
 from random_instance import generate
 from random_instance import mprint
 
-n_drones = 3
+n_drones = 4
 datam = generate(n_drones, 'SB_RS')
 t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
 demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
