@@ -53,13 +53,10 @@ def main(instance_file, str_time_limit, output_file):
             # Distance traveled by each truck
             dist_lambda = model.lambda_function(
                 lambda i: model.at(dist_matrix, sequence[i - 1], sequence[i]))
-            dist_routes[k] = model.sum(model.range(1, c), dist_lambda) \
-                + model.iif(c > 0, dist_depot[sequence[0]] + dist_depot[sequence[c - 1]], 0)
+            dist_routes[k] = model.sum(model.range(1, c), dist_lambda) + model.iif(c > 0, dist_depot[sequence[0]] + dist_depot[sequence[c - 1]], 0)
 
             # End of each visit
-            end_time_lambda = model.lambda_function(
-                lambda i, prev:
-                    model.max(
+            end_time_lambda = model.lambda_function(lambda i, prev:model.max(
                         earliest[sequence[i]],
                         model.iif(
                             i == 0, dist_depot[sequence[0]],
@@ -96,8 +93,8 @@ def main(instance_file, str_time_limit, output_file):
 
         # Parameterize the solver
         ls.param.time_limit = int(str_time_limit)
-        ls.param.time_between_displays = 10
-        ls.param.time_between_ticks = 10
+        ls.param.time_between_displays = 1
+        ls.param.time_between_ticks = 1
 
         ls.solve()
 
