@@ -7,8 +7,8 @@ import math
 
 
 with localsolver.LocalSolver() as ls:
-    n_drones = 5
-    datam = generate(n_drones, 'SB_RS')
+    n_drones = 3
+    datam = generate(n_drones, 'fixed')
     t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
     demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
     drones_set = set(range(1, n_drones + 1))  # use index i for M drones
@@ -17,15 +17,13 @@ with localsolver.LocalSolver() as ls:
     demand_set_combin2 = [[i, j] for (i, j) in product(demand_set, demand_set) if i!=j]
     families = f
     idle = len(demand_set)
-
     B = 10000
     UB = 10000
 
 # Pyomo model for the problem-----------------------------------------------------------
     m = ls.model
     m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=1)
-# m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)
-# m.yy = Var(demand_set, demand_set, domain=Binary, initialize=0)
+    vis_sequence = [m.list(1, len(due_dates) + 1) for k in range(1, n_drones + 1)]
 m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
 m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
 m.z = Var(slot_set, drones_set, domain=Binary, initialize=0)

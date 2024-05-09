@@ -9,17 +9,11 @@ def read_elem(filename):
 
 
 def main(instance_file, str_time_limit, output_file):
-    #
-    # Read instance data
-    #
     nb_customers, nb_trucks, truck_capacity, dist_matrix_data, dist_depot_data, \
         demands_data, service_time_data, earliest_start_data, latest_end_data, \
         max_horizon = read_input_cvrptw(instance_file)
 
     with localsolver.LocalSolver() as ls:
-        #
-        # Declare the optimization model
-        #
         model = ls.model
 
         # Sequence of customers visited by each truck
@@ -102,22 +96,17 @@ def main(instance_file, str_time_limit, output_file):
 
         # Parameterize the solver
         ls.param.time_limit = int(str_time_limit)
+        ls.param.time_between_displays = 10
+        ls.param.time_between_ticks = 10
 
         ls.solve()
 
-        #
-        # Write the solution in a file with the following format:
-        #  - number of trucks used and total distance
-        #  - for each truck the customers visited (omitting the start/end at the depot)
-        #
         if output_file is not None:
             with open(output_file, 'w') as f:
                 f.write("%d %d\n" % (nb_trucks_used.value, total_distance.value))
                 for k in range(nb_trucks):
                     if trucks_used[k].value != 1:
                         continue
-                    # Values in sequence are in 0...nbCustomers. +1 is to put it back in
-                    # 1...nbCustomers+1 as in the data files (0 being the depot)
                     for customer in customers_sequences[k].value:
                         f.write("%d " % (customer + 1))
                     f.write("\n")
