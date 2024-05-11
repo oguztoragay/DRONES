@@ -6,8 +6,8 @@ from itertools import combinations, product
 from random_instance import generate
 from random_instance import mprint
 
-n_drones = 4
-datam = generate(n_drones, 'SB_RS')
+n_drones = 2
+datam = generate(n_drones, 'SB')
 t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
 demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
 drones_set = set(range(1, n_drones + 1))  # use index i for M drones
@@ -17,8 +17,8 @@ demand_set_combin2 = [[i, j] for (i, j) in product(demand_set, demand_set) if i!
 families = f
 idle = len(demand_set)
 
-B = 10000
-UB = 10000
+B = 100
+UB = 100
 
 # Pyomo model for the problem-----------------------------------------------------------
 m = ConcreteModel(name="Parallel Machines1")
@@ -31,7 +31,7 @@ m.z = Var(slot_set, drones_set, domain=Binary, initialize=0)
 # m.w = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
 m.v = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
 m.e = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-m.lmax = Var(initialize=0, domain=NonNegativeReals, bounds=(0, 5))
+m.lmax = Var(initialize=0, domain=NonNegativeReals, bounds=(0, 3))
 m.obj_func = Objective(expr=m.lmax, sense=minimize)
 
 # Constraint 1:-------------------------------------------------------------------------- (1) in new model
@@ -87,7 +87,7 @@ for i in drones_set:
 m.cons10 = ConstraintList()
 for r in slot_set:
     for i in drones_set:
-        m.cons10.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set)) # - B * (1 - sum(m.x[j, r, i] for j in demand_set))
+        m.cons10.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set) - B * (1 - sum(m.x[j, r, i] for j in demand_set)))
 
 # constraint 11 and 12:-------------------------------------------------------------------------- (11) & (12) in new model
 m.cons11 = ConstraintList()
