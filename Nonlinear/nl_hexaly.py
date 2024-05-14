@@ -62,36 +62,32 @@ with localsolver.LocalSolver() as ls:
         c = m.count(sequence)
 
         # Distance traveled by each drone
-        dist_lambda = m.lambda_function(
-            lambda i: m.at(t_matrix, sequence[i - 1], sequence[i]))
+        dist_lambda = m.lambda_function(lambda i: m.at(t_matrix, sequence[i - 1], sequence[i]))
         dist_routes[k] = m.sum(m.range(1, c), dist_lambda) + m.iif(c > 0, td_matrix[sequence[0]] + t_matrix[sequence[c - 1]], 0)
 
         # The battery needed in each route must not exceed the drone's battery charge
-        battery_lambda = m.lambda_function(lambda j: dist_routes[j])
+        battery_lambda = m.lambda_function(lambda j: m.at(t_matrix, sequence[j - 1], sequence[j]))
         route_battery = m.sum(sequence, battery_lambda)
         m.constraint(route_battery <= drone_Charge[k])
-
-
 
         # End of each visit
         end_time_lambda = m.lambda_function(lambda i, prev:m.max( earliest[sequence[i]],
                                                                   m.iif( i == 0, td_matrix[sequence[0]], prev + m.at(t_matrix, sequence[i - 1], sequence[i])))
                                                            + m_time[sequence[i]])
-
         end_time[k] = m.array(m.range(0, c), end_time_lambda, 0)
-
-        # Arriving home after max horizon
-        home_lateness[k] = m.iif(drone_used[k], m.max(0, end_time[k][c - 1] + td_matrix[sequence[c - 1]] - 10000), 0)
-
-        # Completing visit after latest end
-        late_lambda = m.lambda_function(lambda i: m.max(0, end_time[k][i] - due_dates[sequence[i]]))
-        lateness[k] = home_lateness[k] + m.sum(m.range(0, c), late_lambda)
-
-    # Total lateness
-    total_lateness = m.sum(lateness)
-
-    # Total distance traveled
-    total_distance = m.div(m.round(100 * m.sum(dist_routes)), 100)
+    print('wait here')
+    #     # Arriving home after max horizon
+    #     home_lateness[k] = m.iif(drone_used[k], m.max(0, end_time[k][c - 1] + td_matrix[sequence[c - 1]] - 10000), 0)
+    #
+    #     # Completing visit after latest end
+    #     late_lambda = m.lambda_function(lambda i: m.max(0, end_time[k][i] - due_dates[sequence[i]]))
+    #     lateness[k] = home_lateness[k] + m.sum(m.range(0, c), late_lambda)
+    #
+    # # Total lateness
+    # total_lateness = m.sum(lateness)
+    #
+    # # Total distance traveled
+    # total_distance = m.div(m.round(100 * m.sum(dist_routes)), 100)
 
 
 # m.cons1 = ConstraintList()
