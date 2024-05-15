@@ -4,7 +4,7 @@ import math
 
 
 def read_elem(filename):
-    with open(filename) as f:
+    with open('C:\\Users\\otoragay\\PycharmProjects\\DRONES\\Nonlinear\\coordChrist100.dat') as f:
         return [str(elem) for elem in f.read().split()]
 
 
@@ -176,4 +176,4 @@ def compute_dist(xi, xj, yi, yj):
     return int(math.floor(exact_dist + 0.5))
 
 
-main('coordChrist100.dat', '200', None)
+main('coordChrist100.dat', '3600', None)
