@@ -75,7 +75,7 @@ with localsolver.LocalSolver() as ls:
                                                                   m.iif( i == 0, td_matrix[sequence[0]], prev + m.at(t_matrix, sequence[i - 1], sequence[i])))
                                                            + m_time[sequence[i]])
         end_time[k] = m.array(m.range(0, c), end_time_lambda, 0)
-    print('wait here')
+    print(m.__str__())
     #     # Arriving home after max horizon
     #     home_lateness[k] = m.iif(drone_used[k], m.max(0, end_time[k][c - 1] + td_matrix[sequence[c - 1]] - 10000), 0)
     #

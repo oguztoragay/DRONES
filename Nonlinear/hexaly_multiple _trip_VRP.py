@@ -103,7 +103,7 @@ def read_input_multi_trip_vrp(filename):
 
 
 def read_input_multi_trip_vrp_dat(filename):
-    file_it = iter(read_elem(filename))
+    file_it = iter(read_elem('coordChrist100.dat'))
 
     nb_customers = int(next(file_it))
     nb_depots = int(next(file_it))
