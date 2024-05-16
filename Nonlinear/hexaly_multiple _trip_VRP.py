@@ -72,27 +72,24 @@ def main(instance_file, str_time_limit, output_file):
         total_distance = model.sum(dist_routes)
 
         # Objective: minimize the distance traveled
-        model.minimize(total_distance)
+        # model.minimize(total_distance)
+        for i in range(nb_trucks):
+            model.minimize(route_quantity[i])
+            model.minimize(dist_routes[i])
 
         model.close()
-
+        print(model.__str__())
         # Parameterize the solver
         ls.param.time_limit = int(str_time_limit)
-
         ls.solve()
-
-        # Write solution output
-        if output_file != None:
-            with open(output_file, 'w') as file:
-                file.write("File name: %s; totalDistance = %d \n" % (instance_file, total_distance.value))
-                for k in range(nb_trucks):
-                    if trucks_used[k].value:
-                        file.write("Truck %d : " % (k))
-                        for customer in visit_orders[k].value:
-                            file.write("%d" % (customer) if customer < nb_customers else "%d" % (
-                                -(math.floor((customer - nb_customers) / nb_depot_copies) + 1)))
-                            file.write(" ")
-                        file.write("\n")
+        for k in range(nb_trucks):
+            if trucks_used[k].value:
+                print("Truck %d : " % (k+1))
+                # print(visit_orders[k].value)
+                bu = []
+                for customer in visit_orders[k].value:
+                    bu.append(customer+1 if customer < nb_customers else 111)
+                print(bu)
 
 
 def read_input_multi_trip_vrp(filename):
@@ -130,13 +127,13 @@ def read_input_multi_trip_vrp_dat(filename):
     for i in range(nb_customers):
         demands_data[i] = int(next(file_it))
 
-    nb_depot_copies = 20
+    nb_depot_copies = 5
 
     nb_total_locations = nb_customers + nb_depots * nb_depot_copies
 
-    max_dist = 400
+    max_dist = 150
 
-    nb_trucks = 3
+    nb_trucks = 2
 
     dist_matrix_data = compute_distance_matrix(depots_x, depots_y, customers_x, customers_y, nb_depot_copies)
 
@@ -176,4 +173,4 @@ def compute_dist(xi, xj, yi, yj):
     return int(math.floor(exact_dist + 0.5))
 
 
-main('coordChrist100.dat', '3600', None)
+main('coordChrist100.dat', '50', None)

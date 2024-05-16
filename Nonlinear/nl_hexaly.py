@@ -1,46 +1,42 @@
 import localsolver
 from localsolver.modeler import *
+from localsolver import LSInterval
+from localsolver import LSError
 from random_instance import generate
 from random_instance import mprint
 from itertools import combinations, product
 import math
+from operator import itemgetter, indexOf
+
 
 # Hexaly model for the problem-----------------------------------------------------------
 with localsolver.LocalSolver() as ls:
     m = ls.model
-    n_drones = 3
-    datam = generate(n_drones, 'mini_fixed')
+    n_drones = 2
+    datam = generate(n_drones, 'mini_fixed_modi')
     t_matrix_data, due_dates_data, m_time_data, n_slot_data, drone_Charge_data, \
-        i_times, membership, families, f = datam
+        i_times, membership, families_data, f = datam
     t_matrix_data = list(t_matrix_data)
     n_slot = datam[3]
     n_node = len(m_time_data)
+    n_drones = len(drone_Charge_data)
     drone_Charge = m.array(drone_Charge_data)
     t_matrix = m.array()
     td_matrix = m.array(t_matrix_data[0])
     due_dates = m.array(due_dates_data)
     m_time = m.array(m_time_data)
     earliest = m.array()
+    successors = [[] for i in range(n_node)]
     for n in range(n_node):
         t_matrix.add_operand(m.array(t_matrix_data[n]))
     for n in range(n_node):
         earliest.add_operand(1)
+    for fam in families_data:
+        for i in fam:
+            successors[i-1] = fam[indexOf(fam, i)+1::]
 
-    # demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
-    # drones_set = set(range(1, n_drones + 1))  # use index i for M drones
-    # slot_set = set(range(1, n_slot + 1))  # use index r for R slots in each drone
-    # demand_set_combin = list(combinations(demand_set, 2))
-    # demand_set_combin2 = [[i, j] for (i, j) in product(demand_set, demand_set) if i!=j]
-    # families = f
-    # idle = len(demand_set)
-    # B = 10000
-    # UB = 10000
-
-
-
-    # m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=1)
     vis_sequences = [m.list(n_slot) for k in range(n_drones)]
-    m.constraint(m.cover(vis_sequences))
+    m.constraint(m.partition(vis_sequences))
     dist_routes = [None] * n_drones
     end_time = [None] * n_drones
     home_lateness = [None] * n_drones
@@ -48,40 +44,41 @@ with localsolver.LocalSolver() as ls:
 
     drone_used = [(m.count(vis_sequences[k]) > 0) for k in range(n_drones)]
     nb_drones_used = m.sum(drone_used)
-# m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-# m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-# m.z = Var(slot_set, drones_set, domain=Binary, initialize=0)
-# # m.w = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-# m.v = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-# m.e = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-# m.lmax = Var(initialize=0, domain=NonNegativeReals, bounds=(0, 5))
-# m.obj_func = Objective(expr=m.lmax, sense=minimize)
 
     for k in range(n_drones):
         sequence = vis_sequences[k]
         c = m.count(sequence)
-
-        # Distance traveled by each drone
-        dist_lambda = m.lambda_function(lambda i: m.at(t_matrix, sequence[i - 1], sequence[i]))
-        dist_routes[k] = m.sum(m.range(1, c), dist_lambda) + m.iif(c > 0, td_matrix[sequence[0]] + t_matrix[sequence[c - 1]], 0)
+        m.constraint(c <= n_slot)
+        if k == n_drones:
+            for i in range(6, n_node):
+                m.constraint((m.contains(vis_sequences[n_drones], i)) == False)
 
         # The battery needed in each route must not exceed the drone's battery charge
         battery_lambda = m.lambda_function(lambda j: m.at(t_matrix, sequence[j - 1], sequence[j]))
         route_battery = m.sum(sequence, battery_lambda)
+        # m.constraint(m.or_(route_battery <= drone_Charge[k], 0))
         m.constraint(route_battery <= drone_Charge[k])
-
-        # End of each visit
-        end_time_lambda = m.lambda_function(lambda i, prev:m.max( earliest[sequence[i]],
+        end_time_lambda = m.lambda_function(lambda i, prev:m.max(earliest[sequence[i]],
                                                                   m.iif( i == 0, td_matrix[sequence[0]], prev + m.at(t_matrix, sequence[i - 1], sequence[i])))
                                                            + m_time[sequence[i]])
         end_time[k] = m.array(m.range(0, c), end_time_lambda, 0)
+
+        late_lambda = m.lambda_function(lambda i: m.max(0, end_time[k][i] - due_dates[sequence[i]]))
+        lateness[k] = m.max(m.range(0, c), late_lambda)
+    total_lateness = m.max(lateness)
+    m.minimize(total_lateness)
     print(m.__str__())
+    print(LSError.function_name)
+    m.close()
+
+    ls.param.time_limit = int(20)
+    ls.solve()
+
     #     # Arriving home after max horizon
     #     home_lateness[k] = m.iif(drone_used[k], m.max(0, end_time[k][c - 1] + td_matrix[sequence[c - 1]] - 10000), 0)
     #
     #     # Completing visit after latest end
-    #     late_lambda = m.lambda_function(lambda i: m.max(0, end_time[k][i] - due_dates[sequence[i]]))
-    #     lateness[k] = home_lateness[k] + m.sum(m.range(0, c), late_lambda)
+    #
     #
     # # Total lateness
     # total_lateness = m.sum(lateness)
