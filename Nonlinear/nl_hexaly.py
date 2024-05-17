@@ -21,58 +21,45 @@ with localsolver.LocalSolver() as ls:
     n_node = len(m_time_data)
     n_drones = len(drone_Charge_data)
     drone_Charge = m.array(drone_Charge_data)
-    t_matrix = m.array()
+    t_matrix = m.array(t_matrix_data)
     td_matrix = m.array(t_matrix_data[0])
     due_dates = m.array(due_dates_data)
     m_time = m.array(m_time_data)
     earliest = m.array()
     successors = [[] for i in range(n_node)]
-    for n in range(n_node):
-        t_matrix.add_operand(m.array(t_matrix_data[n]))
-    for n in range(n_node):
-        earliest.add_operand(1)
     for fam in families_data:
         for i in fam:
             successors[i-1] = fam[indexOf(fam, i)+1::]
 
-    vis_sequences = [m.list(n_slot) for k in range(n_drones)]
+    vis_sequences = [m.list(n_node) for k in range(n_drones)]
     m.constraint(m.partition(vis_sequences))
     dist_routes = [None] * n_drones
     end_time = [None] * n_drones
     home_lateness = [None] * n_drones
     lateness = [None] * n_drones
-
-    drone_used = [(m.count(vis_sequences[k]) > 0) for k in range(n_drones)]
-    nb_drones_used = m.sum(drone_used)
+    for i in range(0, 6):
+        m.constraint((m.contains(vis_sequences[n_drones-1], i)) == False)
 
     for k in range(n_drones):
         sequence = vis_sequences[k]
         c = m.count(sequence)
         m.constraint(c <= n_slot)
-        if k == n_drones:
-            for i in range(6, n_node):
-                m.constraint((m.contains(vis_sequences[n_drones], i)) == False)
-
-        # The battery needed in each route must not exceed the drone's battery charge
-        battery_lambda = m.lambda_function(lambda j: m.at(t_matrix, sequence[j - 1], sequence[j]))
-        route_battery = m.sum(sequence, battery_lambda)
+        # battery_lambda = m.lambda_function(lambda j: m.at(t_matrix, sequence[j - 1], sequence[j]))
+        # route_battery = m.sum(sequence, battery_lambda)
         # m.constraint(m.or_(route_battery <= drone_Charge[k], 0))
-        m.constraint(route_battery <= drone_Charge[k])
-        end_time_lambda = m.lambda_function(lambda i, prev:m.max(earliest[sequence[i]],
-                                                                  m.iif( i == 0, td_matrix[sequence[0]], prev + m.at(t_matrix, sequence[i - 1], sequence[i])))
-                                                           + m_time[sequence[i]])
-        end_time[k] = m.array(m.range(0, c), end_time_lambda, 0)
-
-        late_lambda = m.lambda_function(lambda i: m.max(0, end_time[k][i] - due_dates[sequence[i]]))
-        lateness[k] = m.max(m.range(0, c), late_lambda)
-    total_lateness = m.max(lateness)
-    m.minimize(total_lateness)
+        # m.constraint(route_battery <= drone_Charge[k]+100)
+        end_time_lambda = m.lambda_function(lambda i, prev: prev + m.at(t_matrix, i-1, i) + m_time[i])
+        end_time = m.array(sequence, end_time_lambda)
+        late_lambda = m.lambda_function(lambda i: end_time[i] - due_dates[i])
+        lateness[k] = m.max(sequence, late_lambda)
+    max_lateness = m.max(lateness)
+    m.minimize(max_lateness)
     print(m.__str__())
-    print(LSError.function_name)
     m.close()
 
     ls.param.time_limit = int(20)
     ls.solve()
+    print('burda dur')
 
     #     # Arriving home after max horizon
     #     home_lateness[k] = m.iif(drone_used[k], m.max(0, end_time[k][c - 1] + td_matrix[sequence[c - 1]] - 10000), 0)

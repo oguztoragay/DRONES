@@ -36,7 +36,7 @@ def generate(ndrones, condition):
         nb_all_nodes = slots * ndrones
         idles = []
         for i in range(8,nb_all_nodes+1):
-            idles.append([7])
+            idles.append([i])
         f = [[2], [4, 5]]
         families = [[1], [2, 3], [4, 5, 6], [7]]
         families += idles
@@ -65,6 +65,7 @@ def generate(ndrones, condition):
         charges = np.ones(ndrones)*5
         i_times = 3
         membership = [1, 2, 2, 3, 3, 3, 4]
+
     if condition == 'fixed':
         f = [[2, 3], [5, 6], [8]]
         families = [[1], [2, 3, 4], [5, 6, 7], [8, 9], [10]]

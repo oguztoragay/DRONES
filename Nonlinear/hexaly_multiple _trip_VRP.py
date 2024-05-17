@@ -2,26 +2,16 @@ import localsolver
 import sys
 import math
 
-
 def read_elem(filename):
     with open('C:\\Users\\otoragay\\PycharmProjects\\DRONES\\Nonlinear\\coordChrist100.dat') as f:
         return [str(elem) for elem in f.read().split()]
-
 
 def main(instance_file, str_time_limit, output_file):
     nb_customers, nb_trucks, truck_capacity, dist_matrix_data, nb_depots, \
         nb_depot_copies, nb_total_locations, demands_data, max_dist = read_input_multi_trip_vrp(instance_file)
 
     with localsolver.LocalSolver() as ls:
-
-        #
-        # Declare the optimization model
-        #
         model = ls.model
-
-        # Locations visited by each truck (customer or depot)
-        # Add copies of the depots (so that they can be visited multiple times)
-        # Add an extra fictive truck (who will visit every depot that will not be visited by real trucks)
         visit_orders = [model.list(nb_total_locations) for k in range(nb_trucks + 1)]
 
         # The fictive truck cannot visit customers
