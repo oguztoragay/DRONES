@@ -3,11 +3,7 @@ from localsolver.modeler import *
 from localsolver import LSInterval
 from localsolver import LSError
 from random_instance import generate
-from random_instance import mprint
-from itertools import combinations, product
-import math
 from operator import itemgetter, indexOf
-
 
 # Hexaly model for the problem-----------------------------------------------------------
 with localsolver.LocalSolver() as ls:
@@ -25,150 +21,37 @@ with localsolver.LocalSolver() as ls:
     td_matrix = m.array(t_matrix_data[0])
     due_dates = m.array(due_dates_data)
     m_time = m.array(m_time_data)
-    earliest = m.array()
     successors = [[] for i in range(n_node)]
     for fam in families_data:
         for i in fam:
             successors[i-1] = fam[indexOf(fam, i)+1::]
-
     vis_sequences = [m.list(n_node) for k in range(n_drones)]
     m.constraint(m.partition(vis_sequences))
-    dist_routes = [None] * n_drones
     end_time = [None] * n_drones
-    home_lateness = [None] * n_drones
     lateness = [None] * n_drones
-    for i in range(0, 6):
+    for i in range(1, 7):
         m.constraint((m.contains(vis_sequences[n_drones-1], i)) == False)
 
     for k in range(n_drones):
         sequence = vis_sequences[k]
         c = m.count(sequence)
         m.constraint(c <= n_slot)
-        # battery_lambda = m.lambda_function(lambda j: m.at(t_matrix, sequence[j - 1], sequence[j]))
-        # route_battery = m.sum(sequence, battery_lambda)
+        # battery_lambda = m.lambda_function(lambda j, prev: m.at(t_matrix, sequence[j - 1], sequence[j]))
+        # route_battery = m.sum(m.range(0, c), battery_lambda)
         # m.constraint(m.or_(route_battery <= drone_Charge[k], 0))
         # m.constraint(route_battery <= drone_Charge[k]+100)
-        end_time_lambda = m.lambda_function(lambda i, prev: prev + m.at(t_matrix, i-1, i) + m_time[i])
-        end_time = m.array(sequence, end_time_lambda)
-        late_lambda = m.lambda_function(lambda i: end_time[i] - due_dates[i])
-        lateness[k] = m.max(sequence, late_lambda)
-    max_lateness = m.max(lateness)
+        end_time_lambda = m.lambda_function(lambda i, prev: m.iif(i != 0, prev + m.at(t_matrix, sequence[i-1], sequence[i]) + m_time[sequence[i]], m_time[sequence[i]]))
+        end_time[k] = m.array(m.range(0, c), end_time_lambda)
+        late_lambda = m.lambda_function(lambda i: end_time[k][i] - due_dates[sequence[i]])
+        lateness[k] = m.max(m.range(0, c), late_lambda)
+    max_lateness = m.max(lateness[0:n_drones-1])
     m.minimize(max_lateness)
     print(m.__str__())
     m.close()
-
-    ls.param.time_limit = int(20)
+    ls.param.time_limit = int(30)
+    # ls.param.seed = 1
     ls.solve()
-    print('burda dur')
-
-    #     # Arriving home after max horizon
-    #     home_lateness[k] = m.iif(drone_used[k], m.max(0, end_time[k][c - 1] + td_matrix[sequence[c - 1]] - 10000), 0)
-    #
-    #     # Completing visit after latest end
-    #
-    #
-    # # Total lateness
-    # total_lateness = m.sum(lateness)
-    #
-    # # Total distance traveled
-    # total_distance = m.div(m.round(100 * m.sum(dist_routes)), 100)
-
-
-# m.cons1 = ConstraintList()
-# for j in demand_set-{1, idle}:
-#     m.cons1.add(sum(m.x[j, r, i] for r in slot_set for i in drones_set) == 1)
-#
-# m.cons2 = ConstraintList()
-# for i in drones_set:
-#     for r in slot_set:
-#         m.cons2.add(sum(m.x[j, r, i] for j in demand_set) <= 1)
-#
-# for i in drones_set:
-#     m.x[1, 1, i].fix(0)
-#
-# m.cons4 = ConstraintList()
-# for i in drones_set:
-#     m.cons4.add(m.c[1, i] == sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set - {1, idle}))
-#
-# m.cons5 = ConstraintList()
-# for i in drones_set:
-#     for r in slot_set - {1}:
-#         m.cons5.add(m.c[r, i] == m.c[r - 1, i] + sum(t_matrix[k - 1, j - 1] * m.x[j, r, i] * m.x[k, r-1, i] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
-#
-# for i in drones_set:
-#     m.s[1, i].fix(0)
-#
-# m.cons7 = ConstraintList()
-# for i in drones_set:
-#     for r in slot_set - {1}:
-#         m.cons7.add(m.s[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.x[j, r, i]*m.x[k, r-1, i] for j in demand_set for k in demand_set))
-#
-# m.cons10 = ConstraintList()
-# for r in slot_set:
-#     for i in drones_set:
-#         m.cons10.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set) - B * (1 - sum(m.x[j, r, i] for j in demand_set)))
-#
-# m.cons11 = ConstraintList()
-# m.cons12 = ConstraintList()
-# for i in drones_set:
-#     m.cons11.add(m.c[1, i] - drone_Charge[i - 1] <= B * m.z[2, i])
-#     m.cons12.add(m.c[1, i] - drone_Charge[i - 1] >= -B * (1 - m.z[2, i]))
-#
-# m.cons13 = ConstraintList()
-# m.cons14 = ConstraintList()
-# for i in drones_set:
-#     for r in slot_set - {1, n_slot}:
-#         m.cons13.add(m.c[r, i] - sum(m.c[b, i] * m.z[b+1, i] for b in range(1, r)) - drone_Charge[i - 1] <= B * m.z[r + 1, i])
-#         m.cons14.add(m.c[r, i] - sum(m.c[b, i] * m.z[b+1, i] for b in range(1, r)) - drone_Charge[i - 1] >= -B * (1 - m.z[r + 1, i]))
-#
-# m.cons19 = ConstraintList()
-# for i in drones_set:
-#     for r in slot_set:
-#         m.cons19.add(m.x[1, r, i] == m.z[r, i])
-#
-# m.cons20 = ConstraintList()
-# for f in families:
-#     for j in f:
-#         m.cons20.add(sum(m.c[r, i]*m.x[j+1, r, i] - m.c[r, i]*m.x[j, r, i] for r in slot_set for i in drones_set) <= i_times)
-#
-# m.cons21 = ConstraintList()
-# for f in families:
-#     for j in f:
-#         m.cons21.add(sum(m.c[r, i]*m.x[j+1, r, i] - m.c[r, i]*m.x[j, r, i] for r in slot_set for i in drones_set) >= 0)
-#
-# m.cons22 = ConstraintList()
-# for f in families:
-#     for j in f:
-#         m.cons22.add(sum(m.e[j+1, r, i] for r in slot_set for i in drones_set) >= sum(m.c[r, i] * m.x[j, r, i]  for r in slot_set for i in drones_set))
-#
-# m.cons24 = ConstraintList()
-# m.cons25 = ConstraintList()
-# m.cons26 = ConstraintList()
-# for j in demand_set:
-#     for r in slot_set:
-#         for i in drones_set:
-#             m.cons24.add(m.v[j, r, i] <= UB * m.x[j, r, i])
-#             m.cons25.add(m.v[j, r, i] <= m.c[r, i])
-#             m.cons26.add(m.v[j, r, i] >= m.c[r, i] - UB*(1 - m.x[j, r, i]))
-#
-# m.cons27 = ConstraintList()
-# m.cons28 = ConstraintList()
-# m.cons29 = ConstraintList()
-# for j in demand_set:
-#     for r in slot_set:
-#         for i in drones_set:
-#             m.cons27.add(m.e[j, r, i] <= UB * m.x[j, r, i])
-#             m.cons28.add(m.e[j, r, i] <= m.s[r, i])
-#             m.cons29.add(m.e[j, r, i] >= m.s[r, i] - UB*(1 - m.x[j, r, i]))
-#
-# m.cons30 = ConstraintList()
-# for f in families:
-#     for j in f:
-#         for r in slot_set - {n_slot}:
-#             for i in drones_set:
-#                 m.cons30.add(sum(m.x[jj, r + 1, i] for jj in range(j+1, len(demand_set))) <= B*(1-m.x[j, r, i]))
-#
-# m.cons31 = ConstraintList()
-# for r in slot_set:
-#     for i in drones_set:
-#         m.cons31.add(m.x[len(due_dates)-1, r, i] == 1 - sum(m.x[j, r, i] for j in demand_set-{len(due_dates)-1}))
+    for i in range(n_drones):
+        print('sequence:',vis_sequences[i].value)
+        print('complete:',end_time[i].value)
+        print('lateness:', lateness[i].value)

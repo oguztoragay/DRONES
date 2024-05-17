@@ -69,6 +69,7 @@ def main(instance_file, str_time_limit, output_file):
 
         model.close()
         print(model.__str__())
+
         # Parameterize the solver
         ls.param.time_limit = int(str_time_limit)
         ls.solve()
