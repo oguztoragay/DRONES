@@ -1,10 +1,6 @@
 import localsolver
-from localsolver.modeler import *
-from localsolver import LSInterval
-from localsolver import LSError
 from random_instance import generate
-from operator import itemgetter, indexOf
-from localsolver import LSErrorCode
+from operator import indexOf
 
 # Hexaly model for the problem-----------------------------------------------------------
 with localsolver.LocalSolver() as ls:
@@ -69,7 +65,6 @@ with localsolver.LocalSolver() as ls:
             i_index = m.find(vis_sequences_array, i)
             i_list = m.at(vis_sequences_array, i_index)
             ic_time = m.at(m.at(end_times, i_index), i)
-            print(ic_time)
             for j in successors_data[i]:
                 j_index = m.find(vis_sequences_array, j)
                 j_list = m.at(vis_sequences_array, j_index)
@@ -83,9 +78,10 @@ with localsolver.LocalSolver() as ls:
 
     max_lateness = m.max(lateness[0:n_drones-1])
     m.minimize(max_lateness)
+    # m.minimize(c)
     print(m.__str__())
     m.close()
-    ls.param.time_limit = int(1)
+    ls.param.time_limit = int(10)
     ls.param.seed = 1
     ls.solve()
     for i in range(n_drones):

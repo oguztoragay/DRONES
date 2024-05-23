@@ -7,8 +7,8 @@ from random_instance import generate
 from random_instance import mprint
 from greedy import greedy_sol
 
-n_drones = 4
-datam = generate(n_drones, 'SB')
+n_drones = 6
+datam = generate(n_drones, 'SB_RS_LA')
 t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
 sol, tries = greedy_sol(n_drones, datam)
 print('Greedy Generated Successfully!------------------------------')
