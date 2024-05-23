@@ -81,7 +81,7 @@ with localsolver.LocalSolver() as ls:
     # m.minimize(c)
     print(m.__str__())
     m.close()
-    ls.param.time_limit = int(10)
+    ls.param.time_limit = int(5)
     ls.param.seed = 1
     ls.solve()
     for i in range(n_drones):
