@@ -40,15 +40,11 @@ def main(instance_file, str_time_limit, output_file):
             route_quantity = model.array(model.range(0, c), route_quantity_lambda, 0)
 
             # Trucks cannot carry more than their capacity
-            quantity_lambda = model.lambda_function(
-                lambda i: route_quantity[i] <= truck_capacity)
+            quantity_lambda = model.lambda_function(lambda i: route_quantity[i] <= truck_capacity)
             model.constraint(model.and_(model.range(0, c), quantity_lambda))
 
             # Distance traveled by each truck
-            dist_lambda = model.lambda_function(lambda i:
-                                                model.at(dist_matrix,
-                                                         sequence[i - 1],
-                                                         sequence[i]))
+            dist_lambda = model.lambda_function(lambda i: model.at(dist_matrix, sequence[i - 1], sequence[i]))
             dist_routes[k] = model.sum(model.range(1, c), dist_lambda) \
                              + model.iif(c > 0,
                                          model.at(dist_matrix, nb_customers, sequence[0]) + \
@@ -164,4 +160,4 @@ def compute_dist(xi, xj, yi, yj):
     return int(math.floor(exact_dist + 0.5))
 
 
-main('coordChrist100.dat', '50', None)
+main('coordChrist100.dat', '5', None)

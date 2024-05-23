@@ -30,15 +30,16 @@ def generate(ndrones, condition):
         i_times = 3 #max intervisit time
         slots = 5
         membership = [1, 2, 2, 3, 3, 3, 4]
+
     if condition == 'mini_fixed_modi':
         ndrones += 1
         slots = 5
         nb_all_nodes = slots * ndrones
         idles = []
-        for i in range(8,nb_all_nodes+1):
+        for i in range(7,nb_all_nodes):
             idles.append([i])
-        f = [[2], [4, 5]]
-        families = [[1], [2, 3], [4, 5, 6], [7]]
+        f = [[1], [3, 4]]
+        families = [[0], [1, 2], [3, 4, 5], [6]]
         families += idles
         monitor_times = [3, 2, 2, 1, 1, 1, 0.01]
         monitor_times = monitor_times + [monitor_times[-1]] * (nb_all_nodes-7)
