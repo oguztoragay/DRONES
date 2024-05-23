@@ -68,14 +68,10 @@ def main(instance_file, str_time_limit, output_file):
             # Arriving home after max horizon
             home_lateness[k] = model.iif(
                 trucks_used[k],
-                model.max(
-                    0,
-                    end_time[k][c - 1] + dist_depot[sequence[c - 1]] - max_horizon),
-                0)
+                model.max( 0, end_time[k][c - 1] + dist_depot[sequence[c - 1]] - max_horizon), 0)
 
             # Completing visit after latest end
-            late_lambda = model.lambda_function(
-                lambda i: model.max(0, end_time[k][i] - latest[sequence[i]]))
+            late_lambda = model.lambda_function(lambda i: model.max(0, end_time[k][i] - latest[sequence[i]]))
             lateness[k] = home_lateness[k] + model.sum(model.range(0, c), late_lambda)
 
         # Total lateness
