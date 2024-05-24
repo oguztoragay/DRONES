@@ -15,7 +15,8 @@ def hexa(data):
         due_dates = m.array(data[6])
         m_time = m.array(data[5])
         successors_data = [[] for i in range(n_node)]
-        for fam in data[7]:
+        families = list(map(lambda list: [item-1 for item in list], data[7]))
+        for fam in families:
             for i in fam:
                 if i == 1:
                     successors_data[i-1] = []  #real_node_data
@@ -80,7 +81,7 @@ def hexa(data):
         # m.minimize(c)
         print(m.__str__())
         m.close()
-        ls.param.time_limit = int(50)
+        ls.param.time_limit = int(5)
         # ls.param.seed = 1
         ls.solve()
         for i in range(n_drones):
