@@ -2,13 +2,13 @@ from pyomo.environ import value
 import numpy as np
 
 
-def generate(ndrones, condition):
+def generate(ndrones, condition, slot, charge, itimes):
     t_matrix = []
     due_date = []
     monitor_times = []
-    slots = []
-    charges = []
-    i_times = []
+    slots = slot
+    charge_ = charge
+    i_times = itimes
     membership = []
     families = []
     f =[]
@@ -46,9 +46,9 @@ def generate(ndrones, condition):
                              [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0]])  # Sjk
 
         due_date = np.array([0, 10, 20, 24, 8, 16, 24, 5, 10, 30])  # dj
-        charges = np.ones(ndrones)*5
-        i_times = 3 #max intervisit time
-        slots = 5
+        charges = np.ones(ndrones)*charge_
+        # i_times = 3 #max intervisit time
+        # slots = 5
         membership = [1, 2, 2, 2, 3, 3, 3, 4, 4, 5]
 
     if condition == 'SB':
@@ -88,9 +88,9 @@ def generate(ndrones, condition):
                 due_date.append(due[i])
                 membership.append(i + 1)
         due_date = due
-        charges = np.ones(ndrones) * 0.4
-        i_times = 4  # max intervisit time
-        slots = 7
+        charges = np.ones(ndrones) * charge_
+        # i_times = 4  # max intervisit time
+        # slots = 7
 
     if condition == 'SB_RS':
         f = [[2], [4, 5], [7], [9, 10], [12, 13], [15], [17], [19]]
@@ -132,9 +132,9 @@ def generate(ndrones, condition):
                 due_date.append(due[i] * (j + 1))
                 membership.append(i+1)
 
-        charges = np.ones(ndrones) * 0.4
-        i_times = 3 # max intervisit time
-        slots = 8
+        charges = np.ones(ndrones) * charge_
+        # i_times = 3 # max intervisit time
+        # slots = 8
         max_need_charge = max([distances[j][i] for i in range(len(distances[j])) for j in range(len(distances[1]))]) * 2
 
     if condition == 'SB_RS_LA':
@@ -186,9 +186,9 @@ def generate(ndrones, condition):
                 due_date.append(due[i] * (j + 1))
                 membership.append(i + 1)
 
-        charges = np.ones(ndrones) * 5
-        i_times = 5  # max intervisit time
-        slots = 20
+        charges = np.ones(ndrones) * charge_
+        # i_times = 5  # max intervisit time
+        # slots = 20
         max_need_charge = max([distances[j][i] for i in range(len(distances[j])) for j in range(len(distances[1]))]) * 2
 
     return t_matrix, due_date, monitor_times, slots, charges, i_times, membership, families, f
