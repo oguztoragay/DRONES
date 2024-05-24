@@ -6,7 +6,6 @@ from random_instance import generate
 from random_instance import mprint
 
 def run():
-    print("jjjjjjjjjjjjjjjjjj")
     nb_drones = 5
     city = 'SB'
     ins = generate(ndrones=nb_drones, condition=city)
@@ -21,6 +20,6 @@ def ins2incumbent(ins):
 def incumbent2pyomo(incumbent):
     return None
 
-if __main__:
-
+if __name__ == '__main__':
+    print("jjjjjjjjjjjjjjjjjj")
     run()
