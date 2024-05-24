@@ -4,6 +4,7 @@ from nl_pyomo_model import nl_pyo
 from pyomo_model import lp_pyo
 from random_instance import generate
 from random_instance import mprint
+import ast
 
 def run(city):
     a, b, c, d, e = city
@@ -11,8 +12,16 @@ def run(city):
     incumbent = ins2incumbent(ins, a, b, c, d, e)
 
 def ins2incumbent(ins, a, b, c, d, e):
-    hexa_data = [a+1, c, ins[0], ins[4], e, ins[2], ins[1], ins[7]]
-    inc = hexa(hexa_data)
+    hexa_data = [a, c, ins[0], ins[4], e, ins[2], ins[1], ins[7]]
+    gen_seq = {}
+    inc = hexa(hexa_data, gen_seq)
+    sequences = []
+    for i in inc:
+        numbers = i.split()
+        for ii in numbers:
+            if ii is int:
+                print(ii)
+        sequences.append(numbers)
     return 0
 
 def incumbent2pyomo(incumbent):
