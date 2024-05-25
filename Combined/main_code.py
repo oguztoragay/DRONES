@@ -28,7 +28,7 @@ def incumbent2pyomo(incumbent):
     return None
 
 if __name__ == '__main__':
-    fixed = [3, 'fixed', 5, 5, 3]
+    fixed = [3, 'fixed', 10, 5, 3]
     SB = [3, 'SB', 7, 0.4, 4]
     SB_RS = [5, 'SB_RS', 8, 0.4, 3]
     SB_RS_LS = [5, 'SB_RS_LS', 20, 5, 5]

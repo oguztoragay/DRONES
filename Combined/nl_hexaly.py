@@ -1,14 +1,6 @@
 import localsolver
 from operator import indexOf
 
-
-# def updater(end, str):
-#     print('injast')
-#     print(end)
-#     print(str)
-#
-#     return 0
-
 def hexa(data, gen_seq):
     with localsolver.LocalSolver() as ls:
         m = ls.model
@@ -28,19 +20,20 @@ def hexa(data, gen_seq):
         for fam in families:
             for i in fam:
                 if i == 0:
-                    successors_data[i] = []  #real_node_data
+                    successors_data[i] = []
                 else:
                     successors_data[i] = fam[indexOf(fam, i)+1::]
-        # successors = m.array(successors_data)
         # The only variable in the model is a list with length of all visits for each drone.
         vis_sequences = [m.list(n_node) for k in range(n_drones)]
         m.constraint(m.cover(vis_sequences))
+        for i in real_node_data:
+            m.constraint(m.sum(m.contains(vis_sequences[k], i) for k in range(n_drones)) == 1)
         end_time = [None] * n_drones
         str_time = [None] * n_drones
         lateness = [None] * n_drones
         route_battery = [None] * n_drones
-        end_time_node = [None] * n_node
-        str_time_node = [None] * n_node
+        end_time_node = [-1000] * n_node
+        str_time_node = [-1000] * n_node
         # for i in real_node_data:
         #     m.constraint((m.contains(vis_sequences[n_drones-1], i)) == False)
         # for k in range(n_drones-1):
@@ -50,6 +43,7 @@ def hexa(data, gen_seq):
             sequence = vis_sequences[k]
             c = m.count(sequence)
             m.constraint(c <= n_slot)
+
             battery_lambda = m.lambda_function(lambda i, prev:
                                                m.iif(i == 0, drone_charge[k] - m.at(td_matrix, sequence[i]) - m_time[sequence[i]],
                                                      m.iif(sequence[i] == 0, drone_charge[k],
@@ -57,8 +51,14 @@ def hexa(data, gen_seq):
             route_battery[k] = m.array(m.range(0, c), battery_lambda)
             quantity_lambda = m.lambda_function(lambda i: route_battery[k][i] >= 0)
             m.constraint(m.and_(m.range(0, c), quantity_lambda))
+
             end_time_lambda = m.lambda_function(lambda i, prev: m.iif(i != 0, prev + m.at(t_matrix, sequence[i-1], sequence[i]) + m_time[sequence[i]], m_time[sequence[i]]))
             end_time[k] = m.array(m.range(0, c), end_time_lambda)
+            end_time_node_lambda = m.lambda_function(lambda i, this:
+                                                     m.iif(m.and_(this == -1000, m.contains(sequence, i)), end_time[k][i], m.max(this, end_time[k][i])))
+            # for j in real_node_data:
+            #     if (m.contains(sequence,i)) > 0.5:
+            #         end_time_node[j] = m.array(m.range(0, c), end_time_node_lambda)
             # str_time_lambda = m.lambda_function(lambda i: m.iif(i == 0, 0,
             #                                                     m.iif(m.contains(m.at(successors,sequence[i-1]), sequence[i]) == True,
             #                                                           end_time[k][i - 1] + m.at(t_matrix, sequence[i - 1], sequence[i]) + i_times,
@@ -102,12 +102,14 @@ def hexa(data, gen_seq):
         ls.param.time_limit = int(5)
         # ls.param.seed = 1
         ls.solve()
-        mn = ls.solution
+        # mn = ls.solution
         for i in range(n_drones):
-            # print('Drone Number', i+1, '-------------------------')
-            gen_seq[i+1] = str(vis_sequences[i].value)
-        #     print('   start:', str_time[i].value)
-        #     print('complete:', end_time[i].value)
-        #     print('lateness:', lateness[i].value)
-        #     print(' battery:',  route_battery[i].value)
+            print('Drone Number', i+1, '-------------------------')
+            # gen_seq[i+1] = str(vis_sequences[i].value)
+            print('Sequence:', vis_sequences[i].value)
+            print('   start:', str_time[i].value)
+            print('complete:', end_time[i].value)
+            print('lateness:', lateness[i].value)
+            print(' battery:', route_battery[i].value)
+        # print(end_time_node.value)
         return gen_seq
