@@ -45,7 +45,7 @@ def generate(ndrones, condition, slot, charge, itimes):
                              [1, 2, 2, 2, 3, 3, 3, 0, 0, 0.1],
                              [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0]])  # Sjk
 
-        due_date = np.array([0, 10, 20, 24, 8, 16, 24, 5, 10, 30])  # dj
+        due_date = np.array([50, 10, 20, 24, 8, 16, 24, 5, 10, 30])  # dj
         charges = np.ones(ndrones)*charge_
         # i_times = 3 #max intervisit time
         # slots = 5
@@ -81,7 +81,7 @@ def generate(ndrones, condition, slot, charge, itimes):
                 for ii in i_mem:
                     for jj in j_mem:
                         t_matrix[ii - 1, jj - 1] = distances[(i, j)]
-        due = np.array([0, 0.1, 0.23, 0.03, 0.15, 0.3, 0.46, 0.8, 0.7, 1.5, 1.7, 15])
+        due = np.array([15, 0.1, 0.23, 0.03, 0.15, 0.3, 0.46, 0.8, 0.7, 1.5, 1.7, 15])
         membership = []
         for i in range(len(families)):
             for j in range(len(families[i])):

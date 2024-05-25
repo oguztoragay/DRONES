@@ -1,5 +1,5 @@
 import greedy
-from nl_hexaly import hexa
+from nl_hexaly2 import hexa
 from nl_pyomo_model import nl_pyo
 from pyomo_model import lp_pyo
 from random_instance import generate
@@ -29,7 +29,7 @@ def incumbent2pyomo(incumbent):
 
 if __name__ == '__main__':
     fixed = [3, 'fixed', 10, 5, 3]
-    SB = [3, 'SB', 7, 0.4, 4]
-    SB_RS = [5, 'SB_RS', 8, 0.4, 3]
-    SB_RS_LS = [5, 'SB_RS_LS', 20, 5, 5]
-    run(fixed)
+    SB = [3, 'SB', 10, 0.4, 4]
+    SB_RS = [4, 'SB_RS', 15, 0.7, 3]
+    SB_RS_LA = [5, 'SB_RS_LA', 15, 2, 5]
+    run(SB_RS_LA)
