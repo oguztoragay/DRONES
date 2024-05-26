@@ -20,13 +20,14 @@ def hexa(data, gen_seq):
             for i in fam:
                 successors_data[i] = fam[indexOf(fam, i)+1::]
         vis_sequences = [m.list(n_node) for _ in range(n_drones)]
-        node_interval = [m.interval(0, 100) for _ in range(n_node)]
+        # node_interval = [m.interval(0, 20) for _ in range(n_node)]
         m.constraint(m.cover(vis_sequences))
         for i in real_node_data:
             m.constraint(m.sum(m.contains(vis_sequences[k], i) for k in range(n_drones)) == 1)
-            # m.constraint(m.length(node_interval[i]) == m_time[i])
-            for s in successors_data[i]:
-                m.constraint(m.end(node_interval[i]) <= m.start(node_interval[s]))
+        #     m.constraint(m.length(node_interval[i]) == m_time[i])
+        #     for s in successors_data[i]:
+        #         m.constraint(m.start(node_interval[s]) - m.end(node_interval[s-1]) <= data[4])
+        #         m.constraint(m.start(node_interval[s]) >= m.end(node_interval[i]))
         end_time = [None] * n_drones
         str_time = [None] * n_drones
         lateness = [None] * n_drones
@@ -69,12 +70,15 @@ def hexa(data, gen_seq):
             if successors_data[i]:
                 i_index = m.find(vis_sequences_array, i)
                 i_list = m.at(vis_sequences_array, i_index)
-                # ic_time = end_times[i_index][i]
-                for j in successors_data[i]:
-                    j_index = m.find(vis_sequences_array, j)
-                    j_list = m.at(vis_sequences_array, j_index)
-                    # jb_time = m.at(m.at(str_times, j_index), j)
-                    m.constraint(m.index(i_list, i) + 1 < m.index(j_list, j))
+                loc_i = m.index(i_list, i)
+                ic_time = end_times[i_index][loc_i]
+                j = successors_data[i][0]
+                j_index = m.find(vis_sequences_array, j)
+                j_list = m.at(vis_sequences_array, j_index)
+                loc_j = m.index(j_list, j)
+                jb_time = str_times[j_index][loc_j]
+                m.constraint(m.index(i_list, i) + 1 < m.index(j_list, j))
+                m.constraint(jb_time - ic_time <= data[4])
 
 
         max_lateness = m.max(lateness[0:n_drones])
@@ -82,7 +86,7 @@ def hexa(data, gen_seq):
         # m.minimize(c)
         print(m.__str__())
         m.close()
-        ls.param.time_limit = int(60)
+        ls.param.time_limit = int(120)
         # ls.param.seed = 1
         ls.solve()
         # mn = ls.solution
@@ -96,6 +100,6 @@ def hexa(data, gen_seq):
             print('lateness:', lateness[i].value)
             print(' battery:', route_battery[i].value)
         # print(end_time_node.value)
-        for i in range(n_node):
-            print(node_interval[i].value)
+        # for i in range(n_node):
+            # print(node_interval[i].value)
         return gen_seq
