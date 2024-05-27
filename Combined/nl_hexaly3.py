@@ -3,7 +3,7 @@
 import localsolver
 from operator import indexOf
 
-def hexa(data, gen_seq):
+def hexa(data, gen_seq, gen_st, gen_ct, av_time):
     with localsolver.LocalSolver() as ls:
         m = ls.model
         n_drones = data[0]
@@ -75,16 +75,23 @@ def hexa(data, gen_seq):
         # m.minimize(c)
         print(m.__str__())
         m.close()
-        ls.param.time_limit = int(20)
-        # ls.param.seed = 1
+        ls.param.time_limit = int(av_time)
         ls.solve()
-        # mn = ls.solution
-        print(families)
-        for i in range(n_drones):
-            print('Drone Number', i+1, '-------------------------')
-            print('Sequence:', vis_sequences[i].value)
-            print('   start:', str_time[i].value)
-            print('complete:', end_time[i].value)
-            print('lateness:', lateness[i].value)
-            print(' battery:', route_battery[i].value)
-        return gen_seq
+        for k in range(n_drones):
+            gen_seq.append([])
+            gen_st.append([])
+            gen_ct.append([])
+            for i1 in vis_sequences[k].value:
+                gen_seq[-1].append(i1+1)
+            for i2 in end_time[k].value:
+                gen_ct[-1].append(round(i2, 4))
+            for i3 in str_time[k].value:
+                gen_st[-1].append(round(i3, 4))
+        # for i in range(n_drones):
+        #     print('Drone Number', i+1, '-------------------------')
+        #     print('Sequence:', vis_sequences[i].value)
+        #     print('   start:', str_time[i].value)
+        #     print('complete:', end_time[i].value)
+        #     print('lateness:', lateness[i].value)
+        #     print(' battery:', route_battery[i].value)
+    return gen_seq, gen_st, gen_ct
