@@ -1,3 +1,5 @@
+# Working hexaly model that generates feasible solutions for all instances
+# Cleaned on 05/26/2024
 import localsolver
 from operator import indexOf
 
@@ -20,20 +22,13 @@ def hexa(data, gen_seq):
             for i in fam:
                 successors_data[i] = fam[indexOf(fam, i)+1::]
         vis_sequences = [m.list(n_node) for _ in range(n_drones)]
-        # node_interval = [m.interval(0, 20) for _ in range(n_node)]
         m.constraint(m.cover(vis_sequences))
         for i in real_node_data:
             m.constraint(m.sum(m.contains(vis_sequences[k], i) for k in range(n_drones)) == 1)
-        #     m.constraint(m.length(node_interval[i]) == m_time[i])
-        #     for s in successors_data[i]:
-        #         m.constraint(m.start(node_interval[s]) - m.end(node_interval[s-1]) <= data[4])
-        #         m.constraint(m.start(node_interval[s]) >= m.end(node_interval[i]))
         end_time = [None] * n_drones
         str_time = [None] * n_drones
         lateness = [None] * n_drones
         route_battery = [None] * n_drones
-        end_time_node = [-1000] * n_node
-        str_time_node = [-1000] * n_node
 
         for k in range(n_drones):
             sequence = vis_sequences[k]
@@ -58,11 +53,6 @@ def hexa(data, gen_seq):
             late_lambda = m.lambda_function(lambda i: end_time[k][i] - due_dates[sequence[i]])
             lateness[k] = m.max(m.range(0, c), late_lambda)
 
-            # end_time_node_lambda2 = m.lambda_function(lambda i: end_time[k][i] <= m.end(node_interval[m.at(sequence,i)]))
-            # m.constraint(m.and_(m.range(0, c), end_time_node_lambda2))
-            # for i in real_node_data:
-            #     ind = m.index(sequence, i)
-            #     m.constraint(m.end(node_interval[ind]) == 2)
         vis_sequences_array = m.array(vis_sequences)
         end_times = m.array(end_time)
         str_times = m.array(str_time)
@@ -80,20 +70,18 @@ def hexa(data, gen_seq):
                 m.constraint(m.index(i_list, i) + 1 < m.index(j_list, j))
                 m.constraint(jb_time - ic_time <= data[4])
 
-
         max_lateness = m.max(lateness[0:n_drones])
         m.minimize(max_lateness)
         # m.minimize(c)
         print(m.__str__())
         m.close()
-        ls.param.time_limit = int(120)
+        ls.param.time_limit = int(20)
         # ls.param.seed = 1
         ls.solve()
         # mn = ls.solution
         print(families)
         for i in range(n_drones):
             print('Drone Number', i+1, '-------------------------')
-            # gen_seq[i+1] = str(vis_sequences[i].value)
             print('Sequence:', vis_sequences[i].value)
             print('   start:', str_time[i].value)
             print('complete:', end_time[i].value)
