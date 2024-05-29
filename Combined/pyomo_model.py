@@ -1,23 +1,28 @@
 # Cleaned on 03/25/2024 (oguz)
 # Multi-drone capable
+# warm start capable 05/28/2024
+import random
 
+import pyomo.contrib.pynumero.examples.sensitivity
 from pyomo.environ import ConcreteModel, Var, Constraint, ConstraintList, NonNegativeReals, Binary, Integers, NonNegativeIntegers, Param, Objective, minimize, SolverFactory, value, maximize
 from itertools import combinations, product
 from random_instance import generate
 from random_instance import mprint
 from greedy import greedy_sol
+import gurobipy as gp
+import random
 
-def lp_pyo(data):
-    n_drones = 6
-    datam = generate(n_drones, 'SB_RS_LA')
+def lp_pyo(data, ws, ws_x, ws_y, ws_z):
+    # n_drones = 6
+    datam = data #generate(n_drones, 'SB_RS_LA')
     t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
-    sol, tries = greedy_sol(n_drones, datam)
-    print('Greedy Generated Successfully!------------------------------')
-    for i in range(0, len(sol[0])):
-        print(*sol[0][i], sep=' --> ')
+    # sol, tries = greedy_sol(len(data[4]), datam)
+    # print('Greedy Generated Successfully!------------------------------')
+    # for i in range(0, len(sol[0])):
+    #     print(*sol[0][i], sep=' --> ')
     print('------------------------------------------------------------')
     demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
-    drones_set = set(range(1, n_drones + 1))  # use index i for M drones
+    drones_set = set(range(1, len(data[4]) + 1))  # use index i for M drones
     slot_set = set(range(1, n_slot + 1))  # use index r for R slots in each drone
     demand_set_combin = list(combinations(demand_set, 2))
     demand_set_combin2 = [[i, j] for (i, j) in product(demand_set, demand_set) if i!=j]
@@ -29,9 +34,8 @@ def lp_pyo(data):
 
     # Pyomo model for the problem-----------------------------------------------------------
     m = ConcreteModel(name="Parallel Machines1")
-    m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=1)
-    m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)
-    # m.yy = Var(demand_set, demand_set, domain=Binary, initialize=0)
+    m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
+    m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=1)
     m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.z = Var(slot_set, drones_set, domain=Binary, initialize=0)
@@ -40,6 +44,23 @@ def lp_pyo(data):
     m.e = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.lmax = Var(initialize=0, domain=NonNegativeReals, bounds=(0, 5))
     m.obj_func = Objective(expr=m.lmax, sense=minimize)
+    # Warm start preparation:---------------------------------------------------------------
+    # if ws is not None:
+    #     print('Hexaly results!------------------------------------')
+    #     for i in ws:
+    #         print(*i, sep=' --> ')
+        # for i in m.x.index_set():
+        #     if random.random() < 0.8:
+        #         m.x[i].fix(ws_x[i])
+        # for i in m.y.index_set():
+        #     if ws_y == 1:
+        #         m.y[i] = ws_y[i]
+        # for i in m.z.index_set():
+        #     if ws_z == 1:
+        #         m.z[i] = ws_z[i]
+
+
+
 
     # Constraint 1:-------------------------------------------------------------------------- (1) in new model
     m.cons1 = ConstraintList()
@@ -66,7 +87,7 @@ def lp_pyo(data):
     for i in drones_set:
         for r in slot_set - {1}:
             m.cons5.add(m.c[r, i] == m.c[r - 1, i] + sum(t_matrix[k - 1, j - 1] * m.y[j, k, r, i] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
-            # m.cons5.add(m.c[r, i] == m.c[r - 1, i] + sum(t_matrix[k - 1, j - 1] * m.yy[j, k] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
+
     # constraint 6:-------------------------------------------------------------------------- (6) in new model
     for i in drones_set:
         m.s[1, i].fix(0)
@@ -76,7 +97,6 @@ def lp_pyo(data):
     for i in drones_set:
         for r in slot_set - {1}:
             m.cons7.add(m.s[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set))
-            # m.cons7.add(m.s[r, i] == m.c[r - 1, i] + sum(t_matrix[k - 1, j - 1] * m.yy[j, k] for j in demand_set for k in demand_set))
 
     # constraint 8 & 9:-------------------------------------------------------------------- (8) & (9) in new model
     m.cons8 = ConstraintList()
@@ -88,8 +108,6 @@ def lp_pyo(data):
                 k = jk[1]
                 m.cons8.add(m.x[j, r, i] + m.x[k, r-1, i] <= 1 + m.y[j, k, r, i])
                 m.cons9.add(m.y[j, k, r, i] <= 0.5*(m.x[j, r, i] + m.x[k, r-1, i]))
-                # m.cons8.add(m.x[j, r, i] + m.x[k, r - 1, i] <= 1 + m.yy[j, k])
-                # m.cons9.add(m.yy[j, k] <= 0.5 * (m.x[j, r, i] + m.x[k, r - 1, i]))
 
     # constraint 10:-------------------------------------------------------------------------- (10) in new model
     m.cons10 = ConstraintList()
@@ -146,11 +164,9 @@ def lp_pyo(data):
 
     # constraint 22 & 23:-------------------------------------------------------------------------- (22) and (23) in new model
     m.cons22 = ConstraintList()
-    m.cons23 = ConstraintList()
     for f in families:
         for j in f:
             m.cons22.add(sum(m.e[j+1, r, i] for r in slot_set for i in drones_set) >= sum(m.v[j, r, i]  for r in slot_set for i in drones_set))
-            # m.cons23.add(sum(m.e[j+1, r, i] - m.v[j, r, ii] for r in slot_set for ii in drones_set-{i}) >= 0)
     # constraint 24 to 26:-------------------------------------------------------------------------- (24) to (26) in new model
     m.cons24 = ConstraintList()
     m.cons25 = ConstraintList()
@@ -199,10 +215,10 @@ def lp_pyo(data):
     for c in m.component_objects(Var):
         num_of_var[c.name] = len(c)
         total_var += len(c)
-    print('***** Total number of variables:%8d' %total_var)
-    print('***** Total number of constraints:%8d' %total_cons)
-    print('***** Variables =',num_of_var)
-    print('***** Constraints =',num_of_cons)
+    # print('***** Total number of variables:%8d' %total_var)
+    # print('***** Total number of constraints:%8d' %total_cons)
+    # print('***** Variables =',num_of_var)
+    # print('***** Constraints =',num_of_cons)
     msolver = SolverFactory('gurobi')
     msolver.options['Threads'] = 24
     msolver.options['FeasibilityTol'] = 1e-7
@@ -210,8 +226,12 @@ def lp_pyo(data):
     msolver.options['Cuts'] = 3
     msolver.options['Heuristics'] = 0.5
     msolver.options['RINS'] = 5
-    solution = msolver.solve(m, tee=True)
+    solution = msolver.solve(m, warmstart= True, tee=False)
     mprint(m, solution, datam)
+    if ws is not None:
+        print('Hexaly results!------------------------------------')
+        for i in ws:
+            print(*i, sep=' --> ')
     return None
 
 

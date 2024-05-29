@@ -5,13 +5,14 @@ from pyomo.environ import ConcreteModel, Var, Constraint, ConstraintList, NonNeg
 from itertools import combinations, product
 from random_instance import generate
 from random_instance import mprint
+import random
 
-def nl_pyo(data):
-    n_drones = 2
-    datam = generate(n_drones, 'SB')
+def nl_pyo(data, ws, ws_x, ws_y, ws_z):
+    # n_drones = 2
+    datam = data  #generate(n_drones, 'SB')
     t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
     demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
-    drones_set = set(range(1, n_drones + 1))  # use index i for M drones
+    drones_set = set(range(1, len(data[4]) + 1))  # use index i for M drones
     slot_set = set(range(1, n_slot + 1))  # use index r for R slots in each drone
     demand_set_combin = list(combinations(demand_set, 2))
     demand_set_combin2 = [[i, j] for (i, j) in product(demand_set, demand_set) if i!=j]
@@ -24,16 +25,20 @@ def nl_pyo(data):
     # Pyomo model for the problem-----------------------------------------------------------
     m = ConcreteModel(name="Parallel Machines1")
     m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=1)
-    # m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)
-    # m.yy = Var(demand_set, demand_set, domain=Binary, initialize=0)
     m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.z = Var(slot_set, drones_set, domain=Binary, initialize=0)
-    # m.w = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.v = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.e = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.lmax = Var(initialize=0, domain=NonNegativeReals, bounds=(0, 3))
     m.obj_func = Objective(expr=m.lmax, sense=minimize)
+    if ws is not None:
+        print('Hexaly results!------------------------------------')
+        for i in ws:
+            print(*i, sep=' --> ')
+    for i in m.x.index_set():
+        if random.random() < 0.9:
+            m.x[i] = ws_x[i]
 
     # Constraint 1:-------------------------------------------------------------------------- (1) in new model
     m.cons1 = ConstraintList()
@@ -44,7 +49,7 @@ def nl_pyo(data):
     m.cons2 = ConstraintList()
     for i in drones_set:
         for r in slot_set:
-            m.cons2.add(sum(m.x[j, r, i] for j in demand_set) <= 1)
+            m.cons2.add(sum(m.x[j, r, i] for j in demand_set) == 1)
 
     # constraint 3:-------------------------------------------------------------------------- (3) in new model
     for i in drones_set:
@@ -135,21 +140,15 @@ def nl_pyo(data):
         for j in f:
             m.cons20.add(sum(m.c[r, i]*m.x[j+1, r, i] - m.c[r, i]*m.x[j, r, i] for r in slot_set for i in drones_set) <= i_times)
     # constraint 21:-------------------------------------------------------------------------- (21) in new model
-    # m.cons21 = ConstraintList()
-    # for f in families:
-    #     for j in f:
-    #         m.cons21.add(sum(m.v[j + 1, r, i] - m.v[j, r, i] for r in slot_set for i in drones_set) >= 0)
     m.cons21 = ConstraintList()
     for f in families:
         for j in f:
             m.cons21.add(sum(m.c[r, i]*m.x[j+1, r, i] - m.c[r, i]*m.x[j, r, i] for r in slot_set for i in drones_set) >= 0)
     # constraint 22 & 23:-------------------------------------------------------------------------- (22) and (23) in new model
     m.cons22 = ConstraintList()
-    # m.cons23 = ConstraintList()
     for f in families:
         for j in f:
             m.cons22.add(sum(m.e[j+1, r, i] for r in slot_set for i in drones_set) >= sum(m.c[r, i] * m.x[j, r, i]  for r in slot_set for i in drones_set))
-            # m.cons23.add(sum(m.e[j+1, r, i] - m.v[j, r, ii] for r in slot_set for ii in drones_set-{i}) >= 0)
     # constraint 24 to 26:-------------------------------------------------------------------------- (24) to (26) in new model
     m.cons24 = ConstraintList()
     m.cons25 = ConstraintList()
@@ -198,18 +197,22 @@ def nl_pyo(data):
     for c in m.component_objects(Var):
         num_of_var[c.name] = len(c)
         total_var += len(c)
-    print('***** Total number of variables:%8d' %total_var)
-    print('***** Total number of constraints:%8d' %total_cons)
-    print('***** Variables =',num_of_var)
-    print('***** Constraints =',num_of_cons)
+    # print('***** Total number of variables:%8d' %total_var)
+    # print('***** Total number of constraints:%8d' %total_cons)
+    # print('***** Variables =',num_of_var)
+    # print('***** Constraints =',num_of_cons)
     msolver = SolverFactory('gurobi')
     # msolver = SolverFactory('scip', solver_io='nl', executable='C:/Users/oguzt/Desktop/solvers/scip/scip.exe', tee=True)
-    msolver.options['Threads'] = 24
+    msolver.options['Threads'] = 20
     msolver.options['FeasibilityTol'] = 1e-7
     msolver.options['MIPFocus'] = 2
     msolver.options['Cuts'] = 3
-    msolver.options['Heuristics'] = 1
+    msolver.options['Heuristics'] = 0
     msolver.options['RINS'] = 5
-    solution = msolver.solve(m, tee=True)
+    solution = msolver.solve(m, warmstart= True, tee=True)
     mprint(m, solution, datam)
+    if ws is not None:
+        print('Hexaly results!------------------------------------')
+        for i in ws:
+            print(*i, sep=' --> ')
     return None

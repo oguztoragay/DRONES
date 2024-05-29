@@ -35,23 +35,33 @@ def generate(ndrones, condition, slot, charge, itimes):
         families = [[1], [2, 3, 4], [5, 6, 7], [8, 9], [10]]
         # families = [[0], [1, 2, 3], [4, 5, 6], [7, 8], [9]]
         monitor_times = np.array([3, 2, 2, 2, 1, 1, 1, 1, 1, 0.01])  # Pj [2, 1, 2, 3, 4, 5, 5]
-        t_matrix = np.array([[0, 3, 3, 3, 4, 4, 4, 1, 1, 0.1],
-                             [3, 0, 50, 50, 1, 1, 1, 2, 2, 0.1],
-                             [3, 50, 0, 50, 1, 1, 1, 2, 2, 0.1],
-                             [3, 50, 50, 0, 1, 1, 1, 2, 2, 0.1],
-                             [4, 1, 1, 1, 0, 50, 50, 3, 3, 0.1],
-                             [4, 1, 1, 1, 50, 0, 50, 3, 3, 0.1],
-                             [4, 1, 1, 1, 50, 50, 0, 3, 3, 0.1],
-                             [1, 2, 2, 2, 3, 3, 3, 0, 50, 0.1],
-                             [1, 2, 2, 2, 3, 3, 3, 50, 0, 0.1],
-                             [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0]])  # Sjk
+        # t_matrix = np.array([[0, 3, 3, 3, 4, 4, 4, 1, 1, 0.1],
+        #                      [3, 0, 50, 50, 1, 1, 1, 2, 2, 0.1],
+        #                      [3, 50, 0, 50, 1, 1, 1, 2, 2, 0.1],
+        #                      [3, 50, 50, 0, 1, 1, 1, 2, 2, 0.1],
+        #                      [4, 1, 1, 1, 0, 50, 50, 3, 3, 0.1],
+        #                      [4, 1, 1, 1, 50, 0, 50, 3, 3, 0.1],
+        #                      [4, 1, 1, 1, 50, 50, 0, 3, 3, 0.1],
+        #                      [1, 2, 2, 2, 3, 3, 3, 0, 50, 0.1],
+        #                      [1, 2, 2, 2, 3, 3, 3, 50, 0, 0.1],
+        #                      [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0]])  # Sjk
 
-        due_date = np.array([50, 10, 20, 24, 8, 16, 24, 5, 10, 30])  # dj
+        t_matrix = np.array([[0, 3, 3, 3, 4, 4, 4, 1, 1, 0.1],
+                             [3, 0, 0, 0, 1, 1, 1, 2, 2, 0.1],
+                             [3, 0, 0, 0, 1, 1, 1, 2, 2, 0.1],
+                             [3, 0, 0, 0, 1, 1, 1, 2, 2, 0.1],
+                             [4, 1, 1, 1, 0, 0, 0, 3, 3, 0.1],
+                             [4, 1, 1, 1, 0, 0, 0, 3, 3, 0.1],
+                             [4, 1, 1, 1, 0, 0, 0, 3, 3, 0.1],
+                             [1, 2, 2, 2, 3, 3, 3, 0, 0, 0.1],
+                             [1, 2, 2, 2, 3, 3, 3, 0, 0, 0.1],
+                             [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0]])
+
+        due_date = np.array([0, 10, 20, 24, 8, 16, 24, 5, 10, 30])  # dj
         charges = np.ones(ndrones)*charge_
         # i_times = 3 #max intervisit time
         # slots = 5
         membership = [1, 2, 2, 2, 3, 3, 3, 4, 4, 5]
-
     if condition == 'SB':
         f = [[2], [4, 5], [7], [9, 10]]
         monitoring = [0.04, 0.03, 0.01, 0.02, 0.05, 0.0002]
@@ -92,7 +102,6 @@ def generate(ndrones, condition, slot, charge, itimes):
         charges = np.ones(ndrones) * charge_
         # i_times = 4  # max intervisit time
         # slots = 7
-
     if condition == 'SB_RS':
         f = [[2], [4, 5], [7], [9, 10], [12, 13], [15], [17], [19]]
         monitoring = [0.04, 0.03, 0.01, 0.02, 0.5, 0.04, 0.03, 0.02, 0.02, 0.002]
@@ -137,7 +146,6 @@ def generate(ndrones, condition, slot, charge, itimes):
         # i_times = 3 # max intervisit time
         # slots = 8
         max_need_charge = max([distances[j][i] for i in range(len(distances[j])) for j in range(len(distances[1]))]) * 2
-
     if condition == 'SB_RS_LA':
         f = [[2], [4, 5], [7], [9, 10], [12, 13], [15], [17], [19], [21, 22, 23, 24],[26, 27, 28], [30, 31, 32, 33],[35, 36, 37], [39, 40, 41, 42], [44, 45, 46], [48, 49, 50], [52, 53, 54]]
         monitoring = [1, 0.03, 0.01, 0.02, 0.05, 0.04, 0.03, 0.02, 0.02, 0.03, 0.03, 0.10, 0.05, 0.05, 0.03, 0.05, 0.06, 0]
@@ -191,9 +199,7 @@ def generate(ndrones, condition, slot, charge, itimes):
         # i_times = 5  # max intervisit time
         # slots = 20
         max_need_charge = max([distances[j][i] for i in range(len(distances[j])) for j in range(len(distances[1]))]) * 2
-
     return t_matrix, due_date, monitor_times, slots, charges, i_times, membership, families, f
-
 
 def mprint(m, solution, datam):
     print('\n\n\n------------------------------------------------------')
@@ -202,7 +208,7 @@ def mprint(m, solution, datam):
     print('\n***** Solver Message *****')
     print(solution['Solver'].message)
     print('Current objective value is:', value(m.obj_func))
-    print('\nThe visiting assignments are as follow:')
+    print('\nGurobi results!')
     assign_list = np.zeros((len(datam[4]), datam[3]), dtype=int)
     assign_families = np.zeros((len(datam[4]), datam[3]), dtype=int)
     assign_dues = np.zeros((len(datam[4]), datam[3]), dtype=int)
@@ -213,10 +219,10 @@ def mprint(m, solution, datam):
             assign_families[ind[2]-1, ind[1]-1] = datam[6][ind[0]-1] + 1
     for i in range(0, assign_list.shape[0]):
         print(*assign_list[i], sep=' --> ')
-    print("\nOr in terms of due_dates:")
-    print(assign_dues)
-    print("\nOr in terms of families:")
-    print(assign_families)
+    # print("\nOr in terms of due_dates:")
+    # print(assign_dues)
+    # print("\nOr in terms of families:")
+    # print(assign_families)
     list_c = sorted(list(m.c.index_set()), key=lambda x: x[1])
     c_values = []
     s_values = []
@@ -225,10 +231,10 @@ def mprint(m, solution, datam):
         s_values.append(value(m.s[ind]))
     c_values = np.reshape(c_values, (len(datam[4]), datam[3]))
     s_values = np.reshape(s_values, (len(datam[4]), datam[3]))
-    print("\nThe c values are as follow:")
-    print(c_values)
-    print("\nThe s values are as follow:")
+    print("The s times:")
     print(s_values)
-    for ind in m.w.index_set():
-        if value(m.w[ind]):
-            print('w', ind, '=', value(m.w[ind]))
+    print("The c times:")
+    print(c_values,'\n')
+    # for ind in m.w.index_set():
+    #     if value(m.w[ind]):
+    #         print('w', ind, '=', value(m.w[ind]))

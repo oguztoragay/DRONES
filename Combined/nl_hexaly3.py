@@ -45,12 +45,9 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time):
 
             end_time_lambda = m.lambda_function(lambda i, prev: m.iif(i != 0, prev + m.at(t_matrix, sequence[i-1], sequence[i]) + m_time[sequence[i]], m_time[sequence[i]]))
             end_time[k] = m.array(m.range(0, c), end_time_lambda)
-            end_time_node_lambda = m.lambda_function(lambda i, this:
-                                                     m.iif(m.and_(this == -1000, m.contains(sequence, i)), end_time[k][i], m.max(this, end_time[k][i])))
-
             str_time_lambda = m.lambda_function(lambda i: m.iif(i == 0, 0, end_time[k][i - 1] + m.at(t_matrix, sequence[i - 1], sequence[i])))
             str_time[k] = m.array(m.range(0, c), str_time_lambda)
-            late_lambda = m.lambda_function(lambda i: end_time[k][i] - due_dates[sequence[i]])
+            late_lambda = m.lambda_function(lambda i: m.iif(sequence[i] == 0, 0, end_time[k][i] - due_dates[sequence[i]]))
             lateness[k] = m.max(m.range(0, c), late_lambda)
 
         vis_sequences_array = m.array(vis_sequences)
@@ -67,13 +64,11 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time):
                 j_list = m.at(vis_sequences_array, j_index)
                 loc_j = m.index(j_list, j)
                 jb_time = str_times[j_index][loc_j]
-                m.constraint(m.index(i_list, i) + 1 < m.index(j_list, j))
+                # m.constraint(m.index(i_list, i) + 1 < m.index(j_list, j))
                 m.constraint(jb_time - ic_time <= data[4])
 
         max_lateness = m.max(lateness[0:n_drones])
         m.minimize(max_lateness)
-        # m.minimize(c)
-        print(m.__str__())
         m.close()
         ls.param.time_limit = int(av_time)
         ls.solve()
