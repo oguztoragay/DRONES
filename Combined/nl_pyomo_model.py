@@ -24,7 +24,7 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
 
     # Pyomo model for the problem-----------------------------------------------------------
     m = ConcreteModel(name="Parallel Machines1")
-    m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=1)
+    m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
     m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.z = Var(slot_set, drones_set, domain=Binary, initialize=0)
@@ -32,10 +32,10 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     m.e = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.lmax = Var(initialize=0, domain=NonNegativeReals, bounds=(0, 3))
     m.obj_func = Objective(expr=m.lmax, sense=minimize)
-    if ws is not None:
-        print('Hexaly results!------------------------------------')
-        for i in ws:
-            print(*i, sep=' --> ')
+    # if ws is not None:
+    #     print('Hexaly results!------------------------------------')
+    #     for i in ws:
+    #         print(*i, sep=' --> ')
     for i in m.x.index_set():
         if random.random() < 0.9:
             m.x[i] = ws_x[i]
@@ -93,7 +93,7 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     m.cons10 = ConstraintList()
     for r in slot_set:
         for i in drones_set:
-            m.cons10.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set) - B * (1 - sum(m.x[j, r, i] for j in demand_set)))
+            m.cons10.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set))# - B * (1 - sum(m.x[j, r, i] for j in demand_set)))
 
     # constraint 11 and 12:-------------------------------------------------------------------------- (11) & (12) in new model
     m.cons11 = ConstraintList()
@@ -138,12 +138,12 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     m.cons20 = ConstraintList()
     for f in families:
         for j in f:
-            m.cons20.add(sum(m.c[r, i]*m.x[j+1, r, i] - m.c[r, i]*m.x[j, r, i] for r in slot_set for i in drones_set) <= i_times)
+            m.cons20.add(sum(m.c[r, i]*m.x[j+1, r, i] for r in slot_set for i in drones_set) - sum(m.c[r, i]*m.x[j, r, i] for r in slot_set for i in drones_set) <= i_times)
     # constraint 21:-------------------------------------------------------------------------- (21) in new model
     m.cons21 = ConstraintList()
     for f in families:
         for j in f:
-            m.cons21.add(sum(m.c[r, i]*m.x[j+1, r, i] - m.c[r, i]*m.x[j, r, i] for r in slot_set for i in drones_set) >= 0)
+            m.cons21.add(sum(m.c[r, i]*m.x[j+1, r, i] for r in slot_set for i in drones_set) - sum(m.c[r, i]*m.x[j, r, i] for r in slot_set for i in drones_set) >= 0)
     # constraint 22 & 23:-------------------------------------------------------------------------- (22) and (23) in new model
     m.cons22 = ConstraintList()
     for f in families:
@@ -207,9 +207,10 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     msolver.options['FeasibilityTol'] = 1e-7
     msolver.options['MIPFocus'] = 2
     msolver.options['Cuts'] = 3
-    msolver.options['Heuristics'] = 0
+    msolver.options['Heuristics'] = 1
     msolver.options['RINS'] = 5
-    solution = msolver.solve(m, warmstart= True, tee=True)
+    solution = msolver.solve(m, warmstart= True, tee=False)
+    print('NONLINEAR!------------------------------------')
     mprint(m, solution, datam)
     if ws is not None:
         print('Hexaly results!------------------------------------')

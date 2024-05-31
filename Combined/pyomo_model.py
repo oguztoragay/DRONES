@@ -35,7 +35,7 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z):
     # Pyomo model for the problem-----------------------------------------------------------
     m = ConcreteModel(name="Parallel Machines1")
     m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
-    m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=1)
+    m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)
     m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.z = Var(slot_set, drones_set, domain=Binary, initialize=0)
@@ -46,12 +46,12 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z):
     m.obj_func = Objective(expr=m.lmax, sense=minimize)
     # Warm start preparation:---------------------------------------------------------------
     # if ws is not None:
-    #     print('Hexaly results!------------------------------------')
-    #     for i in ws:
-    #         print(*i, sep=' --> ')
-        # for i in m.x.index_set():
-        #     if random.random() < 0.8:
-        #         m.x[i].fix(ws_x[i])
+    #     # print('Hexaly results!------------------------------------')
+    #     # for i in ws:
+    #     #     print(*i, sep=' --> ')
+    #     for i in m.x.index_set():
+    #         if random.random() < 0.8:
+    #             m.x[i].fix(ws_x[i])
         # for i in m.y.index_set():
         #     if ws_y == 1:
         #         m.y[i] = ws_y[i]
@@ -80,7 +80,7 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z):
     # constraint 4:-------------------------------------------------------------------------- (4) in new model
     m.cons4 = ConstraintList()
     for i in drones_set:
-        m.cons4.add(m.c[1, i] == sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set - {1, idle}))
+        m.cons4.add(m.c[1, i] == sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set - {1}))
 
     # constraint 5:-------------------------------------------------------------------------- (5) in new model
     m.cons5 = ConstraintList()
@@ -224,14 +224,15 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z):
     msolver.options['FeasibilityTol'] = 1e-7
     msolver.options['MIPFocus'] = 2
     msolver.options['Cuts'] = 3
-    msolver.options['Heuristics'] = 0.5
+    msolver.options['Heuristics'] = 1
     msolver.options['RINS'] = 5
     solution = msolver.solve(m, warmstart= True, tee=False)
+    print('LINEAR!------------------------------------')
     mprint(m, solution, datam)
-    if ws is not None:
-        print('Hexaly results!------------------------------------')
-        for i in ws:
-            print(*i, sep=' --> ')
+    # if ws is not None:
+    #     print('Hexaly results!------------------------------------')
+    #     for i in ws:
+    #         print(*i, sep=' --> ')
     return None
 
 

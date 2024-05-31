@@ -66,6 +66,7 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time):
                 jb_time = str_times[j_index][loc_j]
                 # m.constraint(m.index(i_list, i) + 1 < m.index(j_list, j))
                 m.constraint(jb_time - ic_time <= data[4])
+                m.constraint(jb_time - ic_time >= 0.0002)
 
         max_lateness = m.max(lateness[0:n_drones])
         m.minimize(max_lateness)
