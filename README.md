@@ -7,3 +7,5 @@
 (3) 27 Jan 2024: The idea of having idle time for the drons have been implemented. A new branch has been created for SB small instance (capable of solving the model to optimality)
 
 (4) 09 Apr 2024: The branches have been converted to folders in the main branch of the repository
+
+(5) 31 May 2024: The _Combined_ branch includes all the models (MILP, NLP, Hexaly).
