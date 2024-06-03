@@ -83,7 +83,7 @@ def generate(ndrones, condition, slot, charge, itimes):
                               [0.0458, 0.0713, 0.0574, 0, 0.1818, 0.08],
                               [0.13, 0.1343, 0.1186, 0.1517, 0, 0.08],
                               [0.08, 0.08, 0.08, 0.08, 0.08, 0]]) # Sjk
-
+        penalty = 100
         t_matrix = np.zeros((m, m))
         for i in range(len(families)):
             for j in range(len(families)):
@@ -91,7 +91,10 @@ def generate(ndrones, condition, slot, charge, itimes):
                 j_mem = families[j]
                 for ii in i_mem:
                     for jj in j_mem:
-                        t_matrix[ii - 1, jj - 1] = distances[(i, j)]
+                        if i_mem == j_mem:
+                            t_matrix[ii - 1, jj - 1] = penalty
+                        else:
+                            t_matrix[ii - 1, jj - 1] = distances[(i, j)]
         due = np.array([15, 0.1, 0.23, 0.03, 0.15, 0.3, 0.46, 0.8, 0.7, 1.5, 1.7, 15])
         membership = []
         for i in range(len(families)):
@@ -125,7 +128,7 @@ def generate(ndrones, condition, slot, charge, itimes):
                               [0.3734, 0.3526, 0.3844, 0.3518, 0.4731, 0.5726, 0.3947, 0, 0.2415, 0.08],
                               [0.3265, 0.3456, 0.3378, 0.3053, 0.4661, 0.3521, 0.2375, 0.1992, 0, 0.08],
                               [0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0]])
-
+        penalty = 100
         t_matrix = np.zeros((m, m))
         for i in range(len(families)):
             for j in range(len(families)):
@@ -133,7 +136,10 @@ def generate(ndrones, condition, slot, charge, itimes):
                 j_mem = families[j]
                 for ii in i_mem:
                     for jj in j_mem:
-                        t_matrix[ii - 1, jj - 1] = distances[(i, j)]
+                        if i_mem == j_mem:
+                            t_matrix[ii - 1, jj - 1] = penalty
+                        else:
+                            t_matrix[ii - 1, jj - 1] = distances[(i, j)]
         due = np.array([0, 0.3, 0.69, 0.29, 2.4, 0.9, 0.48, 5.4, 2.1, 12])
         due_date = []
         membership = []
@@ -202,13 +208,9 @@ def generate(ndrones, condition, slot, charge, itimes):
     return t_matrix, due_date, monitor_times, slots, charges, i_times, membership, families, f
 
 def mprint(m, solution, datam):
-    print('\n\n\n------------------------------------------------------')
-    print('---------------- MODEL DATA & RESULTS ----------------')
-    print('------------------------------------------------------\n')
-    print('\n***** Solver Message *****')
+    print('***** Solver Message *****')
     print(solution['Solver'].message)
     print('Current objective value is:', value(m.obj_func))
-    print('\nGurobi results!')
     assign_list = np.zeros((len(datam[4]), datam[3]), dtype=int)
     assign_families = np.zeros((len(datam[4]), datam[3]), dtype=int)
     assign_dues = np.zeros((len(datam[4]), datam[3]), dtype=int)
