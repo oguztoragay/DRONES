@@ -32,18 +32,17 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time):
 
         for k in range(n_drones):
             sequence = vis_sequences[k]
-            seq = m.array(sequence)
             c = m.count(sequence)
             m.constraint(c <= n_slot)
             battery_lambda = m.lambda_function(lambda i, prev:
                                                m.iif(i == 0, drone_charge[k] - m.at(td_matrix, sequence[i]) - m_time[sequence[i]],
                                                      m.iif(sequence[i] == 0, drone_charge[k],
-                                                     prev - m.at(t_matrix, sequence[i - 1], sequence[i]) - m_time[sequence[i]])))
+                                                     prev - m.at(t_matrix, sequence[i - 1], sequence[i]) ))) #- m_time[sequence[i]]
             route_battery[k] = m.array(m.range(0, c), battery_lambda)
             quantity_lambda = m.lambda_function(lambda i: route_battery[k][i] >= 0)
             m.constraint(m.and_(m.range(0, c), quantity_lambda))
 
-            end_time_lambda = m.lambda_function(lambda i, prev: m.iif(i != 0, prev + m.at(t_matrix, sequence[i-1], sequence[i]) + m_time[sequence[i]], m_time[sequence[i]]))
+            end_time_lambda = m.lambda_function(lambda i, prev: m.iif(i != 0, prev + m.at(t_matrix, sequence[i-1], sequence[i]) + m_time[sequence[i]], m.at(td_matrix, sequence[i]) + m_time[sequence[i]]))
             end_time[k] = m.array(m.range(0, c), end_time_lambda)
             str_time_lambda = m.lambda_function(lambda i: m.iif(i == 0, 0, end_time[k][i - 1] + m.at(t_matrix, sequence[i - 1], sequence[i])))
             str_time[k] = m.array(m.range(0, c), str_time_lambda)
@@ -67,7 +66,7 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time):
                 jc_time = end_times[j_index][loc_j]
                 # m.constraint(m.index(i_list, i) + 1 < m.index(j_list, j))
                 m.constraint(jb_time - ic_time <= data[4])
-                m.constraint(jb_time - ic_time >= 0)
+                m.constraint(jb_time >= ic_time)
 
         max_lateness = m.max(lateness[0:n_drones])
         m.minimize(max_lateness)

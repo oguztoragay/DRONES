@@ -40,12 +40,9 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z):
     m.obj_func = Objective(expr=m.lmax, sense=minimize)
     # Warm start preparation:---------------------------------------------------------------
     # if ws is not None:
-    #     # print('Hexaly results!------------------------------------')
-    #     # for i in ws:
-    #     #     print(*i, sep=' --> ')
     #     for i in m.x.index_set():
-    #         if random.random() < 0.8:
-    #             m.x[i].fix(ws_x[i])
+    #         if random.random() < 1:
+    #             m.x[i]=ws_x[i]
         # for i in m.y.index_set():
         #     if ws_y == 1:
         #         m.y[i] = ws_y[i]
@@ -74,7 +71,7 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z):
     # constraint 4:-------------------------------------------------------------------------- (4) in new model
     m.cons4 = ConstraintList()
     for i in drones_set:
-        m.cons4.add(m.c[1, i] == sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set))
+        m.cons4.add(m.c[1, i] == sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set-{0}))
 
     # constraint 5:-------------------------------------------------------------------------- (5) in new model
     m.cons5 = ConstraintList()
@@ -97,7 +94,7 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z):
     m.cons9 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            for jk in demand_set_combin:
+            for jk in demand_set_combin2:
                 j = jk[0]
                 k = jk[1]
                 m.cons8.add(m.x[j, r, i] + m.x[k, r-1, i] <= 1 + m.y[j, k, r, i])
@@ -113,16 +110,16 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z):
     m.cons11 = ConstraintList()
     m.cons12 = ConstraintList()
     for i in drones_set:
-        m.cons11.add(m.c[1, i] - drone_Charge[i - 1] <= B * m.z[2, i])
-        m.cons12.add(m.c[1, i] - drone_Charge[i - 1] >= -B * (1 - m.z[2, i]))
+        m.cons11.add(m.c[1, i] - drone_Charge[i - 1] <= B * m.z[2, i] - 0.000001)
+        m.cons12.add(m.c[1, i] - drone_Charge[i - 1] >= -B * (1 - m.z[2, i]) + 0.000001)
 
     # constraint 13 and 14:-------------------------------------------------------------------------- (13) & (14) in new model
     m.cons13 = ConstraintList()
     m.cons14 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1, n_slot}:
-            m.cons13.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - drone_Charge[i - 1] <= B * m.z[r + 1, i])
-            m.cons14.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - drone_Charge[i - 1] >= -B * (1 - m.z[r + 1, i]))
+            m.cons13.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r+1)) - drone_Charge[i - 1] <= B * m.z[r + 1, i] - 0.000001)
+            m.cons14.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r+1)) - drone_Charge[i - 1] >= -B * (1 - m.z[r + 1, i]) + 0.000001)
 
     # constraint 15 & 16 & 17:--------------------------------------------------------------- (15) to (17) in new model
     m.cons15 = ConstraintList()
@@ -215,13 +212,15 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z):
     # print('***** Variables =',num_of_var)
     # print('***** Constraints =',num_of_cons)
     msolver = SolverFactory('gurobi')
-    msolver.options['Threads'] = 24
+    msolver.options['Threads'] = 20
     msolver.options['FeasibilityTol'] = 1e-7
     msolver.options['MIPFocus'] = 2
     msolver.options['Cuts'] = 3
     msolver.options['Heuristics'] = 1
     msolver.options['RINS'] = 5
-    solution = msolver.solve(m, warmstart= True, tee=False)
+    msolver.options['SubMIPCuts'] = 2
+
+    solution = msolver.solve(m, warmstart= False, tee=True)
     print('\nLINEAR!------------------------------------')
     mprint(m, solution, datam)
     # if ws is not None:

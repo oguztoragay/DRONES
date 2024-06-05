@@ -57,7 +57,7 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     # constraint 4:-------------------------------------------------------------------------- (4) in new model
     m.cons4 = ConstraintList()
     for i in drones_set:
-        m.cons4.add(m.c[1, i] == sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set)) # -{1, idle}
+        m.cons4.add(m.c[1, i] == sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set-{0})) # -{1, idle}
 
     # constraint 5:-------------------------------------------------------------------------- (5) in new model
     m.cons5 = ConstraintList()
@@ -86,16 +86,16 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     m.cons11 = ConstraintList()
     m.cons12 = ConstraintList()
     for i in drones_set:
-        m.cons11.add(m.c[1, i] - drone_Charge[i - 1] <= B * m.z[2, i])
-        m.cons12.add(m.c[1, i] - drone_Charge[i - 1] >= -B * (1 - m.z[2, i]))
+        m.cons11.add(m.c[1, i] - drone_Charge[i - 1] <= B * m.z[2, i]- 0.000001)
+        m.cons12.add(m.c[1, i] - drone_Charge[i - 1] >= -B * (1 - m.z[2, i])+ 0.000001)
 
     # constraint 13 and 14:-------------------------------------------------------------------------- (13) & (14) in new model
     m.cons13 = ConstraintList()
     m.cons14 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1, n_slot}:
-            m.cons13.add(m.c[r, i] - sum(m.c[b, i] * m.z[b+1, i] for b in range(1, r)) - drone_Charge[i - 1] <= B * m.z[r + 1, i])
-            m.cons14.add(m.c[r, i] - sum(m.c[b, i] * m.z[b+1, i] for b in range(1, r)) - drone_Charge[i - 1] >= -B * (1 - m.z[r + 1, i]))
+            m.cons13.add(m.c[r, i] - sum(m.c[b, i] * m.z[b+1, i] for b in range(1, r)) - drone_Charge[i - 1] <= B * m.z[r + 1, i]- 0.000001)
+            m.cons14.add(m.c[r, i] - sum(m.c[b, i] * m.z[b+1, i] for b in range(1, r)) - drone_Charge[i - 1] >= -B * (1 - m.z[r + 1, i])+ 0.000001)
 
     # constraint 19:-------------------------------------------------------------------------- (19) in new model
     m.cons19 = ConstraintList()
@@ -153,8 +153,12 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     msolver.options['Cuts'] = 3
     msolver.options['Heuristics'] = 1
     msolver.options['RINS'] = 5
-    msolver.options['SubMIPNodes'] = 100000
-    solution = msolver.solve(m, warmstart= True, tee=True)
+    msolver.options['SubMIPNodes'] = 1000
+    msolver.options['PreQLinearize'] = 0
+    msolver.options['BarCorrectors'] = 100
+    msolver.options['PreMIQCPForm'] = 1
+    msolver.options['Cutoff'] = 1
+    solution = msolver.solve(m, warmstart= False, tee=True)
     print('\nNONLINEAR!------------------------------------')
     mprint(m, solution, datam)
     if ws is not None:
