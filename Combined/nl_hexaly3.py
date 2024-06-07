@@ -38,9 +38,9 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time):
                                                m.iif(i == 0, drone_charge[k] - m.at(td_matrix, sequence[i]),
                                                      m.iif(sequence[i] == 0, drone_charge[k],
                                                      prev - m.at(t_matrix, sequence[i - 1], sequence[i]) ))) #
-            route_battery[k] = m.array(m.range(0, c), battery_lambda)
+            route_battery[k] = m.array(m.range(0, c-1), battery_lambda)
             quantity_lambda = m.lambda_function(lambda i: m.or_(route_battery[k][i] >= 0, sequence[i+1] == 0))
-            m.constraint(m.and_(m.range(0, c), quantity_lambda))
+            m.constraint(m.and_(m.range(0, c-1), quantity_lambda))
 
             end_time_lambda = m.lambda_function(lambda i, prev: m.iif(i != 0, prev + m.at(t_matrix, sequence[i-1], sequence[i]) + m_time[sequence[i]], m.at(td_matrix, sequence[i]) + m_time[sequence[i]]))
             end_time[k] = m.array(m.range(0, c), end_time_lambda)

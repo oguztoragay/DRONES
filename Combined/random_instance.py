@@ -35,7 +35,7 @@ def generate(ndrones, condition, slot, charge, itimes):
         families = [[1], [2, 3, 4], [5, 6, 7], [8, 9], [10]]
         # families = [[0], [1, 2, 3], [4, 5, 6], [7, 8], [9]]
         monitor_times = np.array([3, 2, 2, 2, 1, 1, 1, 1, 1, 0.01])  # Pj [2, 1, 2, 3, 4, 5, 5]
-        t_matrix = np.array([[50, 3, 3, 3, 4, 4, 4, 1, 1, 0.1],
+        t_matrix = np.array([[0, 3, 3, 3, 4, 4, 4, 1, 1, 0.1],
                              [3, 0, 50, 50, 1, 1, 1, 2, 2, 0.1],
                              [3, 50, 0, 50, 1, 1, 1, 2, 2, 0.1],
                              [3, 50, 50, 0, 1, 1, 1, 2, 2, 0.1],
@@ -57,7 +57,7 @@ def generate(ndrones, condition, slot, charge, itimes):
         #                      [1, 2, 2, 2, 3, 3, 3, 0, 0, 0.1],
         #                      [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0]])
 
-        due_date = np.array([30, 10, 20, 24, 8, 16, 24, 5, 10, 30])  # dj
+        due_date = np.array([0, 10, 20, 24, 8, 16, 24, 5, 10, 30])  # dj
         charges = np.ones(ndrones)*charge_
         # i_times = 3 #max intervisit time
         # slots = 5
@@ -98,6 +98,7 @@ def generate(ndrones, condition, slot, charge, itimes):
                         else:
                             t_matrix[ii - 1, jj - 1] = distances[(i, j)]
         due = np.array([0, 0.1, 0.23, 0.03, 0.15, 0.3, 0.46, 0.8, 0.7, 1.5, 1.7, 15])
+        due = np.array([i*0.2 for i in due])
         membership = []
         for i in range(len(families)):
             for j in range(len(families[i])):
@@ -272,9 +273,9 @@ def route_battery(m, solution, datam):
     battery_usage = {}
     for i in range(0, assign_list.shape[0]):
         clist = assign_list[i]
-        battery_usage[i] = [datam[0][0][clist[0]-1]+datam[2][clist[0]-1]]
+        battery_usage[i] = [datam[4][i] - datam[0][0][clist[0]-1]+datam[2][clist[0]-1]]
         for j in range(1, len(clist)):
-            battery_usage[i].append(battery_usage[i][-1] + datam[0][clist[j-1]-1][clist[j]-1] + datam[2][clist[j]-1])
+            battery_usage[i].append(battery_usage[i][-1] - datam[0][clist[j-1]-1][clist[j]-1] - datam[2][clist[j]-1] + datam[4][i]*int(clist[j]==1))
     print("Battery Usage:")
     for i in range(0, len(battery_usage)):
         print(battery_usage[i])
