@@ -35,11 +35,11 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time):
             c = m.count(sequence)
             m.constraint(c <= n_slot)
             battery_lambda = m.lambda_function(lambda i, prev:
-                                               m.iif(i == 0, drone_charge[k] - m.at(td_matrix, sequence[i]) - m_time[sequence[i]],
+                                               m.iif(i == 0, drone_charge[k] - m.at(td_matrix, sequence[i]),
                                                      m.iif(sequence[i] == 0, drone_charge[k],
-                                                     prev - m.at(t_matrix, sequence[i - 1], sequence[i]) ))) #- m_time[sequence[i]]
+                                                     prev - m.at(t_matrix, sequence[i - 1], sequence[i]) ))) #
             route_battery[k] = m.array(m.range(0, c), battery_lambda)
-            quantity_lambda = m.lambda_function(lambda i: route_battery[k][i] >= 0)
+            quantity_lambda = m.lambda_function(lambda i: m.or_(route_battery[k][i] >= 0, sequence[i+1] == 0))
             m.constraint(m.and_(m.range(0, c), quantity_lambda))
 
             end_time_lambda = m.lambda_function(lambda i, prev: m.iif(i != 0, prev + m.at(t_matrix, sequence[i-1], sequence[i]) + m_time[sequence[i]], m.at(td_matrix, sequence[i]) + m_time[sequence[i]]))
@@ -65,8 +65,8 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time):
                 jb_time = str_times[j_index][loc_j]
                 jc_time = end_times[j_index][loc_j]
                 # m.constraint(m.index(i_list, i) + 1 < m.index(j_list, j))
-                m.constraint(jb_time - ic_time <= data[4])
-                m.constraint(jb_time >= ic_time)
+                m.constraint(jc_time - ic_time <= data[4])
+                m.constraint(jb_time - ic_time >= 0)
 
         max_lateness = m.max(lateness[0:n_drones])
         m.minimize(max_lateness)
@@ -83,11 +83,11 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time):
                 gen_ct[-1].append(round(i2, 4))
             for i3 in str_time[k].value:
                 gen_st[-1].append(round(i3, 4))
-        # for i in range(n_drones):
+        for i in range(n_drones):
         #     print('Drone Number', i+1, '-------------------------')
         #     print('Sequence:', vis_sequences[i].value)
         #     print('   start:', str_time[i].value)
         #     print('complete:', end_time[i].value)
         #     print('lateness:', lateness[i].value)
-        #     print(' battery:', route_battery[i].value)
+            print(' battery:', route_battery[i].value)
     return gen_seq, gen_st, gen_ct

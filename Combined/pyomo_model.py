@@ -8,6 +8,7 @@ from pyomo.environ import ConcreteModel, Var, Constraint, ConstraintList, NonNeg
 from itertools import combinations, product
 from random_instance import generate
 from random_instance import mprint
+from random_instance import route_battery
 from greedy import greedy_sol
 import gurobipy as gp
 import random
@@ -71,13 +72,13 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z):
     # constraint 4:-------------------------------------------------------------------------- (4) in new model
     m.cons4 = ConstraintList()
     for i in drones_set:
-        m.cons4.add(m.c[1, i] == sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set-{0}))
+        m.cons4.add(m.c[1, i] == sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set))
 
     # constraint 5:-------------------------------------------------------------------------- (5) in new model
     m.cons5 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons5.add(m.c[r, i] == m.c[r - 1, i] + sum(t_matrix[k - 1, j - 1] * m.y[j, k, r, i] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
+            m.cons5.add(m.c[r, i] == m.s[r, i] + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
 
     # constraint 6:-------------------------------------------------------------------------- (6) in new model
     for i in drones_set:
@@ -104,22 +105,22 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z):
     m.cons10 = ConstraintList()
     for r in slot_set:
         for i in drones_set:
-            m.cons10.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set)) #- B * (1 - sum(m.x[j, r, i] for j in demand_set)))
+            m.cons10.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set))
 
     # constraint 11 and 12:-------------------------------------------------------------------------- (11) & (12) in new model
     m.cons11 = ConstraintList()
     m.cons12 = ConstraintList()
     for i in drones_set:
-        m.cons11.add(m.c[1, i] - drone_Charge[i - 1] <= B * m.z[2, i] - 0.000001)
-        m.cons12.add(m.c[1, i] - drone_Charge[i - 1] >= -B * (1 - m.z[2, i]) + 0.000001)
+        m.cons11.add(m.c[1, i] - drone_Charge[i - 1] <= B * m.z[2, i])
+        m.cons12.add(m.c[1, i] - drone_Charge[i - 1] >= -B * (1 - m.z[2, i]))
 
     # constraint 13 and 14:-------------------------------------------------------------------------- (13) & (14) in new model
     m.cons13 = ConstraintList()
     m.cons14 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1, n_slot}:
-            m.cons13.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r+1)) - drone_Charge[i - 1] <= B * m.z[r + 1, i] - 0.000001)
-            m.cons14.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r+1)) - drone_Charge[i - 1] >= -B * (1 - m.z[r + 1, i]) + 0.000001)
+            m.cons13.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - drone_Charge[i - 1] <= B * m.z[r + 1, i])
+            m.cons14.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - drone_Charge[i - 1] >= -B * (1 - m.z[r + 1, i]))
 
     # constraint 15 & 16 & 17:--------------------------------------------------------------- (15) to (17) in new model
     m.cons15 = ConstraintList()
@@ -145,13 +146,13 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z):
     m.cons20 = ConstraintList()
     for f in families:
         for j in f:
-            m.cons20.add(sum(m.v[j + 1, r, i] - m.v[j, r, i] for r in slot_set for i in drones_set) <= i_times)
+            m.cons20.add(sum(m.v[j + 1, r, i] for r in slot_set for i in drones_set) - sum(m.e[j, r, i] for r in slot_set for i in drones_set) <= i_times)
 
     # constraint 21:-------------------------------------------------------------------------- (21) in new model
-    m.cons21 = ConstraintList()
-    for f in families:
-        for j in f:
-            m.cons21.add(sum(m.v[j + 1, r, i] - m.v[j, r, i] for r in slot_set for i in drones_set) >= 0)
+    # m.cons21 = ConstraintList()
+    # for f in families:
+    #     for j in f:
+    #         m.cons21.add(sum(m.v[j + 1, r, i] for r in slot_set for i in drones_set) - sum(m.v[j, r, i] for r in slot_set for i in drones_set) >= 0)
 
     # constraint 22 & 23:-------------------------------------------------------------------------- (22) and (23) in new model
     m.cons22 = ConstraintList()
@@ -220,13 +221,21 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z):
     msolver.options['RINS'] = 5
     msolver.options['SubMIPCuts'] = 2
 
-    solution = msolver.solve(m, warmstart= False, tee=True)
+    solution = msolver.solve(m, warmstart= False, tee=False)
     print('\nLINEAR!------------------------------------')
     mprint(m, solution, datam)
+    route_battery(m, solution, datam)
     # if ws is not None:
     #     print('Hexaly results!------------------------------------')
     #     for i in ws:
     #         print(*i, sep=' --> ')
+    for i in drones_set:
+        print([value(m.w[r, i]) for r in slot_set])
     return None
+
+
+
+
+
 
 

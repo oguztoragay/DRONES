@@ -5,6 +5,7 @@ from pyomo.environ import ConcreteModel, Var, Constraint, ConstraintList, NonNeg
 from itertools import combinations, product
 from random_instance import generate
 from random_instance import mprint
+from random_instance import route_battery
 import random
 
 def nl_pyo(data, ws, ws_x, ws_y, ws_z):
@@ -27,8 +28,6 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.z = Var(slot_set, drones_set, domain=Binary, initialize=0)
-    m.v = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-    m.e = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.lmax = Var(initialize=0, domain=NonNegativeReals, bounds=(0, 5))
     m.obj_func = Objective(expr=m.lmax, sense=minimize)
     # if ws is not None:
@@ -57,13 +56,13 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     # constraint 4:-------------------------------------------------------------------------- (4) in new model
     m.cons4 = ConstraintList()
     for i in drones_set:
-        m.cons4.add(m.c[1, i] == sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set-{0})) # -{1, idle}
+        m.cons4.add(m.c[1, i] == sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set))
 
     # constraint 5:-------------------------------------------------------------------------- (5) in new model
     m.cons5 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons5.add(m.c[r, i] == m.c[r - 1, i] + sum(t_matrix[k - 1, j - 1] * m.x[j, r, i] * m.x[k, r-1, i] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
+            m.cons5.add(m.c[r, i] == m.s[r, i] + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
 
     # constraint 6:-------------------------------------------------------------------------- (6) in new model
     for i in drones_set:
@@ -79,23 +78,22 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     m.cons10 = ConstraintList()
     for r in slot_set:
         for i in drones_set:
-            m.cons10.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set))# - B * (1 - sum(m.x[j, r, i] for j in demand_set)))
-            # second part is not necessary anymore because we added idle and none of the slots will remain empty.
+            m.cons10.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set))
 
     # constraint 11 and 12:-------------------------------------------------------------------------- (11) & (12) in new model
     m.cons11 = ConstraintList()
     m.cons12 = ConstraintList()
     for i in drones_set:
-        m.cons11.add(m.c[1, i] - drone_Charge[i - 1] <= B * m.z[2, i]- 0.000001)
-        m.cons12.add(m.c[1, i] - drone_Charge[i - 1] >= -B * (1 - m.z[2, i])+ 0.000001)
+        m.cons11.add(m.c[1, i] - drone_Charge[i - 1] <= B * m.z[2, i])
+        m.cons12.add(m.c[1, i] - drone_Charge[i - 1] >= -B * (1 - m.z[2, i]))
 
     # constraint 13 and 14:-------------------------------------------------------------------------- (13) & (14) in new model
     m.cons13 = ConstraintList()
     m.cons14 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1, n_slot}:
-            m.cons13.add(m.c[r, i] - sum(m.c[b, i] * m.z[b+1, i] for b in range(1, r)) - drone_Charge[i - 1] <= B * m.z[r + 1, i]- 0.000001)
-            m.cons14.add(m.c[r, i] - sum(m.c[b, i] * m.z[b+1, i] for b in range(1, r)) - drone_Charge[i - 1] >= -B * (1 - m.z[r + 1, i])+ 0.000001)
+            m.cons13.add(m.c[r, i] - sum(m.c[b, i] * m.z[b+1, i] for b in range(1, r)) - drone_Charge[i - 1] <= B * m.z[r + 1, i])
+            m.cons14.add(m.c[r, i] - sum(m.c[b, i] * m.z[b+1, i] for b in range(1, r)) - drone_Charge[i - 1] >= -B * (1 - m.z[r + 1, i]))
 
     # constraint 19:-------------------------------------------------------------------------- (19) in new model
     m.cons19 = ConstraintList()
@@ -107,7 +105,7 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     m.cons20 = ConstraintList()
     for f in families:
         for j in f:
-            m.cons20.add(sum(m.s[r, i]*m.x[j+1, r, i] for r in slot_set for i in drones_set) - sum(m.c[r, i]*m.x[j, r, i] for r in slot_set for i in drones_set) <= i_times)
+            m.cons20.add(sum(m.c[r, i]*m.x[j+1, r, i] for r in slot_set for i in drones_set) - sum(m.c[r, i]*m.x[j, r, i] for r in slot_set for i in drones_set) <= i_times)
 
     # constraint 21:-------------------------------------------------------------------------- (21) in new model
     m.cons21 = ConstraintList()
@@ -146,7 +144,6 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     # print('***** Variables =',num_of_var)
     # print('***** Constraints =',num_of_cons)
     msolver = SolverFactory('gurobi')
-    # msolver = SolverFactory('scip', solver_io='nl', executable='C:/Users/oguzt/Desktop/solvers/scip/scip.exe', tee=True)
     msolver.options['Threads'] = 20
     msolver.options['FeasibilityTol'] = 1e-7
     msolver.options['MIPFocus'] = 2
@@ -158,11 +155,16 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     msolver.options['BarCorrectors'] = 100
     msolver.options['PreMIQCPForm'] = 1
     msolver.options['Cutoff'] = 1
-    solution = msolver.solve(m, warmstart= False, tee=True)
+    solution = msolver.solve(m, warmstart= False, tee=False)
     print('\nNONLINEAR!------------------------------------')
     mprint(m, solution, datam)
+    route_battery(m, solution, datam)
+
     if ws is not None:
         print('Hexaly results!------------------------------------')
         for i in ws:
             print(*i, sep=' --> ')
     return None
+
+
+

@@ -10,14 +10,14 @@ import ast
 def run(city, time):
     a, b, c, d, e = city
     ins = generate(ndrones=a, condition=b, slot=c, charge=d, itimes=e)
-    incumbent = ins2incumbent(ins, a, b, c, d, e, time)
-    # warm_start = []
-    # ws_x = []
-    # ws_y = []
-    # ws_z = []
-    warm_start, ws_x, ws_y, ws_z = incumbent2pyomo(incumbent, c, ins[7][-1][0])
+    # incumbent = ins2incumbent(ins, a, b, c, d, e, time)
+    warm_start = []
+    ws_x = []
+    ws_y = []
+    ws_z = []
+    # warm_start, ws_x, ws_y, ws_z = incumbent2pyomo(incumbent, c, ins[7][-1][0])
 
-    # lp_pyo(ins, warm_start, ws_x, ws_y, ws_z)
+    lp_pyo(ins, warm_start, ws_x, ws_y, ws_z)
     nl_pyo(ins, warm_start, ws_x, ws_y, ws_z)
 
 def ins2incumbent(ins, a, b, c, d, e, time):
@@ -65,7 +65,7 @@ def incumbent2pyomo(incumbent, c, idle):
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge, itimes)
     fixed = [3, 'fixed', 5, 4, 5] # 10 nodes including idle
-    SB = [3, 'SB', 5, 0.3, 3] # 12
+    SB = [3, 'SB', 5, 0.15, 2] # 12
     SB_RS = [4, 'SB_RS', 6, 0.7, 3] # 21
     SB_RS_LA = [5, 'SB_RS_LA', 14, 2, 5] # 56
-    run(SB_RS_LA, 60)
+    run(SB, 10)
