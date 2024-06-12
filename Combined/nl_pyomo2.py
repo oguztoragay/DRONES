@@ -86,7 +86,7 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
 
     m.cons13 = ConstraintList()
     for i in drones_set:
-        for r in slot_set - {1}:
+        for r in slot_set - {1, n_slot}:
             # m.cons13.add(m.t[r, i] == (full_charge - m.c[r,i] + m.c[r-1, i]) * m.x[1, r-1, i] + (m.t[r-1, i] - m.c[r,i] + m.c[r-1, i]) * (1-m.x[1, r-1, i]))
             # m.cons13.add(m.t[r, i] == (full_charge - m.c[r,i]) * m.x[1, r-1, i] + (m.t[r-1, i] - m.c[r,i] + m.c[r-1, i]) * (1-m.x[1, r-1, i]))
             m.cons13.add(m.t[r, i] == full_charge * m.x[1, r, i] + (m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i]) * (1 - m.x[1, r, i]))

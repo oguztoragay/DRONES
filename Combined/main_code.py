@@ -1,6 +1,6 @@
 import greedy
 import os
-from nl_hexaly3 import hexa
+from nl_hexaly4 import hexa
 # from nl_pyomo_model import nl_pyo
 from nl_pyomo2 import nl_pyo
 from pyomo_model import lp_pyo
@@ -66,7 +66,7 @@ def incumbent2pyomo(incumbent, c, idle):
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge, itimes)
     fixed = [2, 'fixed', 5, 12, 3] # 10 nodes including idle --->OK
-    SB = [3, 'SB', 5, 0.3, 3] # 12 nodes including idle --->OK
-    SB_RS = [4, 'SB_RS', 6, 0.8, 3] # 21 nodes including idle
+    SB = [3, 'SB', 5, 0.4, 5] # 12 nodes including idle
+    SB_RS = [4, 'SB_RS', 7, 0.8, 3] # 21 nodes including idle
     SB_RS_LA = [5, 'SB_RS_LA', 14, 2, 5] # 56 nodes including idle
     run(fixed, 20)
