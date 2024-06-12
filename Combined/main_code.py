@@ -19,7 +19,7 @@ def run(city, time):
     # warm_start, ws_x, ws_y, ws_z = incumbent2pyomo(incumbent, c, ins[7][-1][0])
 
     # lp_pyo(ins, warm_start, ws_x, ws_y, ws_z)
-    # nl_pyo(ins, warm_start, ws_x, ws_y, ws_z)
+    nl_pyo(ins, warm_start, ws_x, ws_y, ws_z)
 
 def ins2incumbent(ins, a, b, c, d, e, time):
     hexa_data = [a, c, ins[0], ins[4], e, ins[2], ins[1], ins[7]]
@@ -65,7 +65,7 @@ def incumbent2pyomo(incumbent, c, idle):
 
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge, itimes)
-    fixed = [3, 'fixed', 5, 10, 3] # 10 nodes including idle --->OK
+    fixed = [2, 'fixed', 5, 12, 3] # 10 nodes including idle --->OK
     SB = [3, 'SB', 5, 0.3, 3] # 12 nodes including idle --->OK
     SB_RS = [4, 'SB_RS', 6, 0.8, 3] # 21 nodes including idle
     SB_RS_LA = [5, 'SB_RS_LA', 14, 2, 5] # 56 nodes including idle
