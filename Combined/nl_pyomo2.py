@@ -9,27 +9,25 @@ from random_instance import route_battery
 import random
 
 def nl_pyo(data, ws, ws_x, ws_y, ws_z):
-    datam = data  #generate(n_drones, 'SB')
-    t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
+    datam = data
+    t_matrix, due_dates, m_time, n_slot, drone_charge, i_times, membership, families, f = datam
     demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
     drones_set = set(range(1, len(data[4]) + 1))  # use index i for M drones
     slot_set = set(range(1, n_slot + 1))  # use index r for R slots in each drone
-    demand_set_combin = list(combinations(demand_set, 2))
-    demand_set_combin2 = [[i, j] for (i, j) in product(demand_set, demand_set) if i!=j]
     families = f
     idle = len(demand_set)
 
+    full_charge = drone_charge[0]
+
     B = 10000
-    UB = 10000
 
     # Pyomo Nonlinear (quadratic constrained) model for the problem-----------------
     m = ConcreteModel(name="Multiple drones QP model")
     m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
     m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-    # m.z = Var(slot_set, drones_set, domain=Binary, initialize=0)
-    m.t = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-    m.lmax = Var(initialize=0, domain=NonNegativeReals, bounds=(0, 5))
+    m.t = Var(slot_set, drones_set,  domain= NonNegativeReals, initialize=0) #remaining charge AFTER visit completion
+    m.lmax = Var(domain=NonNegativeReals, initialize=0) # , bounds=(0, 5),
     m.obj_func = Objective(expr=m.lmax, sense=minimize)
     # if ws is not None:
     #     print('Hexaly results!------------------------------------')
@@ -82,43 +80,16 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
             m.cons10.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set))
 
     # constraint 11 and 12:-------------------------------------------------------------------------- (11) & (12) in new model
-    # m.cons11 = ConstraintList()
-    # m.cons12 = ConstraintList()
-    # for i in drones_set:
-    #     m.cons11.add(m.c[1, i] - drone_Charge[i - 1] <= B * m.z[2, i])
-    #     m.cons12.add(m.c[1, i] - drone_Charge[i - 1] >= -B * (1 - m.z[2, i]))
-
-    # constraint 13 and 14:-------------------------------------------------------------------------- (13) & (14) in new model
-    # m.cons13 = ConstraintList()
-    # m.cons14 = ConstraintList()
-    # for i in drones_set:
-    #     for r in slot_set - {1, n_slot}:
-    #         m.cons13.add(m.c[r, i] - sum(m.c[b, i] * m.z[b+1, i] for b in range(1, r)) - drone_Charge[i - 1] <= B * m.z[r + 1, i])
-    #         m.cons14.add(m.c[r, i] - sum(m.c[b, i] * m.z[b+1, i] for b in range(1, r)) - drone_Charge[i - 1] >= -B * (1 - m.z[r + 1, i]))
-    #
     m.cons11 = ConstraintList()
-    # m.cons12 = ConstraintList()
     for i in drones_set:
-        m.cons11.add(m.t[1, i] == drone_Charge[i - 1] - m.c[1, i])
-        # m.cons12.add(m.c[1, i] - drone_Charge[i - 1] >= -B * (1 - m.z[2, i]))
-
+        m.cons11.add(m.t[1, i] == full_charge - m.c[1, i])
 
     m.cons13 = ConstraintList()
-    m.cons14 = ConstraintList()
     for i in drones_set:
-        for r in [2]:
-            m.cons13.add(m.t[r, i] == m.t[r-1, i] - m.c[r,i])
-            m.cons14.add(m.t[r, i] - drone_Charge[i - 1] >= B * (m.x[1, r+1, i]))
-            m.cons14.add(m.t[r, i] - drone_Charge[i - 1] <= -B * (1-m.x[1, r + 1, i]))
-            m.cons13.add(m.t[r+1, i] == m.t[r, i] - m.c[r+1, i])
-            m.cons14.add(m.t[r+2, i] == drone_Charge[i-1] * (m.x[1, r+1, i]) + m.t[r+1, i] * (1-m.x[1, r+1, i]))
-
-
-    # constraint 19:-------------------------------------------------------------------------- (19) in new model
-    # m.cons19 = ConstraintList()
-    # for i in drones_set:
-    #     for r in slot_set:
-    #         m.cons19.add(m.x[1, r, i] == m.z[r, i])
+        for r in slot_set - {1}:
+            # m.cons13.add(m.t[r, i] == (full_charge - m.c[r,i] + m.c[r-1, i]) * m.x[1, r-1, i] + (m.t[r-1, i] - m.c[r,i] + m.c[r-1, i]) * (1-m.x[1, r-1, i]))
+            # m.cons13.add(m.t[r, i] == (full_charge - m.c[r,i]) * m.x[1, r-1, i] + (m.t[r-1, i] - m.c[r,i] + m.c[r-1, i]) * (1-m.x[1, r-1, i]))
+            m.cons13.add(m.t[r, i] == full_charge * m.x[1, r, i] + (m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i]) * (1 - m.x[1, r, i]))
 
     # constraint 20:-------------------------------------------------------------------------- (20) in new model
     m.cons20 = ConstraintList()
@@ -133,18 +104,18 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
             m.cons21.add(sum(m.s[r, i]*m.x[j+1, r, i] for r in slot_set for i in drones_set) - sum(m.c[r, i]*m.x[j, r, i] for r in slot_set for i in drones_set) >= 0)
 
     # constraint 30:-------------------------------------------------------------------------- (30) in new model
-    m.cons30 = ConstraintList()
-    for f in families:
-        for j in f:
-            for r in slot_set - {n_slot}:
-                for i in drones_set:
-                    m.cons30.add(sum(m.x[jj, r + 1, i] for jj in range(j+1, len(demand_set))) <= B*(1-m.x[j, r, i]))
+    # m.cons30 = ConstraintList()
+    # for f in families:
+    #     for j in f:
+    #         for r in slot_set - {n_slot}:
+    #             for i in drones_set:
+    #                 m.cons30.add(sum(m.x[jj, r + 1, i] for jj in range(j+1, len(demand_set))) <= B*(1-m.x[j, r, i]))
 
     # constraint 31:-------------------------------------------------------------------------- (31) in new model
-    m.cons31 = ConstraintList()
-    for r in slot_set:
-        for i in drones_set:
-            m.cons31.add(m.x[len(due_dates)-1, r, i] == 1 - sum(m.x[j, r, i] for j in demand_set-{len(due_dates)-1}))
+    # m.cons31 = ConstraintList()
+    # for r in slot_set:
+    #     for i in drones_set:
+    #         m.cons31.add(m.x[len(due_dates)-1, r, i] == 1 - sum(m.x[j, r, i] for j in demand_set-{len(due_dates)-1}))
 
     # m.pprint()
     num_of_cons = {}
@@ -165,24 +136,25 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     msolver = SolverFactory('gurobi')
     msolver.options['Threads'] = 20
     msolver.options['FeasibilityTol'] = 1e-7
-    msolver.options['MIPFocus'] = 2
+    # msolver.options['MIPFocus'] = 2
     msolver.options['Cuts'] = 3
     msolver.options['Heuristics'] = 1
     msolver.options['RINS'] = 5
-    msolver.options['SubMIPNodes'] = 1000
+    # msolver.options['SubMIPNodes'] = 1000
     msolver.options['PreQLinearize'] = 0
     msolver.options['BarCorrectors'] = 100
     msolver.options['PreMIQCPForm'] = 1
-    msolver.options['Cutoff'] = 1
-    solution = msolver.solve(m, warmstart= False, tee=False)
+    # msolver.options['Cutoff'] = 0.65
+    # msolver.options['SolutionLimit'] = 6
+    solution = msolver.solve(m, warmstart= False, tee=True)
     print('\nNONLINEAR!------------------------------------')
     mprint(m, solution, datam)
     route_battery(m, solution, datam)
 
-    if ws is not None:
-        print('Hexaly results!------------------------------------')
-        for i in ws:
-            print(*i, sep=' --> ')
+    # if ws is not None:
+    #     print('Hexaly results!------------------------------------')
+    #     for i in ws:
+    #         print(*i, sep=' --> ')
     return None
 
 

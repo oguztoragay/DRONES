@@ -25,29 +25,36 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time):
         m.constraint(m.cover(vis_sequences))
         for i in real_node_data:
             m.constraint(m.sum(m.contains(vis_sequences[k], i) for k in range(n_drones)) == 1)
+        # for i in [0, n_node]:
+        #     m.constraint(m.sum(m.contains(vis_sequences[k], i) for k in range(n_drones)) >= 0)
+
         end_time = [None] * n_drones
         str_time = [None] * n_drones
         lateness = [None] * n_drones
         route_battery = [None] * n_drones
+        c = [None] * n_drones
 
         for k in range(n_drones):
             sequence = vis_sequences[k]
-            c = m.count(sequence)
-            m.constraint(c <= n_slot)
+            c[k] = m.count(sequence)
+            m.constraint(c[k] <= n_slot)
+            m.constraint(sequence[0] != 0)
             battery_lambda = m.lambda_function(lambda i, prev:
-                                               m.iif(i == 0, drone_charge[k] - m.at(td_matrix, sequence[i]),
+                                               m.iif(i == 0, drone_charge[k] - m_time[sequence[i]] - m.at(td_matrix, sequence[i]),
                                                      m.iif(sequence[i] == 0, drone_charge[k],
-                                                     prev - m.at(t_matrix, sequence[i - 1], sequence[i]) ))) #
-            route_battery[k] = m.array(m.range(0, c-1), battery_lambda)
-            quantity_lambda = m.lambda_function(lambda i: m.or_(route_battery[k][i] >= 0, sequence[i+1] == 0))
-            m.constraint(m.and_(m.range(0, c-1), quantity_lambda))
+                                                     prev - m.at(t_matrix, sequence[i-1], sequence[i]) - m_time[sequence[i]]))) #
+            route_battery[k] = m.array(m.range(0, c[k]), battery_lambda)
+            quantity_lambda = m.lambda_function(lambda i: m.or_(route_battery[k][i] >= 0, sequence[i] == 0))
+            # quantity_lambda = m.lambda_function(lambda i: route_battery[k][i] >= 0)
+
+            m.constraint(m.and_(m.range(0, c[k]), quantity_lambda))
 
             end_time_lambda = m.lambda_function(lambda i, prev: m.iif(i != 0, prev + m.at(t_matrix, sequence[i-1], sequence[i]) + m_time[sequence[i]], m.at(td_matrix, sequence[i]) + m_time[sequence[i]]))
-            end_time[k] = m.array(m.range(0, c), end_time_lambda)
+            end_time[k] = m.array(m.range(0, c[k]), end_time_lambda)
             str_time_lambda = m.lambda_function(lambda i: m.iif(i == 0, 0, end_time[k][i - 1] + m.at(t_matrix, sequence[i - 1], sequence[i])))
-            str_time[k] = m.array(m.range(0, c), str_time_lambda)
+            str_time[k] = m.array(m.range(0, c[k]), str_time_lambda)
             late_lambda = m.lambda_function(lambda i: m.iif(sequence[i] == 0, 0, end_time[k][i] - due_dates[sequence[i]]))
-            lateness[k] = m.max(m.range(0, c), late_lambda)
+            lateness[k] = m.max(m.range(0, c[k]), late_lambda)
 
         vis_sequences_array = m.array(vis_sequences)
         end_times = m.array(end_time)
@@ -70,6 +77,8 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time):
 
         max_lateness = m.max(lateness[0:n_drones])
         m.minimize(max_lateness)
+        # m.maximize(m.sum(c[k] for k in range(n_drones)))
+        # m.minimize(m.sum(m.contains(vis_sequences[k], 0) for k in range(n_drones)))
         m.close()
         ls.param.time_limit = int(av_time)
         ls.solve()

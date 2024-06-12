@@ -33,34 +33,31 @@ def generate(ndrones, condition, slot, charge, itimes):
     if condition == 'fixed':
         f = [[2, 3], [5, 6], [8]]
         families = [[1], [2, 3, 4], [5, 6, 7], [8, 9], [10]]
-        # families = [[0], [1, 2, 3], [4, 5, 6], [7, 8], [9]]
-        monitor_times = np.array([3, 2, 2, 2, 1, 1, 1, 1, 1, 0.01])  # Pj [2, 1, 2, 3, 4, 5, 5]
-        t_matrix = np.array([[0, 3, 3, 3, 4, 4, 4, 1, 1, 0.1],
-                             [3, 0, 50, 50, 1, 1, 1, 2, 2, 0.1],
-                             [3, 50, 0, 50, 1, 1, 1, 2, 2, 0.1],
-                             [3, 50, 50, 0, 1, 1, 1, 2, 2, 0.1],
-                             [4, 1, 1, 1, 0, 50, 50, 3, 3, 0.1],
-                             [4, 1, 1, 1, 50, 0, 50, 3, 3, 0.1],
-                             [4, 1, 1, 1, 50, 50, 0, 3, 3, 0.1],
-                             [1, 2, 2, 2, 3, 3, 3, 0, 50, 0.1],
-                             [1, 2, 2, 2, 3, 3, 3, 50, 0, 0.1],
-                             [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0]])  # Sjk
+        monitor_times = np.array([5, 2, 2, 2, 1, 1, 1, 1, 1, 0.01])  # Pj [2, 1, 2, 3, 4, 5, 5]
+        distances = np.array([[0, 3, 4, 1, 0.1],
+                              [3, 0, 1, 2, 0.1],
+                              [4, 1, 0, 3, 0.1],
+                              [1, 2, 3, 0, 0.1],
+                              [0.1, 0.1, 0.1, 0.1, 0]]) # Sjk
+        m = len(monitor_times)
+        penalty = 1000
+        t_matrix = np.zeros((m, m))
+        for i in range(len(families)):
+            for j in range(len(families)):
+                i_mem = families[i]
+                j_mem = families[j]
+                for ii in i_mem:
+                    for jj in j_mem:
+                        if i_mem == j_mem and i != len(families) - 1:
+                            t_matrix[ii - 1, jj - 1] = penalty
+                        elif j_mem == i_mem and j == len(families) - 1:
+                            t_matrix[ii - 1, jj - 1] = distances[(i, j)]
+                        else:
+                            t_matrix[ii - 1, jj - 1] = distances[(i, j)]
 
-        # t_matrix = np.array([[0, 3, 3, 3, 4, 4, 4, 1, 1, 0.1],
-        #                      [3, 0, 0, 0, 1, 1, 1, 2, 2, 0.1],
-        #                      [3, 0, 0, 0, 1, 1, 1, 2, 2, 0.1],
-        #                      [3, 0, 0, 0, 1, 1, 1, 2, 2, 0.1],
-        #                      [4, 1, 1, 1, 0, 0, 0, 3, 3, 0.1],
-        #                      [4, 1, 1, 1, 0, 0, 0, 3, 3, 0.1],
-        #                      [4, 1, 1, 1, 0, 0, 0, 3, 3, 0.1],
-        #                      [1, 2, 2, 2, 3, 3, 3, 0, 0, 0.1],
-        #                      [1, 2, 2, 2, 3, 3, 3, 0, 0, 0.1],
-        #                      [0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0]])
-
-        due_date = np.array([0, 10, 20, 24, 8, 16, 24, 5, 10, 30])  # dj
+        due_date = np.array([50, 10, 20, 24, 8, 16, 24, 5, 10, 50])  # dj
+        due_date = np.array([i * 0.2 for i in due_date])
         charges = np.ones(ndrones)*charge_
-        # i_times = 3 #max intervisit time
-        # slots = 5
         membership = [1, 2, 2, 2, 3, 3, 3, 4, 4, 5]
     if condition == 'SB':
         f = [[2], [4, 5], [7], [9, 10]]
@@ -77,7 +74,7 @@ def generate(ndrones, condition, slot, charge, itimes):
         families.append([last_])
         monitor_times = list(np.repeat(monitoring, [len(i) for i in families]))
         m = len(monitor_times)
-        distances = np.array([[1000.0000, 0.0632, 0.0117, 0.0225, 0.1443, 0.0080],
+        distances = np.array([[0.0000, 0.0632, 0.0117, 0.0225, 0.1443, 0.0080],
                               [0.0352, 0.0000, 0.0376, 0.0392, 0.1304, 0.0080],
                               [0.0212, 0.0673, 0.0000, 0.0437, 0.1268, 0.0080],
                               [0.0458, 0.0713, 0.0574, 0.0000, 0.1818, 0.0080],
@@ -91,13 +88,13 @@ def generate(ndrones, condition, slot, charge, itimes):
                 j_mem = families[j]
                 for ii in i_mem:
                     for jj in j_mem:
-                        if i_mem == j_mem and i_mem != len(families):
+                        if i_mem == j_mem and i != len(families)-1:
                             t_matrix[ii - 1, jj - 1] = penalty
-                        elif j_mem == i_mem and j_mem == len(families):
+                        elif j_mem == i_mem and j == len(families)-1:
                             t_matrix[ii - 1, jj - 1] = distances[(i, j)]
                         else:
                             t_matrix[ii - 1, jj - 1] = distances[(i, j)]
-        due = np.array([0, 0.1, 0.23, 0.03, 0.15, 0.3, 0.46, 0.8, 0.7, 1.5, 1.7, 15])
+        due = np.array([15, 0.1, 0.23, 0.03, 0.15, 0.3, 0.46, 0.8, 0.7, 1.5, 1.7, 15])
         due = np.array([i*0.2 for i in due])
         membership = []
         for i in range(len(families)):
@@ -139,13 +136,14 @@ def generate(ndrones, condition, slot, charge, itimes):
                 j_mem = families[j]
                 for ii in i_mem:
                     for jj in j_mem:
-                        if i_mem == j_mem and i_mem != len(families):
+                        if i_mem == j_mem and i != len(families)-1:
                             t_matrix[ii - 1, jj - 1] = penalty
-                        elif j_mem == i_mem and j_mem == len(families):
+                        elif j_mem == i_mem and j == len(families)-1:
                             t_matrix[ii - 1, jj - 1] = distances[(i, j)]
                         else:
                             t_matrix[ii - 1, jj - 1] = distances[(i, j)]
         due = np.array([12, 0.3, 0.69, 0.29, 2.4, 0.9, 0.48, 5.4, 2.1, 12])
+        # due = np.array([i * 0.2 for i in due])
         due_date = []
         membership = []
         for i in range(len(families)):
@@ -260,7 +258,6 @@ def mprint(m, solution, datam):
     #     if value(m.w[ind]):
     #         print('w', ind, '=', value(m.w[ind]))
 
-
 def route_battery(m, solution, datam):
     assign_list = np.zeros((len(datam[4]), datam[3]), dtype=int)
     assign_families = np.zeros((len(datam[4]), datam[3]), dtype=int)
@@ -277,6 +274,8 @@ def route_battery(m, solution, datam):
         for j in range(1, len(clist)):
             battery_usage[i].append(battery_usage[i][-1] - datam[0][clist[j-1]-1][clist[j]-1] - datam[2][clist[j]-1] + datam[4][i]*int(clist[j]==1))
     print("Battery Usage:")
-    for i in range(0, len(battery_usage)):
-        print(battery_usage[i])
+    # for i in range(0, len(battery_usage)):
+    #     print(battery_usage[i])
+    for i in m.t_index_1.data():
+        print([value(m.t[j,i]) for j in m.t_index_0.data()])
 
