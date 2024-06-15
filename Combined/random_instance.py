@@ -33,7 +33,7 @@ def generate(ndrones, condition, slot, charge, itimes):
     if condition == 'fixed':
         f = [[2, 3], [5, 6], [8]]
         families = [[1], [2, 3, 4], [5, 6, 7], [8, 9], [10]]
-        monitor_times = np.array([0.01, 2, 2, 2, 1, 1, 1, 1, 1, 0.01])  # Pj [2, 1, 2, 3, 4, 5, 5]
+        monitor_times = np.array([5, 2, 2, 2, 1, 1, 1, 1, 1, 0.01])  # Pj [2, 1, 2, 3, 4, 5, 5]
         distances = np.array([[0, 3, 4, 1, 0.1],
                               [3, 0, 1, 2, 0.1],
                               [4, 1, 0, 3, 0.1],
@@ -74,12 +74,15 @@ def generate(ndrones, condition, slot, charge, itimes):
         families.append([last_])
         monitor_times = list(np.repeat(monitoring, [len(i) for i in families]))
         m = len(monitor_times)
-        distances = np.array([[0.0000, 0.0632, 0.0117, 0.0225, 0.1443, 0.0080],
+        non_symmetric_dist = np.array([[0.0000, 0.0632, 0.0117, 0.0225, 0.1443, 0.0080],
                               [0.0352, 0.0000, 0.0376, 0.0392, 0.1304, 0.0080],
                               [0.0212, 0.0673, 0.0000, 0.0437, 0.1268, 0.0080],
                               [0.0458, 0.0713, 0.0574, 0.0000, 0.1818, 0.0080],
                               [0.1300, 0.1343, 0.1186, 0.1517, 0.0000, 0.0080],
                               [0.0080, 0.0080, 0.0080, 0.0080, 0.0080, 0.0000]]) # Sjk
+
+        symmetric_dist = (non_symmetric_dist + non_symmetric_dist.T) / 2
+        distances = non_symmetric_dist
         penalty = 1000
         t_matrix = np.zeros((m, m))
         for i in range(len(families)):
@@ -94,8 +97,8 @@ def generate(ndrones, condition, slot, charge, itimes):
                             t_matrix[ii - 1, jj - 1] = distances[(i, j)]
                         else:
                             t_matrix[ii - 1, jj - 1] = distances[(i, j)]
-        due = np.array([15, 0.1, 0.23, 0.03, 0.15, 0.3, 0.46, 0.8, 0.7, 1.5, 1.7, 15])
-        due = np.array([i*0.2 for i in due])
+        due = np.array([50, 0.1, 0.23, 0.03, 0.15, 0.3, 0.46, 0.8, 0.7, 0.9, 1.1, 50])
+        # due = np.array([i*0.2 for i in due])
         membership = []
         for i in range(len(families)):
             for j in range(len(families[i])):
@@ -107,7 +110,7 @@ def generate(ndrones, condition, slot, charge, itimes):
         # slots = 7
     if condition == 'SB_RS':
         f = [[2], [4, 5], [7], [9, 10], [12, 13], [15], [17], [19]]
-        monitoring = [0.04, 0.03, 0.01, 0.02, 0.5, 0.04, 0.03, 0.02, 0.02, 0.002]
+        monitoring = [0.04, 0.03, 0.01, 0.02, 0.05, 0.04, 0.03, 0.02, 0.02, 0.002]
         families = []
         for fam in f:
             families.append(fam + [fam[-1] + 1])
@@ -118,7 +121,7 @@ def generate(ndrones, condition, slot, charge, itimes):
         families.append([21])
         monitor_times = list(np.repeat(monitoring, [len(i) for i in families]))
         m = len(monitor_times)
-        distances = np.array([[0, 0.0632, 0.0117, 0.0225, 0.1443, 0.4696, 0.1890, 0.3619, 0.3260, 0.01],
+        non_symmetric_dist = np.array([[0, 0.0632, 0.0117, 0.0225, 0.1443, 0.4696, 0.1890, 0.3619, 0.3260, 0.01],
                               [0.0352, 0, 0.0376, 0.0392, 0.1304, 0.5006, 0.2196, 0.3508, 0.3373, 0.01],
                               [0.0212, 0.0673, 0, 0.0437, 0.1268, 0.4798, 0.2004, 0.3820, 0.3464, 0.01],
                               [0.0458, 0.0713, 0.0574, 0, 0.1818, 0.4567, 0.1772, 0.3170, 0.2856, 0.01],
@@ -128,6 +131,8 @@ def generate(ndrones, condition, slot, charge, itimes):
                               [0.3734, 0.3526, 0.3844, 0.3518, 0.4731, 0.5726, 0.3947, 0, 0.2415, 0.01],
                               [0.3265, 0.3456, 0.3378, 0.3053, 0.4661, 0.3521, 0.2375, 0.1992, 0, 0.01],
                               [0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0]])
+        symmetric_dist = (non_symmetric_dist + non_symmetric_dist.T) / 2
+        distances = symmetric_dist
         penalty = 1000
         t_matrix = np.zeros((m, m))
         for i in range(len(families)):
@@ -142,8 +147,8 @@ def generate(ndrones, condition, slot, charge, itimes):
                             t_matrix[ii - 1, jj - 1] = distances[(i, j)]
                         else:
                             t_matrix[ii - 1, jj - 1] = distances[(i, j)]
-        due = np.array([12, 0.3, 0.69, 0.29, 2.4, 0.9, 0.48, 5.4, 2.1, 12])
-        # due = np.array([i * 0.2 for i in due])
+        due = np.array([30, 0.3, 0.69, 0.29, 2.15, 0.9, 0.48, 1.48, 2.1, 30])
+        due = np.array([i * 0.2 for i in due])
         due_date = []
         membership = []
         for i in range(len(families)):
@@ -187,15 +192,6 @@ def generate(ndrones, condition, slot, charge, itimes):
                               [0.9110, 0.8489, 0.9137, 0.9044, 0.8734, 1.3076, 1.0586, 0.7866, 0.9956, 0.2373, 0.2408, 0.6492, 0.4490, 0.4171, 0.2049, 0.0000, 0.0703, 0.0800],
                               [0.8873, 0.8266, 0.8911, 0.8786, 0.8636, 1.2633, 1.0240, 0.7307, 0.9443, 0.3242, 0.3054, 0.7308, 0.5072, 0.4691, 0.2929, 0.1405, 0.0000, 0.0800],
                               [0.0800, 0.0800, 0.0800, 0.0800, 0.0800, 0.0800, 0.0800, 0.0800, 0.0800, 0.0800, 0.0800, 0.0800, 0.0800, 0.0800, 0.0800, 0.0800, 0.0800, 0.0000]])
-
-        # t_matrix = np.zeros((m, m))
-        # for i in range(len(families)):
-        #     for j in range(len(families)):
-        #         i_mem = families[i]
-        #         j_mem = families[j]
-        #         for ii in i_mem:
-        #             for jj in j_mem:
-        #                 t_matrix[ii - 1, jj - 1] = distances[(i, j)]
         penalty = 1000
         t_matrix = np.zeros((m, m))
         for i in range(len(families)):
@@ -204,9 +200,9 @@ def generate(ndrones, condition, slot, charge, itimes):
                 j_mem = families[j]
                 for ii in i_mem:
                     for jj in j_mem:
-                        if i_mem == j_mem and i_mem != len(families):
+                        if i_mem == j_mem and i != len(families) - 1:
                             t_matrix[ii - 1, jj - 1] = penalty
-                        elif j_mem == i_mem and j_mem == len(families):
+                        elif j_mem == i_mem and j == len(families) - 1:
                             t_matrix[ii - 1, jj - 1] = distances[(i, j)]
                         else:
                             t_matrix[ii - 1, jj - 1] = distances[(i, j)]

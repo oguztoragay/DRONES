@@ -7,8 +7,9 @@ from random_instance import generate
 from random_instance import mprint
 from random_instance import route_battery
 import random
+import pickle
 
-def nl_pyo(data, ws, ws_x, ws_y, ws_z):
+def nl_pyo(data, ws, ws_x, ws_y, ws_z, verbose):
     datam = data
     t_matrix, due_dates, m_time, n_slot, drone_charge, i_times, membership, families, f = datam
     demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
@@ -27,8 +28,9 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.t = Var(slot_set, drones_set,  domain= NonNegativeReals, initialize=0) #remaining charge AFTER visit completion
-    m.lmax = Var(domain=NonNegativeReals, initialize=0) # , bounds=(0, 5),
+    m.lmax = Var(initialize=0) #domain=NonNegativeReals,
     m.obj_func = Objective(expr=m.lmax, sense=minimize)
+
     # if ws is not None:
     #     print('Hexaly results!------------------------------------')
     #     for i in ws:
@@ -61,7 +63,7 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     m.cons5 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons5.add(m.c[r, i] == m.s[r, i] + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
+            m.cons5.add(m.c[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.x[k, r-1, i]*m.x[j, r, i] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
 
     # constraint 6:-------------------------------------------------------------------------- (6) in new model
     for i in drones_set:
@@ -71,13 +73,15 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     m.cons7 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons7.add(m.s[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.x[j, r, i]*m.x[k, r-1, i] for j in demand_set for k in demand_set))
+            # m.cons7.add(m.s[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.x[k, r-1, i]*m.x[j, r, i] for j in demand_set for k in demand_set))
+            m.cons7.add(m.s[r, i] == m.c[r, i] - sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
 
     # constraint 10:-------------------------------------------------------------------------- (10) in new model
     m.cons10 = ConstraintList()
     for r in slot_set:
         for i in drones_set:
-            m.cons10.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set))
+            # m.cons10.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set))
+            m.cons10.add(m.lmax >= sum((m.c[r, i] - due_dates[j - 1]) * m.x[j, r, i] for j in demand_set))
 
     # constraint 11 and 12:-------------------------------------------------------------------------- (11) & (12) in new model
     m.cons11 = ConstraintList()
@@ -86,16 +90,16 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
 
     m.cons13 = ConstraintList()
     for i in drones_set:
-        for r in slot_set - {1, n_slot}:
+        for r in slot_set - {1}:
             # m.cons13.add(m.t[r, i] == (full_charge - m.c[r,i] + m.c[r-1, i]) * m.x[1, r-1, i] + (m.t[r-1, i] - m.c[r,i] + m.c[r-1, i]) * (1-m.x[1, r-1, i]))
             # m.cons13.add(m.t[r, i] == (full_charge - m.c[r,i]) * m.x[1, r-1, i] + (m.t[r-1, i] - m.c[r,i] + m.c[r-1, i]) * (1-m.x[1, r-1, i]))
-            m.cons13.add(m.t[r, i] == full_charge * m.x[1, r, i] + (m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i]) * (1 - m.x[1, r, i]))
+            m.cons13.add(m.t[r, i] == (full_charge * m.x[1, r, i]) + ((m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i]) * (1 - m.x[1, r, i])))
 
     # constraint 20:-------------------------------------------------------------------------- (20) in new model
     m.cons20 = ConstraintList()
     for f in families:
         for j in f:
-            m.cons20.add(sum(m.c[r, i]*m.x[j+1, r, i] for r in slot_set for i in drones_set) - sum(m.c[r, i]*m.x[j, r, i] for r in slot_set for i in drones_set) <= i_times)
+            m.cons20.add(sum(m.s[r, i]*m.x[j+1, r, i] for r in slot_set for i in drones_set) - sum(m.c[r1, i1]*m.x[j, r1, i1] for r1 in slot_set for i1 in drones_set) <= i_times)
 
     # constraint 21:-------------------------------------------------------------------------- (21) in new model
     m.cons21 = ConstraintList()
@@ -103,15 +107,15 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
         for j in f:
             m.cons21.add(sum(m.s[r, i]*m.x[j+1, r, i] for r in slot_set for i in drones_set) - sum(m.c[r, i]*m.x[j, r, i] for r in slot_set for i in drones_set) >= 0)
 
-    # constraint 30:-------------------------------------------------------------------------- (30) in new model
+    # # constraint 30:-------------------------------------------------------------------------- (30) in new model
     # m.cons30 = ConstraintList()
     # for f in families:
     #     for j in f:
     #         for r in slot_set - {n_slot}:
     #             for i in drones_set:
     #                 m.cons30.add(sum(m.x[jj, r + 1, i] for jj in range(j+1, len(demand_set))) <= B*(1-m.x[j, r, i]))
-
-    # constraint 31:-------------------------------------------------------------------------- (31) in new model
+    #
+    # # constraint 31:-------------------------------------------------------------------------- (31) in new model
     # m.cons31 = ConstraintList()
     # for r in slot_set:
     #     for i in drones_set:
@@ -136,21 +140,24 @@ def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     msolver = SolverFactory('gurobi')
     msolver.options['Threads'] = 20
     msolver.options['FeasibilityTol'] = 1e-7
-    # msolver.options['MIPFocus'] = 2
+    msolver.options['MIPFocus'] = 2
     msolver.options['Cuts'] = 3
     msolver.options['Heuristics'] = 1
     msolver.options['RINS'] = 5
-    # msolver.options['SubMIPNodes'] = 1000
+    msolver.options['SubMIPNodes'] = 1000
     msolver.options['PreQLinearize'] = 0
     msolver.options['BarCorrectors'] = 100
     msolver.options['PreMIQCPForm'] = 1
-    # msolver.options['Cutoff'] = 0.65
+    # msolver.options['Cutoff'] = 1
     # msolver.options['SolutionLimit'] = 6
-    solution = msolver.solve(m, warmstart= False, tee=True)
-    print('\nNONLINEAR!------------------------------------')
-    mprint(m, solution, datam)
-    route_battery(m, solution, datam)
-
+    solution = msolver.solve(m, warmstart= False, tee=verbose)
+    # print('\nNONLINEAR!------------------------------------')
+    # mprint(m, solution, datam)
+    # route_battery(m, solution, datam)
+    pickle_out = open('nlp.pickle', "wb")
+    pickle.dump([m, solution, datam], pickle_out)
+    pickle_out.close()
+    print('~~~~~~~~~~ NLP has been finalized ~~~~~~~~~~ -->',  solution.Solver.Termination_condition)
     # if ws is not None:
     #     print('Hexaly results!------------------------------------')
     #     for i in ws:
