@@ -108,6 +108,55 @@ def generate(ndrones, condition, slot, charge, itimes):
         charges = np.ones(ndrones) * charge_
         # i_times = 4  # max intervisit time
         # slots = 7
+    if condition == 'SB_M':
+        f = [[2], [4, 5], [7], [9, 10]]
+        monitoring = [7, 3, 1, 2, 5, 0]
+        families = []
+        last_ = 0
+        for fam in f:
+            families.append(fam + [fam[-1] + 1])
+            last_ = fam[-1] + 2
+        list1 = [[1]]
+        for i in families:
+            list1.append(i)
+        families = list1
+        families.append([last_])
+        monitor_times = list(np.repeat(monitoring, [len(i) for i in families]))
+        m = len(monitor_times)
+        non_symmetric_dist = np.array([[0.0000, 0.0632, 0.0117, 0.0225, 0.1443, 0.0080],
+                              [0.0352, 0.0000, 0.0376, 0.0392, 0.1304, 0.0080],
+                              [0.0212, 0.0673, 0.0000, 0.0437, 0.1268, 0.0080],
+                              [0.0458, 0.0713, 0.0574, 0.0000, 0.1818, 0.0080],
+                              [0.1300, 0.1343, 0.1186, 0.1517, 0.0000, 0.0080],
+                              [0.0080, 0.0080, 0.0080, 0.0080, 0.0080, 0.0000]]) # Sjk
+        non_symmetric_dist = np.multiply(non_symmetric_dist, 10)
+        symmetric_dist = (non_symmetric_dist + non_symmetric_dist.T) / 2
+        distances = non_symmetric_dist
+        penalty = 1000
+        t_matrix = np.zeros((m, m))
+        for i in range(len(families)):
+            for j in range(len(families)):
+                i_mem = families[i]
+                j_mem = families[j]
+                for ii in i_mem:
+                    for jj in j_mem:
+                        if i_mem == j_mem and i != len(families)-1:
+                            t_matrix[ii - 1, jj - 1] = penalty
+                        elif j_mem == i_mem and j == len(families)-1:
+                            t_matrix[ii - 1, jj - 1] = distances[(i, j)]
+                        else:
+                            t_matrix[ii - 1, jj - 1] = distances[(i, j)]
+        due = np.array([5, 0.1, 0.23, 0.03, 0.15, 0.3, 0.46, 0.8, 0.7, 0.9, 1.1, 5])
+        due = np.array([i*10 for i in due])
+        membership = []
+        for i in range(len(families)):
+            for j in range(len(families[i])):
+                due_date.append(due[i])
+                membership.append(i + 1)
+        due_date = due
+        charges = np.ones(ndrones) * charge_
+        # i_times = 4  # max intervisit time
+        # slots = 7
     if condition == 'SB_RS':
         f = [[2], [4, 5], [7], [9, 10], [12, 13], [15], [17], [19]]
         monitoring = [0.04, 0.03, 0.01, 0.02, 0.05, 0.04, 0.03, 0.02, 0.02, 0.002]

@@ -22,15 +22,8 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
         for fam in families:
             for i in fam:
                 successors_data[i] = fam[indexOf(fam, i)+1::]
-        vis_sequences = [m.list(n_node) for _ in range(n_drones)]
-        # m.constraint(m.cover(vis_sequences))
-        for i in real_node_data:
-            m.constraint(m.sum(m.contains(vis_sequences[k], i) for k in range(n_drones)) == 1)
-        # for i in [0, n_node]:
-        #     m.constraint(m.sum(m.contains(vis_sequences[k], i) for k in range(n_drones)) >= 0)
+        vis_sequences = [m.list(n_slot) for _ in range(n_drones)]
 
-        # lb = 0
-        # ub = 30
         end_time = [None] * n_drones
         str_time = [None] * n_drones
         lateness = [None] * n_drones
@@ -38,27 +31,25 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
 
         for k in range(n_drones):
             sequence = vis_sequences[k]
-            c = m.count(sequence)
-            m.constraint(c <= n_slot)
+            c = n_slot-1
             m.constraint(sequence[0] != 0)
             battery_lambda = m.lambda_function(lambda i, prev:
                                                m.iif(i == 0, drone_charge[k] - m_time[sequence[i]] - m.at(t_matrix, 0, sequence[i]),
                                                      m.iif(sequence[i] == 0, drone_charge[k],
-                                                     prev - m.at(t_matrix, sequence[i-1], sequence[i]) - m_time[sequence[i]]))) #
-            route_battery[k] = m.array(m.range(0, c), battery_lambda)
-            quantity_lambda = m.lambda_function(lambda i: m.iif(route_battery[k][i] >= 0, True, sequence[i] == 0))
-            # quantity_lambda = m.lambda_function(lambda i: route_battery[k][i] >= 0)
-            m.constraint(m.and_(m.range(0, c), quantity_lambda))
+                                                     prev - m.at(t_matrix, sequence[i-1], sequence[i]) - m_time[sequence[i]])))
+            route_battery[k] = m.array(m.range(0, c), battery_lambda,0)
+            # quantity_lambda = m.lambda_function(lambda i: m.iif(route_battery[k][i] >= 0, True, sequence[i] == 0))
+            quantity_lambda = m.lambda_function(lambda i: route_battery[k][i] >= 0)
+            m.constraint(m.and_(m.range(0, c-1), quantity_lambda))
             # m.constraint(m.and_([m.range(0, c), m.iif(route_battery[k][i] >= 0, sequence[i] >=1, True)]))
 
 
             end_time_lambda = m.lambda_function(lambda i, prev: m.iif(i != 0, prev + m.at(t_matrix, sequence[i-1], sequence[i]) + m_time[sequence[i]], m.at(t_matrix, 0, sequence[i]) + m_time[sequence[i]]))
-            end_time[k] = m.array(m.range(0, c), end_time_lambda)
+            end_time[k] = m.array(m.range(0, c), end_time_lambda,0)
             str_time_lambda = m.lambda_function(lambda i: m.iif(i == 0, 0, end_time[k][i - 1] + m.at(t_matrix, sequence[i - 1], sequence[i])))
             str_time[k] = m.array(m.range(0, c), str_time_lambda)
-            late_lambda = m.lambda_function(lambda i: m.iif(m.or_(i == 0, i == n_node-1), -100, end_time[k][i] - due_dates[sequence[i]])) # m.iif(m.or_(i == 0, i == n_node), -1000,
+            late_lambda = m.lambda_function(lambda i: m.iif(m.or_(i == 0, i == n_node), 0, end_time[k][i] - due_dates[sequence[i]])) # m.iif(m.or_(i == 0, i == n_node), -1000,
             lateness[k] = m.max(m.range(0, c), late_lambda)
-            # lateness[k] = end_time[k][c]
 
 
             seq_rule = m.lambda_function(lambda i: m.iif(i == 0, 1, str_time[k][i] >= end_time[k][i-1]))
@@ -67,7 +58,11 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
         vis_sequences_array = m.array(vis_sequences)
         end_times = m.array(end_time)
         str_times = m.array(str_time)
+
         for i in real_node_data:
+            # m.constraint(m.and_(m.range(0, n_drones), m.bool(m.contains(vis_sequences[k], i)))==False)
+            # m.constraint(m.and_(m.range(0, n_drones), m.contains(vis_sequences[k], i)) == False)
+            m.constraint(m.contains(vis_sequences[0], i) + m.contains(vis_sequences[1], i) == 1)
             if successors_data[i]:
                 i_index = m.find(vis_sequences_array, i)
                 i_list = m.at(vis_sequences_array, i_index)
@@ -80,8 +75,8 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
                 jb_time = str_times[j_index][loc_j]
                 jc_time = end_times[j_index][loc_j]
                 # m.constraint(m.index(i_list, i) + 1 < m.index(j_list, j))
-                m.constraint(jb_time - ic_time <= data[4])
-                m.constraint(jb_time - ic_time >= 0)
+                # m.constraint(jb_time - ic_time <= data[4])
+                # m.constraint(jb_time - ic_time >= 0)
 
         max_lateness = m.max(m.array(lateness))
         m.minimize(max_lateness)
@@ -89,6 +84,8 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
         ls.param.time_limit = int(av_time)
         ls.param.verbosity = int(verbose)
         ls.solve()
+        iis = ls.compute_inconsistency()
+        print(iis)
         for k in range(n_drones):
             gen_seq.append([])
             gen_st.append([])
@@ -108,3 +105,4 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
         pickle_out.close()
         print('~~~~~~~~~~ HXL has been finalized ~~~~~~~~~~ -->', ls.solution.status.name)
     return gen_seq, gen_st, gen_ct, b_res
+

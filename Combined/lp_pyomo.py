@@ -2,7 +2,7 @@
 # Multi-drone capable
 # warm start capable 05/28/2024
 import random
-
+import pickle
 import pyomo.contrib.pynumero.examples.sensitivity
 from pyomo.environ import ConcreteModel, Var, Constraint, ConstraintList, NonNegativeReals, Binary, Integers, NonNegativeIntegers, Param, Objective, minimize, SolverFactory, value, maximize
 from itertools import combinations, product
@@ -13,7 +13,7 @@ from greedy import greedy_sol
 import gurobipy as gp
 import random
 
-def lp_pyo(data, ws, ws_x, ws_y, ws_z):
+def lp_pyo(data, ws, ws_x, ws_y, ws_z, verbose):
     datam = data #generate(n_drones, 'SB_RS_LA')
     t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
     demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
@@ -26,18 +26,26 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z):
 
     B = 10000
     UB = 10000
+    full_charge = drone_Charge[0]
 
     # Pyomo Linear model for the problem------------------------------------------------
     m = ConcreteModel(name="Multiple drones LP model")
+
     m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
     m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)
+
     m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-    m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-    m.z = Var(slot_set, drones_set, domain=Binary, initialize=0)
-    m.w = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-    m.v = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.e = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-    m.lmax = Var(initialize=0, domain=NonNegativeReals, bounds=(0, 5))
+
+    m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
+    m.v = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
+
+    # m.z = Var(slot_set, drones_set, domain=Binary, initialize=0)
+    # m.w = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
+    m.t = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, full_charge))
+
+    m.lmax = Var(initialize=-100)   # domain=NonNegativeReals,,  bounds=(0, 5)
+
     m.obj_func = Objective(expr=m.lmax, sense=minimize)
     # Warm start preparation:---------------------------------------------------------------
     # if ws is not None:
@@ -79,6 +87,9 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z):
     for i in drones_set:
         for r in slot_set - {1}:
             m.cons5.add(m.c[r, i] == m.s[r, i] + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
+    m.cons5_1 = ConstraintList()
+    for i in drones_set:
+        m.cons5_1.add(m.c[n_slot, i] - m.s[n_slot, i] == sum(m_time[j - 1] * m.x[j, n_slot, i] for j in demand_set))
 
     # constraint 6:-------------------------------------------------------------------------- (6) in new model
     for i in drones_set:
@@ -107,46 +118,60 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z):
         for i in drones_set:
             m.cons10.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set))
 
-    # constraint 11 and 12:-------------------------------------------------------------------------- (11) & (12) in new model
+    # # constraint 11 and 12:-------------------------------------------------------------------------- (11) & (12) in new model
+    # m.cons11 = ConstraintList()
+    # m.cons12 = ConstraintList()
+    # for i in drones_set:
+    #     m.cons11.add(m.c[1, i] - drone_Charge[i - 1] <= B * m.z[2, i])
+    #     m.cons12.add(m.c[1, i] - drone_Charge[i - 1] >= -B * (1 - m.z[2, i]))
+    #
+    # # constraint 13 and 14:-------------------------------------------------------------------------- (13) & (14) in new model
+    # m.cons13 = ConstraintList()
+    # m.cons14 = ConstraintList()
+    # for i in drones_set:
+    #     for r in slot_set - {1, n_slot}:
+    #         m.cons13.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - drone_Charge[i - 1] <= B * m.z[r + 1, i])
+    #         m.cons14.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - drone_Charge[i - 1] >= -B * (1 - m.z[r + 1, i]))
+    #
+
     m.cons11 = ConstraintList()
-    m.cons12 = ConstraintList()
     for i in drones_set:
-        m.cons11.add(m.c[1, i] - drone_Charge[i - 1] <= B * m.z[2, i])
-        m.cons12.add(m.c[1, i] - drone_Charge[i - 1] >= -B * (1 - m.z[2, i]))
+        m.cons11.add(m.t[1, i] == full_charge - m.c[1, i])
 
-    # constraint 13 and 14:-------------------------------------------------------------------------- (13) & (14) in new model
-    m.cons13 = ConstraintList()
-    m.cons14 = ConstraintList()
-    for i in drones_set:
-        for r in slot_set - {1, n_slot}:
-            m.cons13.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - drone_Charge[i - 1] <= B * m.z[r + 1, i])
-            m.cons14.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - drone_Charge[i - 1] >= -B * (1 - m.z[r + 1, i]))
+    # m.cons13 = ConstraintList()
+    # for i in drones_set:
+    #     for r in slot_set - {1}:
+    #         # m.cons13.add(m.t[r, i] == (full_charge - m.c[r,i] + m.c[r-1, i]) * m.x[1, r-1, i] + (m.t[r-1, i] - m.c[r,i] + m.c[r-1, i]) * (1-m.x[1, r-1, i]))
+    #         # m.cons13.add(m.t[r, i] == (full_charge - m.c[r,i]) * m.x[1, r-1, i] + (m.t[r-1, i] - m.c[r,i] + m.c[r-1, i]) * (1-m.x[1, r-1, i]))
+    #         m.cons13.add(m.t[r, i] == (full_charge * m.x[1, r, i]) + ((m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i]) * (1 - m.x[1, r, i])))
 
-    # constraint 15 & 16 & 17:--------------------------------------------------------------- (15) to (17) in new model
+    # # constraint 15 & 16 & 17:--------------------------------------------------------------- (15) to (17) in new model
     m.cons15 = ConstraintList()
     m.cons16 = ConstraintList()
     m.cons17 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons15.add(m.w[r-1, i] >= m.c[r-1, i] - UB*(1 - m.z[r, i]))
-            m.cons16.add(m.w[r-1, i] <= m.c[r-1, i])
-            m.cons17.add(m.w[r-1, i] <= UB*m.z[r, i])
+            m.cons15.add(m.t[r, i] <= full_charge * m.x[1, r, i] + B * (1-m.x[1, r, i]))
+            m.cons17.add(m.t[r, i] <= full_charge * m.x[1, r, i] + (m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i]))
+            m.cons16.add(m.t[r, i] >= full_charge * m.x[1, r, i] - B * (1 - m.x[1, r, i]))
+            m.cons17.add(m.t[r, i] >= full_charge * m.x[1, r, i] + (m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i]) - B * m.x[1, r, i])
+
 
     # constraint 18:-------------------------------------------------------------------------- (18) in new model
-    for i in drones_set:
-        m.w[1, i].fix(0)
+    # for i in drones_set:
+    #     m.w[1, i].fix(0)
 
     # constraint 19:-------------------------------------------------------------------------- (19) in new model
-    m.cons19 = ConstraintList()
-    for i in drones_set:
-        for r in slot_set:
-            m.cons19.add(m.x[1, r, i] == m.z[r, i])
+    # m.cons19 = ConstraintList()
+    # for i in drones_set:
+    #     for r in slot_set:
+    #         m.cons19.add(m.x[1, r, i] == m.z[r, i])
 
     # constraint 20:-------------------------------------------------------------------------- (20) in new model
     m.cons20 = ConstraintList()
     for f in families:
         for j in f:
-            m.cons20.add(sum(m.v[j + 1, r, i] for r in slot_set for i in drones_set) - sum(m.e[j, r, i] for r in slot_set for i in drones_set) <= i_times)
+            m.cons20.add(sum(m.e[j + 1, r, i] for r in slot_set for i in drones_set) - sum(m.v[j, r, i] for r in slot_set for i in drones_set) <= i_times)
 
     # constraint 21:-------------------------------------------------------------------------- (21) in new model
     # m.cons21 = ConstraintList()
@@ -182,19 +207,19 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z):
                 m.cons28.add(m.e[j, r, i] <= m.s[r, i])
                 m.cons29.add(m.e[j, r, i] >= m.s[r, i] - UB*(1 - m.x[j, r, i]))
 
-    # constraint 30:-------------------------------------------------------------------------- (30) in new model
-    m.cons30 = ConstraintList()
-    for f in families:
-        for j in f:
-            for r in slot_set - {n_slot}:
-                for i in drones_set:
-                    m.cons30.add(sum(m.x[jj, r + 1, i] for jj in range(j+1, len(demand_set))) <= B*(1-m.x[j, r, i]))
-
-    # constraint 31:-------------------------------------------------------------------------- (31) in new model
-    m.cons31 = ConstraintList()
-    for r in slot_set:
-        for i in drones_set:
-            m.cons31.add(m.x[len(due_dates)-1, r, i] == 1 - sum(m.x[j, r, i] for j in demand_set-{len(due_dates)-1}))
+    # # constraint 30:-------------------------------------------------------------------------- (30) in new model
+    # m.cons30 = ConstraintList()
+    # for f in families:
+    #     for j in f:
+    #         for r in slot_set - {n_slot}:
+    #             for i in drones_set:
+    #                 m.cons30.add(sum(m.x[jj, r + 1, i] for jj in range(j+1, len(demand_set))) <= B*(1-m.x[j, r, i]))
+    #
+    # # constraint 31:-------------------------------------------------------------------------- (31) in new model
+    # m.cons31 = ConstraintList()
+    # for r in slot_set:
+    #     for i in drones_set:
+    #         m.cons31.add(m.x[len(due_dates)-1, r, i] == 1 - sum(m.x[j, r, i] for j in demand_set-{len(due_dates)-1}))
 
     # m.pprint()
     num_of_cons = {}
@@ -221,10 +246,16 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z):
     msolver.options['RINS'] = 5
     msolver.options['SubMIPCuts'] = 2
 
-    solution = msolver.solve(m, warmstart= False, tee=False)
-    print('\nLINEAR!------------------------------------')
-    mprint(m, solution, datam)
-    route_battery(m, solution, datam)
+    solution = msolver.solve(m, warmstart= False, tee=verbose)
+
+    pickle_out = open('lp.pickle', "wb")
+    pickle.dump([m, solution, datam], pickle_out)
+    pickle_out.close()
+    print('~~~~~~~~~~  LP has been finalized ~~~~~~~~~~ -->', solution.Solver.Termination_condition)
+
+    # print('\nLINEAR!------------------------------------')
+    # mprint(m, solution, datam)
+    # route_battery(m, solution, datam)
     # if ws is not None:
     #     print('Hexaly results!------------------------------------')
     #     for i in ws:

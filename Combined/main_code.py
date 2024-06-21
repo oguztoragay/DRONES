@@ -5,7 +5,7 @@ import os
 from nl_hexaly4 import hexa
 # from nl_pyomo_model import nl_pyo
 from nl_pyomo2 import nl_pyo
-from pyomo_model import lp_pyo
+from lp_pyomo import lp_pyo
 from random_instance import generate
 from random_instance import mprint
 from pyomo.environ import value
@@ -23,8 +23,7 @@ def run(city, time_, verbose):
     ws_y = []
     ws_z = []
     # warm_start, ws_x, ws_y, ws_z = incumbent2pyomo(incumbent, c, ins[7][-1][0])
-
-    # lp_pyo(ins, warm_start, ws_x, ws_y, ws_z)
+    lp_pyo(ins, warm_start, ws_x, ws_y, ws_z, verbose)
     nl_pyo(ins, warm_start, ws_x, ws_y, ws_z, verbose)
 def ins2incumbent(ins, a, b, c, d, e, time_, verbose):
     hexa_data = [a, c, ins[0], ins[4], e, ins[2], ins[1], ins[7]]
@@ -61,38 +60,67 @@ def incumbent2pyomo(incumbent, c, idle):
 def compare(rep):
     nlp_pickle = open('nlp.pickle', "rb")
     nlp_ = pickle.load(nlp_pickle)
-    hxl_pickle = open('hxl.pickle', "rb")
-    hxl_ = pickle.load(hxl_pickle)
     assign_list = np.zeros((len(nlp_[2][4]), nlp_[2][3]), dtype=int)
-    assign_families = np.zeros((len(nlp_[2][4]), nlp_[2][3]), dtype=int)
     assign_dues = np.zeros((len(nlp_[2][4]), nlp_[2][3]), dtype=int)
     for ind in nlp_[0].x.index_set():
         if value(nlp_[0].x[ind]) == 1:
             assign_list[ind[2]-1, ind[1]-1] = ind[0]
             assign_dues[ind[2]-1, ind[1]-1] = nlp_[2][1][ind[0]-1]
-            assign_families[ind[2]-1, ind[1]-1] = nlp_[2][6][ind[0]-1] + 1
-    list_c = sorted(list(nlp_[0].c.index_set()), key=lambda x: x[1])
-    c_values = []
-    s_values = []
-    t_values = []
-    for ind in list_c:
-        c_values.append(round(value(nlp_[0].c[ind]),4))
-        s_values.append(round(value(nlp_[0].s[ind]),4))
-        t_values.append(round(value(nlp_[0].t[ind]),4))
-    c_values = np.reshape(c_values, (len(nlp_[2][4]), nlp_[2][3]))
-    s_values = np.reshape(s_values, (len(nlp_[2][4]), nlp_[2][3]))
-    t_values = np.reshape(t_values, (len(nlp_[2][4]), nlp_[2][3]))
+    nllist_c = sorted(list(nlp_[0].c.index_set()), key=lambda x: x[1])
+    nlpc_values = []
+    nlps_values = []
+    nlpt_values = []
+    for ind in nllist_c:
+        nlpc_values.append(round(value(nlp_[0].c[ind]),4))
+        nlps_values.append(round(value(nlp_[0].s[ind]),4))
+        nlpt_values.append(round(value(nlp_[0].t[ind]),4))
+    nlpc_values = np.reshape(nlpc_values, (len(nlp_[2][4]), nlp_[2][3]))
+    nlps_values = np.reshape(nlps_values, (len(nlp_[2][4]), nlp_[2][3]))
+    nlpt_values = np.reshape(nlpt_values, (len(nlp_[2][4]), nlp_[2][3]))
+
+    lp_pickle = open('lp.pickle', "rb")
+    lp_ = pickle.load(lp_pickle)
+    lassign_list = np.zeros((len(lp_[2][4]), lp_[2][3]), dtype=int)
+    lassign_dues = np.zeros((len(lp_[2][4]), lp_[2][3]), dtype=int)
+    for ind in lp_[0].x.index_set():
+        if value(lp_[0].x[ind]) == 1:
+            lassign_list[ind[2]-1, ind[1]-1] = ind[0]
+            lassign_dues[ind[2]-1, ind[1]-1] = lp_[2][1][ind[0]-1]
+    lplist_c = sorted(list(lp_[0].c.index_set()), key=lambda x: x[1])
+    lpc_values = []
+    lps_values = []
+    lpt_values = []
+    for ind in lplist_c:
+        lpc_values.append(round(value(lp_[0].c[ind]),4))
+        lps_values.append(round(value(lp_[0].s[ind]),4))
+        lpt_values.append(round(value(lp_[0].t[ind]),4))
+    lpc_values = np.reshape(lpc_values, (len(lp_[2][4]), lp_[2][3]))
+    lps_values = np.reshape(lps_values, (len(lp_[2][4]), lp_[2][3]))
+    lpt_values = np.reshape(lpt_values, (len(lp_[2][4]), lp_[2][3]))
+
+
+    hxl_pickle = open('hxl.pickle', "rb")
+    hxl_ = pickle.load(hxl_pickle)
+
+
     print('~~~~~~~~~~~~~~~~~~~~~~~~~~ Instance ~~~~~~~~~~~~~~~~~~~~~~~~~')
     print(' Families:', nlp_[2][7])
     print('Due_dates:', nlp_[2][1])
     print('Monitor_t:', nlp_[2][2])
     print('~~~~~~~~~~~~~~~~~~~ Comparing the results ~~~~~~~~~~~~~~~~~~~')
+    print('~~~~~ lp_objective:', value(lp_[0].obj_func))
+    for i in range(0, lassign_list.shape[0]):
+        print('     Drone (' + str(i + 1) + '):', *lassign_list[i], sep=' --> ')
+        print('     s_times', *lps_values[i], sep=' --> ')
+        print('     c_times', *lpc_values[i], sep=' --> ')
+        print('      charge', *lpt_values[i], sep=' --> ')
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     print('~~~~~ nlp_objective:', value(nlp_[0].obj_func))
     for i in range(0, assign_list.shape[0]):
-        print('     Drone ('+str(i+1)+'):', *assign_list[i], sep=' --> ')
-        print('     s_times', *s_values[i], sep=' --> ')
-        print('     c_times', *c_values[i], sep=' --> ')
-        print('      charge', *t_values[i], sep=' --> ')
+        print('     Drone (' + str(i + 1) + '):', *assign_list[i], sep=' --> ')
+        print('     s_times', *nlps_values[i], sep=' --> ')
+        print('     c_times', *nlpc_values[i], sep=' --> ')
+        print('      charge', *nlpt_values[i], sep=' --> ')
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     print('~~~~~ hxl_objective:', hxl_[4])
     for i in range(0, len(hxl_[0])):
@@ -115,12 +143,19 @@ def compare(rep):
         c_f.write('Due_dates: '+ str(nlp_[2][1])+'\n')
         c_f.write('Monitor_t: '+ str(nlp_[2][2])+'\n')
         c_f.write('~~~~~~~~~~~~~~~~~~~ Comparing the results ~~~~~~~~~~~~~~~~~~~\n')
-        c_f.write('~~~~~ nlp_objective: '+ str(value(nlp_[0].obj_func))+'\n')
+        c_f.write('~~~~~ lp_objective: '+ str(value(lp_[0].obj_func))+'\n')
+        for i in range(0, lassign_list.shape[0]):
+            c_f.write('     Drone (' + str(i + 1) + '):'+ str(lassign_list[i]) +'\n')
+            c_f.write('     s_times: ' + str(lps_values[i]) + '\n')
+            c_f.write('     c_times: ' + str(lpc_values[i]) + '\n')
+            c_f.write('      charge: ' + str(lpt_values[i]) + '\n')
+            c_f.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
+        c_f.write('~~~~~ nlp_objective: ' + str(value(nlp_[0].obj_func)) + '\n')
         for i in range(0, assign_list.shape[0]):
             c_f.write('     Drone (' + str(i + 1) + '):'+ str(assign_list[i]) +'\n')
-            c_f.write('     s_times: ' + str(s_values[i]) + '\n')
-            c_f.write('     c_times: ' + str(c_values[i]) + '\n')
-            c_f.write('      charge: ' + str(t_values[i]) + '\n')
+            c_f.write('     s_times: ' + str(nlps_values[i]) + '\n')
+            c_f.write('     c_times: ' + str(nlpc_values[i]) + '\n')
+            c_f.write('      charge: ' + str(nlpt_values[i]) + '\n')
             c_f.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
         c_f.write('~~~~~ hxl_objective:' + str(hxl_[4])+'\n')
         for i in range(0, len(hxl_[0])):
@@ -133,14 +168,14 @@ def compare(rep):
         c_f.close()
 
 
-
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge, itimes)
-    fixed = [2, 'fixed', 5, 12, 3] # 10 nodes including idle --->OK
-    SB = [3, 'SB', 4, 0.3, 2] # 12 nodes including idle
-    SB_RS = [4, 'SB_RS', 6, 1, 1] # 21 nodes including idle
-    SB_RS_LA = [5, 'SB_RS_LA', 15, 4, 5] # 56 nodes including idle
-    run(SB, 30, verbose=True)
+    fixed = [2, 'fixed', 6, 9, 3]  # 10 nodes including idle --->OK
+    SB = [3, 'SB', 4, 0.3, 2]  # 12 nodes including idle
+    SB_M = [3, 'SB_M', 4, 15, 15]  # 12 nodes including idle
+    SB_RS = [4, 'SB_RS', 6, 1, 1]  # 21 nodes including idle
+    SB_RS_LA = [5, 'SB_RS_LA', 15, 4, 5]  # 56 nodes including idle
+    run(SB_M, 30, verbose=True)
     compare(rep=True)
 
     # Options:
