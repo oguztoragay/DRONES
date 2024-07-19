@@ -74,12 +74,12 @@ def generate(ndrones, condition, slot, charge, itimes):
         families.append([last_])
         monitor_times = list(np.repeat(monitoring, [len(i) for i in families]))
         m = len(monitor_times)
-        non_symmetric_dist = np.array([[0.0000, 0.0632, 0.0117, 0.0225, 0.1443, 0.0080],
+        non_symmetric_dist = np.array([[0.0000, 0.0632, 0.0117, 0.0225, 0.1443, 0.280],
                               [0.0352, 0.0000, 0.0376, 0.0392, 0.1304, 0.0080],
                               [0.0212, 0.0673, 0.0000, 0.0437, 0.1268, 0.0080],
                               [0.0458, 0.0713, 0.0574, 0.0000, 0.1818, 0.0080],
                               [0.1300, 0.1343, 0.1186, 0.1517, 0.0000, 0.0080],
-                              [0.0080, 0.0080, 0.0080, 0.0080, 0.0080, 0.0000]]) # Sjk
+                              [0.280, 0.0080, 0.0080, 0.0080, 0.0080, 0.0000]]) # Sjk
 
         symmetric_dist = (non_symmetric_dist + non_symmetric_dist.T) / 2
         distances = non_symmetric_dist

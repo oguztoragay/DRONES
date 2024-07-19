@@ -170,12 +170,12 @@ def compare(rep):
 
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge, itimes)
-    fixed = [2, 'fixed', 6, 9, 3]  # 10 nodes including idle --->OK
-    SB = [3, 'SB', 4, 0.3, 2]  # 12 nodes including idle
+    fixed = [2, 'fixed', 6, 12, 3]  # 10 nodes including idle --->OK
+    SB = [4, 'SB', 4, 0.4, 0.5]  # 12 nodes including idle
     SB_M = [3, 'SB_M', 4, 15, 15]  # 12 nodes including idle
     SB_RS = [4, 'SB_RS', 6, 1, 1]  # 21 nodes including idle
     SB_RS_LA = [5, 'SB_RS_LA', 15, 4, 5]  # 56 nodes including idle
-    run(SB_M, 30, verbose=True)
+    run(fixed, 30, verbose=True)
     compare(rep=True)
 
     # Options:

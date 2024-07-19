@@ -1,11 +1,12 @@
 # Working hexaly model that generates feasible solutions for all instances
 # Cleaned on 05/26/2024
-import localsolver
+import hexaly.optimizer
+# import localsolver
 from operator import indexOf
 import pickle
 
 def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
-    with localsolver.LocalSolver() as ls:
+    with hexaly.optimizer.HexalyOptimizer() as ls:
         m = ls.model
         n_drones = data[0]
         t_matrix_data = list(data[2])
@@ -23,6 +24,7 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
             for i in fam:
                 successors_data[i] = fam[indexOf(fam, i)+1::]
         vis_sequences = [m.list(n_node) for _ in range(n_drones)]
+        # ss = m.array(vis_sequences[1:-1])
         # m.constraint(m.cover(vis_sequences))
         for i in real_node_data:
             m.constraint(m.sum(m.contains(vis_sequences[k], i) for k in range(n_drones)) == 1)
@@ -46,7 +48,7 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
                                                      m.iif(sequence[i] == 0, drone_charge[k],
                                                      prev - m.at(t_matrix, sequence[i-1], sequence[i]) - m_time[sequence[i]]))) #
             route_battery[k] = m.array(m.range(0, c), battery_lambda)
-            quantity_lambda = m.lambda_function(lambda i: m.iif(route_battery[k][i] >= 0, True, sequence[i] == 0))
+            quantity_lambda = m.lambda_function(lambda i: m.or_(route_battery[k][i] >= 0, sequence[i] == 0))
             # quantity_lambda = m.lambda_function(lambda i: route_battery[k][i] >= 0)
             m.constraint(m.and_(m.range(0, c), quantity_lambda))
             # m.constraint(m.and_([m.range(0, c), m.iif(route_battery[k][i] >= 0, sequence[i] >=1, True)]))
@@ -56,7 +58,7 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
             end_time[k] = m.array(m.range(0, c), end_time_lambda)
             str_time_lambda = m.lambda_function(lambda i: m.iif(i == 0, 0, end_time[k][i - 1] + m.at(t_matrix, sequence[i - 1], sequence[i])))
             str_time[k] = m.array(m.range(0, c), str_time_lambda)
-            late_lambda = m.lambda_function(lambda i: m.iif(m.or_(i == 0, i == n_node-1), -100, end_time[k][i] - due_dates[sequence[i]])) # m.iif(m.or_(i == 0, i == n_node), -1000,
+            late_lambda = m.lambda_function(lambda i: m.iif(m.or_(i == 0, i == n_node-1), -500000, end_time[k][i] - due_dates[sequence[i]])) # m.iif(m.or_(i == 0, i == n_node), -1000,
             lateness[k] = m.max(m.range(0, c), late_lambda)
             # lateness[k] = end_time[k][c]
 
@@ -89,6 +91,8 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
         ls.param.time_limit = int(av_time)
         ls.param.verbosity = int(verbose)
         ls.solve()
+        iis = ls.compute_inconsistency()
+        print(iis)
         for k in range(n_drones):
             gen_seq.append([])
             gen_st.append([])
