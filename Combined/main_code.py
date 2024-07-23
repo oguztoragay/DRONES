@@ -71,9 +71,9 @@ def compare(rep):
     nlps_values = []
     nlpt_values = []
     for ind in nllist_c:
-        nlpc_values.append(round(value(nlp_[0].c[ind]),4))
-        nlps_values.append(round(value(nlp_[0].s[ind]),4))
-        nlpt_values.append(round(value(nlp_[0].t[ind]),4))
+        nlpc_values.append(round(value(nlp_[0].c[ind]), 4))
+        nlps_values.append(round(value(nlp_[0].s[ind]), 4))
+        nlpt_values.append(round(value(nlp_[0].t[ind]), 4))
     nlpc_values = np.reshape(nlpc_values, (len(nlp_[2][4]), nlp_[2][3]))
     nlps_values = np.reshape(nlps_values, (len(nlp_[2][4]), nlp_[2][3]))
     nlpt_values = np.reshape(nlpt_values, (len(nlp_[2][4]), nlp_[2][3]))
@@ -139,20 +139,20 @@ def compare(rep):
             None
         c_f = open(folder_name+'/'+'Output_record '+time.strftime("%Y%m%d-%H%M%S")+'.txt', 'w+')
         c_f.write('~~~~~~~~~~~~~~~~~~~~~~~~~~ Instance ~~~~~~~~~~~~~~~~~~~~~~~~~\n')
-        c_f.write(' Families: '+ str(nlp_[2][7])+'\n')
-        c_f.write('Due_dates: '+ str(nlp_[2][1])+'\n')
-        c_f.write('Monitor_t: '+ str(nlp_[2][2])+'\n')
+        c_f.write(' Families: ' + str(nlp_[2][7])+'\n')
+        c_f.write('Due_dates: ' + str(nlp_[2][1])+'\n')
+        c_f.write('Monitor_t: ' + str(nlp_[2][2])+'\n')
         c_f.write('~~~~~~~~~~~~~~~~~~~ Comparing the results ~~~~~~~~~~~~~~~~~~~\n')
-        c_f.write('~~~~~ lp_objective: '+ str(value(lp_[0].obj_func))+'\n')
+        c_f.write('~~~~~ lp_objective: ' + str(value(lp_[0].obj_func))+'\n')
         for i in range(0, lassign_list.shape[0]):
-            c_f.write('     Drone (' + str(i + 1) + '):'+ str(lassign_list[i]) +'\n')
+            c_f.write('     Drone (' + str(i + 1) + '):' + str(lassign_list[i]) + '\n')
             c_f.write('     s_times: ' + str(lps_values[i]) + '\n')
             c_f.write('     c_times: ' + str(lpc_values[i]) + '\n')
             c_f.write('      charge: ' + str(lpt_values[i]) + '\n')
             c_f.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
         c_f.write('~~~~~ nlp_objective: ' + str(value(nlp_[0].obj_func)) + '\n')
         for i in range(0, assign_list.shape[0]):
-            c_f.write('     Drone (' + str(i + 1) + '):'+ str(assign_list[i]) +'\n')
+            c_f.write('     Drone (' + str(i + 1) + '):' + str(assign_list[i]) + '\n')
             c_f.write('     s_times: ' + str(nlps_values[i]) + '\n')
             c_f.write('     c_times: ' + str(nlpc_values[i]) + '\n')
             c_f.write('      charge: ' + str(nlpt_values[i]) + '\n')
