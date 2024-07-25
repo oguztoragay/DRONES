@@ -1,62 +1,20 @@
 from datetime import date
 
-import greedy
 import os
-from nl_hexaly4 import hexa
-# from nl_pyomo_model import nl_pyo
 from nl_pyomo2 import nl_pyo
 from lp_pyomo import lp_pyo
 from random_instance import generate
-from random_instance import mprint
 from pyomo.environ import value
-import ast
 import pickle
 import numpy as np
 import time
 
-def run(city, time_, verbose):
+def run(city, verbose):
     a, b, c, d, e = city
     ins = generate(ndrones=a, condition=b, slot=c, charge=d, itimes=e)
-    incumbent = ins2incumbent(ins, a, b, c, d, e, time_, verbose)
-    warm_start = []
-    ws_x = []
-    ws_y = []
-    ws_z = []
-    # warm_start, ws_x, ws_y, ws_z = incumbent2pyomo(incumbent, c, ins[7][-1][0])
-    lp_pyo(ins, warm_start, ws_x, ws_y, ws_z, verbose)
-    nl_pyo(ins, warm_start, ws_x, ws_y, ws_z, verbose)
-def ins2incumbent(ins, a, b, c, d, e, time_, verbose):
-    hexa_data = [a, c, ins[0], ins[4], e, ins[2], ins[1], ins[7]]
-    gen_seq = []
-    gen_st = []
-    gen_ct = []
-    bres = []
-    seq, st, ct, bs = hexa(hexa_data, gen_seq, gen_st, gen_ct, time_, bres, verbose)
-    # os.system('cls')
-    return gen_seq
-def incumbent2pyomo(incumbent, c, idle):
-    for i in incumbent:
-        if len(i) < c:
-            to_add = c - len(i)
-            ext = [idle] * to_add
-            i.extend(ext)
-    ws_x = {}
-    ws_y = {}
-    ws_z = {}
-    for drn in range(1, len(incumbent) + 1):
-        for slt in range(1, c+1):
-            for vis in range(1, idle + 1):
-                ws_x[vis, slt, drn] = 0
-            ws_x[incumbent[drn-1][slt-1], slt, drn] = 1
-    for drn in range(1, len(incumbent) + 1):
-        for slt in range(1, c):
-            ws_z[slt, drn] = 1
-            for vis in range(1, idle + 1):
-                for vis2 in range(1, idle + 1):
-                    ws_y[vis, vis2, slt, drn] = 0
-                    if slt>0 and incumbent[drn-1][slt] == vis and incumbent[drn-1][slt-1] == vis2:
-                        ws_y[vis, vis2, slt+1, drn] = 1
-    return incumbent, ws_x, ws_y, ws_z
+    lp_pyo(ins, verbose)
+    nl_pyo(ins, verbose)
+
 def compare(rep):
     nlp_pickle = open('nlp.pickle', "rb")
     nlp_ = pickle.load(nlp_pickle)
@@ -99,10 +57,6 @@ def compare(rep):
     lpt_values = np.reshape(lpt_values, (len(lp_[2][4]), lp_[2][3]))
 
 
-    hxl_pickle = open('hxl.pickle', "rb")
-    hxl_ = pickle.load(hxl_pickle)
-
-
     print('~~~~~~~~~~~~~~~~~~~~~~~~~~ Instance ~~~~~~~~~~~~~~~~~~~~~~~~~')
     print(' Families:', nlp_[2][7])
     print('Due_dates:', nlp_[2][1])
@@ -121,13 +75,6 @@ def compare(rep):
         print('     s_times', *nlps_values[i], sep=' --> ')
         print('     c_times', *nlpc_values[i], sep=' --> ')
         print('      charge', *nlpt_values[i], sep=' --> ')
-        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-    print('~~~~~ hxl_objective:', hxl_[4])
-    for i in range(0, len(hxl_[0])):
-        print('     Drone ('+str(i+1)+'):', *hxl_[0][i], sep=' --> ')
-        print('     s_times', *hxl_[1][i], sep=' --> ')
-        print('     c_times', *hxl_[2][i], sep=' --> ')
-        print('      charge', *hxl_[3][i], sep=' --> ')
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     print('==========================================')
     if rep:
@@ -157,13 +104,6 @@ def compare(rep):
             c_f.write('     c_times: ' + str(nlpc_values[i]) + '\n')
             c_f.write('      charge: ' + str(nlpt_values[i]) + '\n')
             c_f.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
-        c_f.write('~~~~~ hxl_objective:' + str(hxl_[4])+'\n')
-        for i in range(0, len(hxl_[0])):
-            c_f.write('     Drone (' + str(i + 1) + '):' + str(hxl_[0][i]) + '\n')
-            c_f.write('     s_times' + str(hxl_[1][i]) + '\n')
-            c_f.write('     c_times' + str(hxl_[2][i]) + '\n')
-            c_f.write('      charge' + str(hxl_[3][i]) + '\n')
-            c_f.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
         c_f.write('==========================================\n')
         c_f.close()
 
@@ -175,8 +115,8 @@ if __name__ == '__main__':
     SB_M = [3, 'SB_M', 4, 15, 15]  # 12 nodes including idle
     SB_RS = [4, 'SB_RS', 6, 1, 1]  # 21 nodes including idle
     SB_RS_LA = [5, 'SB_RS_LA', 15, 4, 5]  # 56 nodes including idle
-    run(fixed, 30, verbose=True)
-    compare(rep=True)
+    run(fixed, verbose=True)
+    compare(rep=False)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False

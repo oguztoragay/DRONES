@@ -1,25 +1,15 @@
 # Cleaned on 03/25/2024 (oguz)
-# Multi-drone capable
-# warm start capable 05/28/2024
-import random
+# Cleaned on 07/25/2024 (oguz)
 import pickle
-import pyomo.contrib.pynumero.examples.sensitivity
 from pyomo.environ import ConcreteModel, Var, Constraint, ConstraintList, NonNegativeReals, Binary, Integers, NonNegativeIntegers, Param, Objective, minimize, SolverFactory, value, maximize
 from itertools import combinations, product
-from random_instance import generate
-from random_instance import mprint
-from random_instance import route_battery
-from greedy import greedy_sol
-import gurobipy as gp
-import random
 
-def lp_pyo(data, ws, ws_x, ws_y, ws_z, verbose):
-    datam = data #generate(n_drones, 'SB_RS_LA')
+def lp_pyo(data, verbose):
+    datam = data
     t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f = datam
     demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
     drones_set = set(range(1, len(data[4]) + 1))  # use index i for M drones
     slot_set = set(range(1, n_slot + 1))  # use index r for R slots in each drone
-    demand_set_combin = list(combinations(demand_set, 2))
     demand_set_combin2 = [[i, j] for (i, j) in product(demand_set, demand_set) if i!=j]
     families = f
     idle = len(demand_set)
@@ -47,20 +37,6 @@ def lp_pyo(data, ws, ws_x, ws_y, ws_z, verbose):
     m.lmax = Var(initialize=-100)   # domain=NonNegativeReals,,  bounds=(0, 5)
 
     m.obj_func = Objective(expr=m.lmax, sense=minimize)
-    # Warm start preparation:---------------------------------------------------------------
-    # if ws is not None:
-    #     for i in m.x.index_set():
-    #         if random.random() < 1:
-    #             m.x[i]=ws_x[i]
-        # for i in m.y.index_set():
-        #     if ws_y == 1:
-        #         m.y[i] = ws_y[i]
-        # for i in m.z.index_set():
-        #     if ws_z == 1:
-        #         m.z[i] = ws_z[i]
-
-
-
 
     # Constraint 1:-------------------------------------------------------------------------- (1) in new model
     m.cons1 = ConstraintList()

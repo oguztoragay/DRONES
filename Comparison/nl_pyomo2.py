@@ -1,15 +1,11 @@
 # Cleaned on 03/25/2024 (oguz)
+# Cleaned on 07/25/2024 (oguz)
 # Multi-drone capable
 
 from pyomo.environ import ConcreteModel, Var, Constraint, ConstraintList, NonNegativeReals, Binary, Integers, NonNegativeIntegers, Param, Objective, minimize, SolverFactory, value, maximize
-from itertools import combinations, product
-from random_instance import generate
-from random_instance import mprint
-from random_instance import route_battery
-import random
 import pickle
 
-def nl_pyo(data, ws, ws_x, ws_y, ws_z, verbose):
+def nl_pyo(data, verbose):
     datam = data
     t_matrix, due_dates, m_time, n_slot, drone_charge, i_times, membership, families, f = datam
     demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
