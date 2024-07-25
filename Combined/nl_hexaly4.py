@@ -1,7 +1,4 @@
-# Working hexaly model that generates feasible solutions for all instances
-# Cleaned on 05/26/2024
 import hexaly.optimizer
-# import localsolver
 from operator import indexOf
 import pickle
 
@@ -15,7 +12,6 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
         real_node_data = list(range(1, n_node-1))
         drone_charge = m.array(data[3])
         t_matrix = m.array(t_matrix_data)
-        # td_matrix = m.array(t_matrix_data[0])
         due_dates = m.array(data[6])
         m_time = m.array(data[5])
         successors_data = [[] for i in range(n_node)]
