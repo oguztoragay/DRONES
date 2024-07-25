@@ -15,7 +15,7 @@ def run(city, verbose):
     lp_pyo(ins, verbose)
     nl_pyo(ins, verbose)
 
-def compare(rep):
+def compare(report):
     nlp_pickle = open('nlp.pickle', "rb")
     nlp_ = pickle.load(nlp_pickle)
     assign_list = np.zeros((len(nlp_[2][4]), nlp_[2][3]), dtype=int)
@@ -77,13 +77,13 @@ def compare(rep):
         print('      charge', *nlpt_values[i], sep=' --> ')
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     print('==========================================')
-    if rep:
+    if report:
         folder_name = 'result_'+str(date.today())
         f_loc = os.getcwd()
         try:
             os.mkdir(f_loc + '/'+folder_name)
         except:
-            None
+            print('The named folder exists in the given path.')
         c_f = open(folder_name+'/'+'Output_record '+time.strftime("%Y%m%d-%H%M%S")+'.txt', 'w+')
         c_f.write('~~~~~~~~~~~~~~~~~~~~~~~~~~ Instance ~~~~~~~~~~~~~~~~~~~~~~~~~\n')
         c_f.write(' Families: ' + str(nlp_[2][7])+'\n')
@@ -116,8 +116,9 @@ if __name__ == '__main__':
     SB_RS = [4, 'SB_RS', 6, 1, 1]  # 21 nodes including idle
     SB_RS_LA = [5, 'SB_RS_LA', 15, 4, 5]  # 56 nodes including idle
     run(fixed, verbose=True)
-    compare(rep=False)
+    compare(report=False)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False
-    # If you want to record the solution, change the rep=True ==> makes a .txt file to record the current comparison of the solutions
+    # If you want to record the solution, change the report=True ==>
+    # makes a .txt file to record the current comparison of the solutions
