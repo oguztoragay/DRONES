@@ -134,6 +134,7 @@ def nl_pyo(data, verbose):
     # print('***** Total number of constraints:%8d' %total_cons)
     # print('***** Variables =',num_of_var)
     # print('***** Constraints =',num_of_cons)
+
     msolver = SolverFactory('gurobi')
     msolver.options['Threads'] = 20
     msolver.options['FeasibilityTol'] = 1e-7
@@ -145,20 +146,16 @@ def nl_pyo(data, verbose):
     msolver.options['PreQLinearize'] = 0
     msolver.options['BarCorrectors'] = 100
     msolver.options['PreMIQCPForm'] = 1
-    # msolver.options['Cutoff'] = 1
-    # msolver.options['SolutionLimit'] = 6
-    solution = msolver.solve(m, warmstart= False, tee=verbose)
-    # print('\nNONLINEAR!------------------------------------')
-    # mprint(m, solution, datam)
-    # route_battery(m, solution, datam)
+    # # msolver.options['Cutoff'] = 1
+    # # msolver.options['SolutionLimit'] = 6
+
+    solution = msolver.solve(m, warmstart=False, tee=verbose)
+
+
     pickle_out = open('nlp.pickle', "wb")
     pickle.dump([m, solution, datam], pickle_out)
     pickle_out.close()
     print('~~~~~~~~~~ NLP has been finalized ~~~~~~~~~~ -->',  solution.Solver.Termination_condition)
-    # if ws is not None:
-    #     print('Hexaly results!------------------------------------')
-    #     for i in ws:
-    #         print(*i, sep=' --> ')
     return None
 
 
