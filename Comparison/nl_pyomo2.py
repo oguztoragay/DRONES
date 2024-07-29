@@ -135,21 +135,28 @@ def nl_pyo(data, verbose):
     # print('***** Variables =',num_of_var)
     # print('***** Constraints =',num_of_cons)
 
-    msolver = SolverFactory('gurobi')
-    msolver.options['Threads'] = 20
-    msolver.options['FeasibilityTol'] = 1e-7
-    msolver.options['MIPFocus'] = 2
-    msolver.options['Cuts'] = 3
-    msolver.options['Heuristics'] = 1
-    msolver.options['RINS'] = 5
-    msolver.options['SubMIPNodes'] = 1000
-    msolver.options['PreQLinearize'] = 0
-    msolver.options['BarCorrectors'] = 100
-    msolver.options['PreMIQCPForm'] = 1
+    # msolver = SolverFactory('gurobi')
+    # msolver.options['Threads'] = 20
+    # msolver.options['FeasibilityTol'] = 1e-7
+    # msolver.options['MIPFocus'] = 2
+    # msolver.options['Cuts'] = 3
+    # msolver.options['Heuristics'] = 1
+    # msolver.options['RINS'] = 5
+    # msolver.options['SubMIPNodes'] = 1000
+    # msolver.options['PreQLinearize'] = 0
+    # msolver.options['BarCorrectors'] = 100
+    # msolver.options['PreMIQCPForm'] = 1
     # # msolver.options['Cutoff'] = 1
     # # msolver.options['SolutionLimit'] = 6
+    msolver = SolverFactory('SHOT', executable='C:/Users/otoragay/Desktop/SHOT1/SHOT.exe')
+    msolver.options['Dual.MIP.Solver'] = 0
+    msolver.options['Subsolver.Gurobi.MIPFocus'] = 3
+    msolver.options['Dual.Relaxation.Use'] = 'true'
+    msolver.options['Dual.MIP.Presolve.UpdateObtainedBounds'] = 'true'
+    msolver.options['Dual.CutStrategy'] = 0
+    msolver.options['Termination.TimeLimit'] = 1000
 
-    solution = msolver.solve(m, warmstart=False, tee=verbose)
+    solution = msolver.solve(m, tee=verbose)
 
 
     pickle_out = open('nlp.pickle', "wb")

@@ -3,6 +3,7 @@
 import pickle
 from pyomo.environ import ConcreteModel, Var, Constraint, ConstraintList, NonNegativeReals, Binary, Integers, NonNegativeIntegers, Param, Objective, minimize, SolverFactory, value, maximize
 from itertools import combinations, product
+from pyomo.contrib.latex_printer import latex_printer
 
 def lp_pyo(data, verbose):
     datam = data
@@ -209,6 +210,7 @@ def lp_pyo(data, verbose):
     for c in m.component_objects(Var):
         num_of_var[c.name] = len(c)
         total_var += len(c)
+
     # print('***** Total number of variables:%8d' %total_var)
     # print('***** Total number of constraints:%8d' %total_cons)
     # print('***** Variables =',num_of_var)
