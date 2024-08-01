@@ -1,0 +1,89 @@
+
+- Supporting Hyperplane Optimization Toolkit (SHOT) -------------------------------------------------------------------
+
+ Andreas Lundell and Jan Kronqvist, Åbo Akademi University, Finland.
+ See documentation for full list of contributors and utilized software libraries.
+
+ Version: 1.0.1. Git hash: releases/1.0.1. Released: May 28 2020.
+
+ For more information visit https://shotsolver.dev
+
+- Modeling system -----------------------------------------------------------------------------------------------------
+
+ Modeling system:            AMPL
+ Problem read from file:     C:\Users\otoragay\AppData\Local\Temp\tmp16kr5p8w.pyomo.nl
+
+ Performing bound tightening on original problem.
+  - Bounds for 4 variables tightened in 2.51 s.
+ SHOT has not been compiled with support for selected MIP solver.
+ Performing bound tightening on reformulated problem.
+  - Bounds for 4 variables tightened in 5.00 s.
+
+- Problem instance ----------------------------------------------------------------------------------------------------
+
+                                    Original             Reformulated
+
+ Problem classification:            MINLP, nonconvex     MINLP, nonconvex
+
+ Objective function direction:      minimize             minimize
+ Objective function type:           linear               linear
+
+ Number of constraints:             118                  5224
+  - linear:                         43                   5176
+  - nonconvex quadratic:            51                   0
+  - nonconvex nonlinear:            24                   48
+
+ Number of variables:               220                  1933
+  - real:                           43                   76
+  - binary:                         0                    1857
+  - integer:                        177                  0
+  - nonlinear:                      216                  183
+
+ Number of transformations performed:                    1713
+ - continuous bilinear term extraction:                  33
+ - binary bilinear term reformulation:                   1680
+
+- Options -------------------------------------------------------------------------------------------------------------
+
+ No options file specified.
+
+ Nondefault options used:
+
+  - Dual.ESH.InteriorPoint.CuttingPlane.IterationLimit = 50
+  - Dual.HyperplaneCuts.ConstraintSelectionFactor = 1.0
+  - Dual.HyperplaneCuts.UseIntegerCuts = true
+  - Dual.MIP.Presolve.UpdateObtainedBounds = false
+  - Dual.MIP.SolutionLimit.Initial = 2147483647
+  - Dual.MIP.Solver = 2
+  - Dual.Relaxation.Use = false
+  - Dual.TreeStrategy = 0
+  - Model.Reformulation.Constraint.PartitionNonlinearTerms = 1
+  - Model.Reformulation.Constraint.PartitionQuadraticTerms = 0
+  - Model.Reformulation.ObjectiveFunction.PartitionNonlinearTerms = 1
+  - Model.Reformulation.ObjectiveFunction.PartitionQuadraticTerms = 0
+  - Model.Reformulation.Quadratics.Strategy = 0
+  - Output.OutputDirectory = 0
+  - Primal.FixedInteger.CallStrategy = 0
+  - Primal.FixedInteger.OnlyUniqueIntegerCombinations = false
+  - Primal.FixedInteger.Source = 0
+  - Primal.Tolerance.TrustLinearConstraintValues = false
+  - Termination.TimeLimit = 1000.0
+
+ Dual strategy:              Multi-tree
+  - cut algorithm:           ESH
+  - solver:                  Cbc 2.10.3
+
+ Primal NLP solver:          Ipopt 3.12.13 (with default linear solver)
+
+
+- Interior point search -----------------------------------------------------------------------------------------------
+
+ Strategy selected:          cutting plane minimax
+
+
+    Iteration      |  Time  |    Cuts     |     Objective value     |  Objective diff.   
+     #: type       |  tot.  |   + | tot.  |    problem | line srch  |    abs. | rel.    
+---------------------------------------------------------------------------------------
+     1: LP           7.71                      -1e+12 | -1e+12          inf. | inf.    
+     2: LP           7.85     12 | 12       -0.272287 | 0.231347     5.0e-01 | 1.8e+00 
+     3: LP           8.53     12 | 24       -0.215952 | 2.40284      2.

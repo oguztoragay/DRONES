@@ -62,14 +62,16 @@ def compare(report):
     print('Due_dates:', nlp_[2][1])
     print('Monitor_t:', nlp_[2][2])
     print('~~~~~~~~~~~~~~~~~~~ Comparing the results ~~~~~~~~~~~~~~~~~~~')
-    print('~~~~~ lp_objective:', value(lp_[0].obj_func))
+    print('***** lp_objective:', value(lp_[0].obj_func))
+    print('***** lp_Sol_time:', round(lp_[1].Solver.Time, 3))
     for i in range(0, lassign_list.shape[0]):
         print('     Drone (' + str(i + 1) + '):', *lassign_list[i], sep=' --> ')
         print('     s_times', *lps_values[i], sep=' --> ')
         print('     c_times', *lpc_values[i], sep=' --> ')
         print('      charge', *lpt_values[i], sep=' --> ')
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
-    print('~~~~~ nlp_objective:', value(nlp_[0].obj_func))
+    print('***** nlp_objective:', value(nlp_[0].obj_func))
+    print('***** nlp_Sol_time:', round(nlp_[1].Solver[0]['Wallclock time'], 3))
     for i in range(0, assign_list.shape[0]):
         print('     Drone (' + str(i + 1) + '):', *assign_list[i], sep=' --> ')
         print('     s_times', *nlps_values[i], sep=' --> ')
@@ -90,19 +92,21 @@ def compare(report):
         c_f.write('Due_dates: ' + str(nlp_[2][1])+'\n')
         c_f.write('Monitor_t: ' + str(nlp_[2][2])+'\n')
         c_f.write('~~~~~~~~~~~~~~~~~~~ Comparing the results ~~~~~~~~~~~~~~~~~~~\n')
-        c_f.write('~~~~~ lp_objective: ' + str(value(lp_[0].obj_func))+'\n')
+        c_f.write('***** lp_objective: ' + str(value(lp_[0].obj_func))+'\n')
+        c_f.write('***** lp_Sol_time: ' + str(round(lp_[1].Solver.Time, 3))+'\n')
         for i in range(0, lassign_list.shape[0]):
-            c_f.write('     Drone (' + str(i + 1) + '):' + str(lassign_list[i]) + '\n')
-            c_f.write('     s_times: ' + str(lps_values[i]) + '\n')
-            c_f.write('     c_times: ' + str(lpc_values[i]) + '\n')
-            c_f.write('      charge: ' + str(lpt_values[i]) + '\n')
+            c_f.write('Drone(' + str(i + 1) + '): ' + ' --> '.join(map(str, lassign_list[i])) + '\n')
+            c_f.write(' s_times: ' + ' --> '.join(map(str, lps_values[i])) + '\n')
+            c_f.write(' c_times: ' + ' --> '.join(map(str, lpc_values[i])) + '\n')
+            c_f.write('  charge: ' + ' --> '.join(map(str, lpt_values[i])) + '\n')
             c_f.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
-        c_f.write('~~~~~ nlp_objective: ' + str(value(nlp_[0].obj_func)) + '\n')
+        c_f.write('***** nlp_objective: ' + str(value(nlp_[0].obj_func)) + '\n')
+        c_f.write('***** nlp_Sol_time:' + str(round(nlp_[1].Solver[0]['Wallclock time'], 3))+'\n')
         for i in range(0, assign_list.shape[0]):
-            c_f.write('     Drone (' + str(i + 1) + '):' + str(assign_list[i]) + '\n')
-            c_f.write('     s_times: ' + str(nlps_values[i]) + '\n')
-            c_f.write('     c_times: ' + str(nlpc_values[i]) + '\n')
-            c_f.write('      charge: ' + str(nlpt_values[i]) + '\n')
+            c_f.write('Drone(' + str(i + 1) + '): ' + ' --> '.join(map(str, assign_list[i])) + '\n')
+            c_f.write(' s_times: ' + ' --> '.join(map(str, nlps_values[i])) + '\n')
+            c_f.write(' c_times: ' + ' --> '.join(map(str, nlpc_values[i])) + '\n')
+            c_f.write('  charge: ' + ' --> '.join(map(str, nlpt_values[i])) + '\n')
             c_f.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
         c_f.write('==========================================\n')
         c_f.close()
@@ -110,9 +114,9 @@ def compare(report):
 
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge, itimes)
-    fixed = [2, 'fixed', 6, 12, 3]  # 10 nodes including idle --->OK
+    fixed = [2, 'fixed', 6, 10, 1]  # 10 nodes including idle --->OK
     SB = [3, 'SB', 5, 0.3, 0.5]  # 12 nodes including idle
-    SB_M = [3, 'SB_M', 6, 15, 15]  # 12 nodes including idle
+    SB_M = [3, 'SB_M', 5, 10, 5]  # 12 nodes including idle
     SB_RS = [4, 'SB_RS', 6, 1, 1]  # 21 nodes including idle
     SB_RS_LA = [5, 'SB_RS_LA', 20, 4, 5]  # 56 nodes including idle
     run(fixed, verbose=True)

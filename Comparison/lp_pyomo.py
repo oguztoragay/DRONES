@@ -35,7 +35,7 @@ def lp_pyo(data, verbose):
     # m.w = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.t = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, full_charge))
 
-    m.lmax = Var(initialize=-100)   # domain=NonNegativeReals,  bounds=(4, 11)
+    m.lmax = Var(domain=NonNegativeReals, initialize=0)   #   bounds=(4, 11)
 
     m.obj_func = Objective(expr=m.lmax, sense=minimize)
 
@@ -48,7 +48,7 @@ def lp_pyo(data, verbose):
     m.cons2 = ConstraintList()
     for i in drones_set:
         for r in slot_set:
-            m.cons2.add(sum(m.x[j, r, i] for j in demand_set) <= 1)
+            m.cons2.add(sum(m.x[j, r, i] for j in demand_set) == 1)
 
     # constraint 3:-------------------------------------------------------------------------- (3) in new model
     for i in drones_set:
