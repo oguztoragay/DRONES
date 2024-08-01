@@ -25,7 +25,7 @@ def nl_pyo(data, verbose):
     m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.t = Var(slot_set, drones_set,  domain=NonNegativeReals, initialize=0, bounds=(0, full_charge))  # remaining charge AFTER visit completion
-    m.lmax = Var(initialize=0) #domain=NonNegativeReals,
+    m.lmax = Var(initialize=-100) #domain=NonNegativeReals,
     m.obj_func = Objective(expr=m.lmax, sense=minimize)
 
     # if ws is not None:
@@ -45,7 +45,7 @@ def nl_pyo(data, verbose):
     m.cons2 = ConstraintList()
     for i in drones_set:
         for r in slot_set:
-            m.cons2.add(sum(m.x[j, r, i] for j in demand_set) == 1)
+            m.cons2.add(sum(m.x[j, r, i] for j in demand_set) <= 1)
 
     # constraint 3:-------------------------------------------------------------------------- (3) in new model
     for i in drones_set:
