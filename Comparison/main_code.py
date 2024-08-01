@@ -12,7 +12,7 @@ import time
 def run(city, verbose):
     a, b, c, d, e = city
     ins = generate(ndrones=a, condition=b, slot=c, charge=d, itimes=e)
-    # lp_pyo(ins, verbose)
+    lp_pyo(ins, verbose)
     nl_pyo(ins, verbose)
 
 def compare(report):
@@ -115,7 +115,7 @@ if __name__ == '__main__':
     SB_M = [3, 'SB_M', 4, 15, 15]  # 12 nodes including idle
     SB_RS = [4, 'SB_RS', 6, 1, 1]  # 21 nodes including idle
     SB_RS_LA = [5, 'SB_RS_LA', 20, 4, 5]  # 56 nodes including idle
-    run(SB, verbose=True)
+    run(SB_M, verbose=True)
     compare(report=False)
 
     # Options:
