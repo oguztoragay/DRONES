@@ -12,10 +12,10 @@ import time
 def run(city, verbose):
     a, b, c, d, e = city
     ins = generate(ndrones=a, condition=b, slot=c, charge=d, itimes=e)
-    lp_pyo(ins, verbose)
-    nl_pyo(ins, verbose)
+    # lp_pyo(ins, verbose)
+    # nl_pyo(ins, verbose)
 
-def compare(report):
+def compare(instance, report):
     nlp_pickle = open('nlp.pickle', "rb")
     nlp_ = pickle.load(nlp_pickle)
     assign_list = np.zeros((len(nlp_[2][4]), nlp_[2][3]), dtype=int)
@@ -87,7 +87,7 @@ def compare(report):
         except:
             print('The named folder exists in the given path.')
         c_f = open(folder_name+'/'+'Output_record '+time.strftime("%Y%m%d-%H%M%S")+'.txt', 'w+')
-        c_f.write('~~~~~~~~~~~~~~~~~~~~~~~~~~ Instance ~~~~~~~~~~~~~~~~~~~~~~~~~\n')
+        c_f.write('~~~~~~~~~~~~~~~~~~~ ' + str(instance) + ' ~~~~~~~~~~~~~~~~~~~\n')
         c_f.write(' Families: ' + str(nlp_[2][7])+'\n')
         c_f.write('Due_dates: ' + str(nlp_[2][1])+'\n')
         c_f.write('Monitor_t: ' + str(nlp_[2][2])+'\n')
@@ -119,8 +119,8 @@ if __name__ == '__main__':
     SB_M = [3, 'SB_M', 5, 10, 5]  # 12 nodes including idle
     SB_RS = [4, 'SB_RS', 6, 1, 1]  # 21 nodes including idle
     SB_RS_LA = [5, 'SB_RS_LA', 20, 4, 5]  # 56 nodes including idle
-    run(fixed, verbose=True)
-    compare(report=True)
+    run(SB, verbose=True)
+    compare(SB, report=True)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False
