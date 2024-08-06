@@ -91,18 +91,19 @@ def nl_pyo(data, verbose):
         for j in f:
             m.cons21.add(sum(m.s[r3, i3]*m.x[j+1, r3, i3] for r3 in slot_set for i3 in drones_set) - sum(m.c[r2, i2]*m.x[j, r2, i2] for r2 in slot_set for i2 in drones_set) >= 0)
 
+    # Info about the model:------------------------------------------
     # m.pprint()
-    num_of_cons = {}
-    total_cons = 0
-    for c in m.component_objects(Constraint):
-        num_of_cons[c.name] = len(c)
-        total_cons += len(c)
-
-    num_of_var = {}
-    total_var = 0
-    for c in m.component_objects(Var):
-        num_of_var[c.name] = len(c)
-        total_var += len(c)
+    # num_of_cons = {}
+    # total_cons = 0
+    # for c in m.component_objects(Constraint):
+    #     num_of_cons[c.name] = len(c)
+    #     total_cons += len(c)
+    #
+    # num_of_var = {}
+    # total_var = 0
+    # for c in m.component_objects(Var):
+    #     num_of_var[c.name] = len(c)
+    #     total_var += len(c)
     # print('***** Total number of variables:%8d' %total_var)
     # print('***** Total number of constraints:%8d' %total_cons)
     # print('***** Variables =',num_of_var)
