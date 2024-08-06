@@ -13,7 +13,7 @@ def run(city, verbose):
     a, b, c, d, e = city
     ins = generate(ndrones=a, condition=b, slot=c, charge=d, itimes=e)
     # lp_pyo(ins, verbose)
-    # nl_pyo(ins, verbose)
+    nl_pyo(ins, verbose)
 
 def compare(instance, report):
     nlp_pickle = open('nlp.pickle', "rb")
@@ -71,7 +71,8 @@ def compare(instance, report):
         print('      charge', *lpt_values[i], sep=' --> ')
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     print('***** nlp_objective:', value(nlp_[0].obj_func))
-    print('***** nlp_Sol_time:', round(nlp_[1].Solver[0]['Wallclock time'], 3))
+    # print('***** nlp_Sol_time:', round(nlp_[1].Solver[0]['Wallclock time'], 3))
+    print('***** nlp_Sol_time:', round(nlp_[1].Solver.Time, 3))
     for i in range(0, assign_list.shape[0]):
         print('     Drone (' + str(i + 1) + '):', *assign_list[i], sep=' --> ')
         print('     s_times', *nlps_values[i], sep=' --> ')
@@ -101,7 +102,8 @@ def compare(instance, report):
             c_f.write('  charge: ' + ' --> '.join(map(str, lpt_values[i])) + '\n')
             c_f.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
         c_f.write('***** nlp_objective: ' + str(value(nlp_[0].obj_func)) + '\n')
-        c_f.write('***** nlp_Sol_time:' + str(round(nlp_[1].Solver[0]['Wallclock time'], 3))+'\n')
+        # c_f.write('***** nlp_Sol_time:' + str(round(nlp_[1].Solver[0]['Wallclock time'], 3)) + '\n')
+        c_f.write('***** nlp_Sol_time:' + str(round(nlp_[1].Solver.Time, 3)) + '\n')
         for i in range(0, assign_list.shape[0]):
             c_f.write('Drone(' + str(i + 1) + '): ' + ' --> '.join(map(str, assign_list[i])) + '\n')
             c_f.write(' s_times: ' + ' --> '.join(map(str, nlps_values[i])) + '\n')
@@ -119,8 +121,8 @@ if __name__ == '__main__':
     SB_M = [3, 'SB_M', 5, 10, 5]  # 12 nodes including idle
     SB_RS = [4, 'SB_RS', 6, 1, 1]  # 21 nodes including idle
     SB_RS_LA = [5, 'SB_RS_LA', 20, 4, 5]  # 56 nodes including idle
-    run(SB, verbose=True)
-    compare(SB, report=True)
+    run(fixed, verbose=True)
+    compare(fixed, report=True)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False
