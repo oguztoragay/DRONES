@@ -26,84 +26,70 @@ def nl_pyo(data, verbose):
     m.lmax = Var(domain=NonNegativeReals, initialize=0) #
     m.obj_func = Objective(expr=m.lmax, sense=minimize)
 
-    # Constraint:-------------------------------------------------------------------------- (1*) in new model
+    # Constraint:----------------------------- (1*)
     m.cons1 = ConstraintList()
     for j in demand_set-{1, idle}:
         m.cons1.add(sum(m.x[j, r, i] for r in slot_set for i in drones_set) == 1)
 
-    # constraint:-------------------------------------------------------------------------- (2*) in new model
+    # constraint:----------------------------- (2*)
     m.cons2 = ConstraintList()
     for i in drones_set:
         for r in slot_set:
             m.cons2.add(sum(m.x[j, r, i] for j in demand_set) == 1)
 
-    # constraint:-------------------------------------------------------------------------- (3*) in new model
+    # constraint:----------------------------- (3*)
     for i in drones_set:
         m.x[1, 1, i].fix(0)
 
-    # constraint:-------------------------------------------------------------------------- (4*) in new model
+    # constraint:----------------------------- (4*)
     m.cons4 = ConstraintList()
     for i in drones_set:
         m.cons4.add(m.c[1, i] == sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set))
 
-    # constraint:-------------------------------------------------------------------------- (5*) in new model
+    # constraint:----------------------------- (5*)
     m.cons5 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
             m.cons5.add(m.c[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.x[k, r-1, i]*m.x[j, r, i] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
 
-    # constraint:-------------------------------------------------------------------------- (6*) in new model
+    # constraint:----------------------------- (6*)
     for i in drones_set:
         m.s[1, i].fix(0)
 
-    # constraint:-------------------------------------------------------------------------- (7*) in new model
+    # constraint:----------------------------- (7*)
     m.cons7 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
             m.cons7.add(m.s[r, i] == m.c[r, i] - sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
 
-    # constraint:-------------------------------------------------------------------------- (8*) in new model
+    # constraint:----------------------------- (8*)
     m.cons8 = ConstraintList()
     for r in slot_set:
         for i in drones_set:
             m.cons8.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set))
 
-    # constraint:-------------------------------------------------------------------------- (9*) in new model
+    # constraint:----------------------------- (9*)
     m.cons9 = ConstraintList()
     for i in drones_set:
         m.cons9.add(m.t[1, i] == full_charge - m.c[1, i])
 
-    # constraint:-------------------------------------------------------------------------- (10*) in new model
+    # constraint:----------------------------- (10*)
     m.cons10 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
             m.cons10.add(m.t[r, i] == (full_charge * m.x[1, r, i]) + ((m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i]) * (1 - m.x[1, r, i])))
 
-    # constraint 20:-------------------------------------------------------------------------- (20) in new model
+    # constraint:----------------------------- (11*)
     m.cons20 = ConstraintList()
     for f in families:
         for j in f:
             m.cons20.add(sum(m.s[r0, i0]*m.x[j+1, r0, i0] for r0 in slot_set for i0 in drones_set) - sum(m.c[r1, i1]*m.x[j, r1, i1] for r1 in slot_set for i1 in drones_set) <= i_times)
 
-    # constraint 21:-------------------------------------------------------------------------- (21) in new model
+    # constraint:----------------------------- (12*)
     m.cons21 = ConstraintList()
     for f in families:
         for j in f:
             m.cons21.add(sum(m.s[r3, i3]*m.x[j+1, r3, i3] for r3 in slot_set for i3 in drones_set) - sum(m.c[r2, i2]*m.x[j, r2, i2] for r2 in slot_set for i2 in drones_set) >= 0)
-
-    # # constraint 30:-------------------------------------------------------------------------- (30) in new model
-    # m.cons30 = ConstraintList()
-    # for f in families:
-    #     for j in f:
-    #         for r in slot_set - {n_slot}:
-    #             for i in drones_set:
-    #                 m.cons30.add(sum(m.x[jj, r + 1, i] for jj in range(j+1, len(demand_set))) <= B*(1-m.x[j, r, i]))
-    #
-    # # constraint 31:-------------------------------------------------------------------------- (31) in new model
-    # m.cons31 = ConstraintList()
-    # for r in slot_set:
-    #     for i in drones_set:
-    #         m.cons31.add(m.x[len(due_dates)-1, r, i] == 1 - sum(m.x[j, r, i] for j in demand_set-{len(due_dates)-1}))
 
     # m.pprint()
     num_of_cons = {}
@@ -126,6 +112,7 @@ def nl_pyo(data, verbose):
     # msolver.set_instance(m)
     # msolver.set_gurobi_param('FuncNonlinear', 1)
     # msolver.set_gurobi_param('LazyConstraints', 1)
+
     msolver = SolverFactory('gurobi')
     msolver.options['Threads'] = 20
     msolver.options['FeasibilityTol'] = 1e-7
@@ -133,7 +120,7 @@ def nl_pyo(data, verbose):
     msolver.options['Cuts'] = 3
     msolver.options['Heuristics'] = 1
     msolver.options['RINS'] = 5
-    msolver.options['SubMIPNodes'] = 1000
+    # msolver.options['SubMIPNodes'] = 1000
     msolver.options['PreQLinearize'] = 0
     msolver.options['BarCorrectors'] = 100
     msolver.options['PreMIQCPForm'] = 1
