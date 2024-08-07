@@ -23,7 +23,8 @@ def nl_pyo(data, verbose):
     m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.t = Var(slot_set, drones_set,  domain=NonNegativeReals, initialize=0, bounds=(0, full_charge))  # remaining charge AFTER visit completion
-    m.lmax = Var(domain=NonNegativeReals, initialize=0) #
+    m.lmax = Var(domain=NonNegativeReals, initialize=0)
+
     m.obj_func = Objective(expr=m.lmax, sense=minimize)
 
     # Constraint:----------------------------- (1*)

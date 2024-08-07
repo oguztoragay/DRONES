@@ -96,7 +96,7 @@ def generate(ndrones, condition, slot, charge, itimes):
                             t_matrix[ii - 1, jj - 1] = distances[(i, j)]
                         else:
                             t_matrix[ii - 1, jj - 1] = distances[(i, j)]
-        due = np.array([50, 0.1, 0.23, 0.03, 0.15, 0.3, 0.46, 0.8, 0.7, 0.9, 1.1, 50])
+        due = np.array([5, 0.1, 0.23, 0.03, 0.15, 0.3, 0.46, 0.8, 0.7, 0.9, 1.1, 5])
         # due = np.array([i*0.2 for i in due])
         membership = []
         for i in range(len(families)):

@@ -12,7 +12,7 @@ import time
 def run(city, verbose):
     a, b, c, d, e = city
     ins = generate(ndrones=a, condition=b, slot=c, charge=d, itimes=e)
-    # lp_pyo(ins, verbose)
+    lp_pyo(ins, verbose)
     nl_pyo(ins, verbose)
 
 def compare(instance, report):
@@ -116,13 +116,14 @@ def compare(instance, report):
 
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge, itimes)
-    fixed = [2, 'fixed', 6, 10, 1]  # 10 nodes including idle --->OK
-    SB = [3, 'SB', 5, 0.3, 0.5]  # 12 nodes including idle
-    SB_M = [3, 'SB_M', 5, 10, 5]  # 12 nodes including idle
+    fixed = [2, 'fixed', 6, 10, 0.5]  # 10 nodes including idle --->OK
+    SB = [3, 'SB', 4, 0.3, 0.2]  # 12 nodes including idle
+    SB_M1 = [3, 'SB_M', 5, 20, 5]  # 12 nodes including idle
+    SB_M2 = [2, 'SB_M', 7, 25, 5]  # 12 nodes including idle
     SB_RS = [4, 'SB_RS', 6, 1, 1]  # 21 nodes including idle
     SB_RS_LA = [5, 'SB_RS_LA', 20, 4, 5]  # 56 nodes including idle
-    run(fixed, verbose=True)
-    compare(fixed, report=True)
+    run(SB_RS, verbose=True)
+    compare(SB_RS, report=True)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False

@@ -35,7 +35,7 @@ def lp_pyo(data, verbose):
     # m.w = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.t = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, full_charge))
 
-    m.lmax = Var(domain=NonNegativeReals, initialize=0)   #   bounds=(4, 11)
+    m.lmax = Var(domain=NonNegativeReals, initialize=0)
 
     m.obj_func = Objective(expr=m.lmax, sense=minimize)
 
@@ -63,10 +63,10 @@ def lp_pyo(data, verbose):
     m.cons5 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons5.add(m.c[r, i] == m.s[r, i] + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
-    m.cons5_1 = ConstraintList()
-    for i in drones_set:
-        m.cons5_1.add(m.c[n_slot, i] - m.s[n_slot, i] == sum(m_time[j - 1] * m.x[j, n_slot, i] for j in demand_set))
+            m.cons5.add(m.c[r, i] == m.c[r-1, i] + + sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
+    # m.cons5_1 = ConstraintList()
+    # for i in drones_set:
+    #     m.cons5_1.add(m.c[n_slot, i] - m.s[n_slot, i] == sum(m_time[j - 1] * m.x[j, n_slot, i] for j in demand_set))
 
     # constraint 6:-------------------------------------------------------------------------- (6) in new model
     for i in drones_set:
@@ -76,7 +76,7 @@ def lp_pyo(data, verbose):
     m.cons7 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons7.add(m.s[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set))
+            m.cons7.add(m.s[r, i] == m.c[r, i] - sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
 
     # constraint 8 & 9:-------------------------------------------------------------------- (8) & (9) in new model
     m.cons8 = ConstraintList()
@@ -222,7 +222,12 @@ def lp_pyo(data, verbose):
     msolver.options['Cuts'] = 3
     msolver.options['Heuristics'] = 1
     msolver.options['RINS'] = 5
-    msolver.options['SubMIPCuts'] = 2
+    # msolver.options['SubMIPCuts'] = 2
+    # msolver.options['SubMIPNodes'] = 1000
+    msolver.options['PreQLinearize'] = 0
+    msolver.options['BarCorrectors'] = 100
+    msolver.options['PreMIQCPForm'] = 1
+    # msolver.options['Cutoff'] = 1
 
     solution = msolver.solve(m, warmstart= False, tee=verbose)
 
