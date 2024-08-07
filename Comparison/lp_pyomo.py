@@ -224,9 +224,9 @@ def lp_pyo(data, verbose):
     msolver.options['RINS'] = 5
     # msolver.options['SubMIPCuts'] = 2
     # msolver.options['SubMIPNodes'] = 1000
-    msolver.options['PreQLinearize'] = 0
-    msolver.options['BarCorrectors'] = 100
-    msolver.options['PreMIQCPForm'] = 1
+    # msolver.options['PreQLinearize'] = 0
+    # msolver.options['BarCorrectors'] = 100
+    # msolver.options['PreMIQCPForm'] = 1
     # msolver.options['Cutoff'] = 1
 
     solution = msolver.solve(m, warmstart= False, tee=verbose)

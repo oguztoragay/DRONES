@@ -120,7 +120,7 @@ if __name__ == '__main__':
     SB = [3, 'SB', 4, 0.3, 0.2]  # 12 nodes including idle
     SB_M1 = [3, 'SB_M', 5, 20, 5]  # 12 nodes including idle
     SB_M2 = [2, 'SB_M', 7, 25, 5]  # 12 nodes including idle
-    SB_RS = [4, 'SB_RS', 6, 1, 1]  # 21 nodes including idle
+    SB_RS = [3, 'SB_RS', 8, 5, 1]  # 21 nodes including idle
     SB_RS_LA = [5, 'SB_RS_LA', 20, 4, 5]  # 56 nodes including idle
     run(SB_RS, verbose=True)
     compare(SB_RS, report=True)
