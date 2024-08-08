@@ -23,8 +23,8 @@ def run(city, time_, verbose):
     ws_y = []
     ws_z = []
     # warm_start, ws_x, ws_y, ws_z = incumbent2pyomo(incumbent, c, ins[7][-1][0])
-    lp_pyo(ins, warm_start, ws_x, ws_y, ws_z, verbose)
-    nl_pyo(ins, warm_start, ws_x, ws_y, ws_z, verbose)
+    # lp_pyo(ins, warm_start, ws_x, ws_y, ws_z, verbose)
+    # nl_pyo(ins, warm_start, ws_x, ws_y, ws_z, verbose)
 def ins2incumbent(ins, a, b, c, d, e, time_, verbose):
     hexa_data = [a, c, ins[0], ins[4], e, ins[2], ins[1], ins[7]]
     gen_seq = []
@@ -170,13 +170,13 @@ def compare(rep):
 
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge, itimes)
-    fixed = [2, 'fixed', 6, 12, 3]  # 10 nodes including idle --->OK
+    fixed = [2, 'fixed', 6, 12, 2]  # 10 nodes including idle --->OK
     SB = [4, 'SB', 4, 0.4, 0.5]  # 12 nodes including idle
     SB_M = [3, 'SB_M', 4, 15, 15]  # 12 nodes including idle
     SB_RS = [4, 'SB_RS', 6, 1, 1]  # 21 nodes including idle
     SB_RS_LA = [5, 'SB_RS_LA', 15, 4, 5]  # 56 nodes including idle
-    run(fixed, 30, verbose=True)
-    compare(rep=True)
+    run(fixed, 60, verbose=True)
+    compare(rep=False)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False
