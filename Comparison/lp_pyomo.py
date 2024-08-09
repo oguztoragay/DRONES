@@ -4,6 +4,8 @@ import pickle
 from pyomo.environ import ConcreteModel, Var, Constraint, ConstraintList, NonNegativeReals, Binary, Integers, NonNegativeIntegers, Param, Objective, minimize, SolverFactory, value, maximize
 from itertools import combinations, product
 from pyomo.contrib.latex_printer import latex_printer
+import pandas as pd
+import scipy as sp
 
 def lp_pyo(data, verbose):
     datam = data
@@ -231,6 +233,12 @@ def lp_pyo(data, verbose):
 
     solution = msolver.solve(m, warmstart= False, tee=verbose)
 
+    # Extracting A matrix into a csv file --------------------------
+    # solver1 = SolverFactory('gurobi_persistent', model=m)
+    # A = solver1._solver_model.getA()
+    # denseMatrix = pd.DataFrame(data=sp.sparse.csr_matrix.todense(A))
+    # denseMatrix.to_csv('Amatrix.csv', index=False)
+
     pickle_out = open('lp.pickle', "wb")
     pickle.dump([m, solution, datam], pickle_out)
     pickle_out.close()
@@ -246,10 +254,5 @@ def lp_pyo(data, verbose):
     # for i in drones_set:
     #     print([value(m.w[r, i]) for r in slot_set])
     return None
-
-
-
-
-
 
 
