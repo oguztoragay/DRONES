@@ -13,7 +13,7 @@ def run(city, verbose):
     a, b, c, d, e = city
     ins = generate(ndrones=a, condition=b, slot=c, charge=d, itimes=e)
     lp_pyo(ins, verbose)
-    # nl_pyo(ins, verbose)
+    nl_pyo(ins, verbose)
 
 def compare(instance, report):
     nlp_pickle = open('nlp.pickle', "rb")
