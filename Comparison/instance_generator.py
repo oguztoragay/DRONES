@@ -3,10 +3,13 @@ import itertools
 from pyomo.environ import value
 import numpy as np
 import geopy.distance
-import ast
 
-
-arcs = {'SB1': [34.06748049349774, -117.58627467784373, 34.06733829280365, -117.56805711511826],
+DP = [34.067330, -117.545154, 34.067330, -117.545154]  # coordinates of depot location
+DL = [34.067330, -117.545154, 34.067330, -117.545154]  # coordinates of idle location
+drone_speed = 10
+penalty = 1000
+arcs = {'DP': [34.067330, -117.545154, 34.067330, -117.545154],
+        'SB1': [34.06748049349774, -117.58627467784373, 34.06733829280365, -117.56805711511826],
         'SB2': [34.073664262003916, -117.54478073959717, 34.07880072708419, -117.54469490891294],
         'SB3': [34.055221667702725, -117.54707552414482, 34.042942672497496, -117.55046155255096],
         'SB4': [34.13509556151658, -117.5918373464612, 34.13665850403775, -117.55952209385272],
@@ -21,8 +24,9 @@ arcs = {'SB1': [34.06748049349774, -117.58627467784373, 34.06733829280365, -117.
         'RS1': [33.94245747674634, -117.27950645054175, 33.94101794657498, -117.2530191660786],
         'RS2': [34.01310741213049, -117.44103478257155, 34.01129317274416, -117.43197964538643],
         'RS3': [33.88454308524973, -117.62931466068288, 33.88289535845872, -117.644110477192],
-        'RS4': [33.897340150833756, -117.48842212774255, 33.894628991533885, -117.50064506537053]}
-speed = 40
+        'RS4': [33.897340150833756, -117.48842212774255, 33.894628991533885, -117.50064506537053],
+        'DL': [34.0673301, -117.5451541, 34.0673301, -117.5451541]}
+
 
 def generate(ndrones, condition, slot, charge, itimes):
     t_matrix = []
@@ -182,6 +186,7 @@ def generate(ndrones, condition, slot, charge, itimes):
     if condition == 'SB_RS':
         locations = city_data(condition)
         dist = distances_matrix(locations)
+        monitoring = [arc_data(arcs[i])[1] for i in locations]
         f = [[2], [4, 5], [7], [9, 10], [12, 13], [15], [17], [19]]
         monitoring = [0.04, 0.03, 0.01, 0.02, 0.05, 0.04, 0.03, 0.02, 0.02, 0.002]
         families = []
@@ -204,9 +209,8 @@ def generate(ndrones, condition, slot, charge, itimes):
                               [0.3734, 0.3526, 0.3844, 0.3518, 0.4731, 0.5726, 0.3947, 0, 0.2415, 0.01],
                               [0.3265, 0.3456, 0.3378, 0.3053, 0.4661, 0.3521, 0.2375, 0.1992, 0, 0.01],
                               [0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0]])
-        symmetric_dist = (non_symmetric_dist + non_symmetric_dist.T) / 2
-        distances = symmetric_dist
-        penalty = 1000
+
+        distances = non_symmetric_dist
         t_matrix = np.zeros((m, m))
         for i in range(len(families)):
             for j in range(len(families)):
@@ -296,7 +300,11 @@ def arc_data(arc):
     coord1 = (arc[0], arc[1])
     coord2 = (arc[2], arc[3])
     arc_length = geopy.distance.geodesic(coord1, coord2).miles  # distance in miles
-    monitoring = (arc_length/speed)*60  # visit times in minutes
+    monitoring = (arc_length/drone_speed)*60  # visit times in minutes
+    if arc == arcs['DP']:
+        monitoring = 60
+    if arc == arcs['DL']:
+        monitoring = 0.01
     return arc_length, monitoring
 
 def city_data(city):
@@ -304,18 +312,22 @@ def city_data(city):
     LA = ['LA1', 'LA2', 'LA3', 'LA4', 'LA5', 'LA6', 'LA7', 'LA8']
     RS = ['RS1', 'RS2', 'RS3', 'RS4']
     cities = city.split('_')
-    locations = []
+    locations = ['DP']
     for i in cities:
         locations.extend([i for i in eval(i)])
+    locations.extend(['DL'])
     return locations
 
 def distances_matrix(locations):
     dist_mat = np.zeros((len(locations), len(locations)))
     for i, j in itertools.combinations(locations, 2):
         travel_1_2 = [arcs[i][2], arcs[i][3], arcs[j][0], arcs[j][1]]
-        length_1_2, travel_1_2 = arc_data(travel_1_2)
+        ij = arc_data(travel_1_2)[1]
         travel_2_1 = [arcs[j][2], arcs[j][3], arcs[i][0], arcs[i][1]]
-        length_2_1, travel_2_1 = arc_data(travel_2_1)
-        dist_mat[locations.index(i), locations.index(j)] = travel_1_2
-        dist_mat[locations.index(j), locations.index(i)] = travel_2_1
+        ji = arc_data(travel_2_1)[1]
+        if i == 'DL' or j == 'DL':
+            ij = 0.01
+            ji = 0.01
+        dist_mat[locations.index(i), locations.index(j)] = ij
+        dist_mat[locations.index(j), locations.index(i)] = ji
     return dist_mat
