@@ -9,7 +9,7 @@ import pickle
 
 def nl_pyo(data, verbose):
     datam = data
-    t_matrix, due_dates, m_time, n_slot, drone_charge, i_times, membership, families, f = datam
+    t_matrix, due_dates, m_time, n_slot, drone_charge, i_times, membership, families, f, due2 = datam
     demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
     drones_set = set(range(1, len(data[4]) + 1))  # use index i for M drones
     slot_set = set(range(1, n_slot + 1))  # use index r for R slots in each drone
@@ -25,8 +25,9 @@ def nl_pyo(data, verbose):
     m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.t = Var(slot_set, drones_set,  domain=NonNegativeReals, initialize=0, bounds=(0, full_charge))  # remaining charge AFTER visit completion
     m.lmax = Var(domain=NonNegativeReals, initialize=0)
+    m.lmax2 = Var(domain=NonNegativeReals, initialize=0)
 
-    m.obj_func = Objective(expr=m.lmax, sense=minimize)
+    m.obj_func = Objective(expr=m.lmax + m.lmax2, sense=minimize)
 
     # Constraint:----------------------------- (1*)
     m.cons1 = ConstraintList()
@@ -37,11 +38,11 @@ def nl_pyo(data, verbose):
     m.cons2 = ConstraintList()
     for i in drones_set:
         for r in slot_set:
-            m.cons2.add(sum(m.x[j, r, i] for j in demand_set) == 1)
+            m.cons2.add(sum(m.x[j, r, i] for j in demand_set) <= 1)
 
     # constraint:----------------------------- (3*)
-    for i in drones_set:
-        m.x[1, 1, i].fix(0)
+    # for i in drones_set:
+    #     m.x[1, 1, i].fix(0)
 
     # constraint:----------------------------- (4*)
     m.cons4 = ConstraintList()
@@ -69,6 +70,7 @@ def nl_pyo(data, verbose):
     for r in slot_set:
         for i in drones_set:
             m.cons8.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set))
+            m.cons8.add(m.lmax2 >= sum(due2[j - 1] * m.x[j, r, i] for j in demand_set) - m.s[r, i])
 
     # constraint:----------------------------- (9*)
     m.cons9 = ConstraintList()

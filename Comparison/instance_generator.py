@@ -65,7 +65,7 @@ def generate(ndrones, city, slot, charge, itimes):
 def arc_data(arc):
     coord1 = (arc[0], arc[1])
     coord2 = (arc[2], arc[3])
-    arc_length = geopy.distance.geodesic(coord1, coord2).miles  # distance in miles
+    arc_length = geopy.distance.geodesic(coord1, coord2).kilometers  # distance in miles
     monitoring = (arc_length/drone_speed)*60  # visit times in minutes
     if arc == arcs['DP']:
         monitoring = 60
@@ -107,3 +107,8 @@ def arc2distance(locations):
         dist_mat[locations.index(i), locations.index(j)] = ij
         dist_mat[locations.index(j), locations.index(i)] = ji
     return dist_mat
+
+# SB_RS = [3, 'SB_RS', 8, 5, 1]
+# a, b, c, d, e = city
+#     ins = generate(ndrones=a, condition=b, slot=c, charge=d, itimes=e)
+#

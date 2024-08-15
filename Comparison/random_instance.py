@@ -55,6 +55,8 @@ def generate(ndrones, condition, slot, charge, itimes):
                             t_matrix[ii - 1, jj - 1] = distances[(i, j)]
 
         due_date = np.array([50, 10, 20, 24, 8, 16, 24, 5, 10, 50])  # dj
+        # due_date2 = np.array([0, 0, 5, 10, 0, 8, 20, 0, 4, 0])
+        due_date2 = np.array([0, 2, 2, 2, 2, 2, 2, 2, 2, 0])
         # due_date = np.array([i * 0.2 for i in due_date])
         charges = np.ones(ndrones)*charge_
         membership = [1, 2, 2, 2, 3, 3, 3, 4, 4, 5]
@@ -266,7 +268,7 @@ def generate(ndrones, condition, slot, charge, itimes):
         # i_times = 5  # max intervisit time
         # slots = 20
         max_need_charge = max([distances[j][i] for i in range(len(distances[j])) for j in range(len(distances[1]))]) * 2
-    return t_matrix, due_date, monitor_times, slots, charges, i_times, membership, families, f
+    return t_matrix, due_date, monitor_times, slots, charges, i_times, membership, families, f, due_date2
 
 def mprint(m, solution, datam):
     print('***** Solver Message *****')
