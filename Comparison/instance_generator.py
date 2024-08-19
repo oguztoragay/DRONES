@@ -5,10 +5,11 @@ import numpy as np
 import geopy.distance
 import operator
 from functools import reduce
+from itertools import chain
 
 DP = [34.067330, -117.545154, 34.067330, -117.545154]  # coordinates of depot location
 DL = [34.067330, -117.545154, 34.067330, -117.545154]  # coordinates of idle location
-drone_speed = 10
+drone_speed = 30 # kilometers per hour
 arcs = {'DP': [34.067330, -117.545154, 34.067330, -117.545154, 0],
         'SB1': [34.06748049349774, -117.58627467784373, 34.06733829280365, -117.56805711511826, 2],
         'SB2': [34.073664262003916, -117.54478073959717, 34.07880072708419, -117.54469490891294, 3],
@@ -26,7 +27,9 @@ arcs = {'DP': [34.067330, -117.545154, 34.067330, -117.545154, 0],
         'RS2': [34.01310741213049, -117.44103478257155, 34.01129317274416, -117.43197964538643, 2],
         'RS3': [33.88454308524973, -117.62931466068288, 33.88289535845872, -117.644110477192, 2],
         'RS4': [33.897340150833756, -117.48842212774255, 33.894628991533885, -117.50064506537053, 2],
-        'DL': [34.0673301, -117.5451541, 34.0673301, -117.5451541, 0]}
+        'RS_iDL': [33.93341044928401, -117.45850404694579, 33.93341044928401, -117.45850404694579, 0],
+        'SB_iDL': [34.082150272643005, -117.56158799481022, 34.082150272643005, -117.56158799481022, 0],
+        'LA_iDL': [34.03829254642072, -118.28026863444143, 34.03829254642072, -118.28026863444143, 0]}
 
 def generate(ndrones, city, slot, charge, itimes):
     slots = slot
@@ -49,7 +52,8 @@ def generate(ndrones, city, slot, charge, itimes):
                         t_matrix[ii - 1, jj - 1] = distances[(i, j)]
                     else:
                         t_matrix[ii - 1, jj - 1] = distances[(i, j)]
-    due = np.array([24*60, 60, 90, 35, 120, 50, 180, 120, 60, 24*60])
+    due = np.array([24, 6, 10, 3, 16, 50, 180, 120, 60, 24, 24])
+    due = np.array([0, 60, 90, 35, 120, 50, 180, 120, 60, 0, 0])
     due_date = []
     for i in families:
         due_date.append([j*(24*60/len(i)) for j in range(1, len(i)+1)])
@@ -69,8 +73,8 @@ def arc_data(arc):
     monitoring = (arc_length/drone_speed)*60  # visit times in minutes
     if arc == arcs['DP']:
         monitoring = 60
-    if arc == arcs['DL']:
-        monitoring = 0.01
+    # if arc == arcs['DL']:
+    #     monitoring = 0.01
     return arc_length, monitoring
 
 def city2arc(city):
@@ -79,19 +83,25 @@ def city2arc(city):
     RS = ['RS1', 'RS2', 'RS3', 'RS4']
     visit_frequency = []
     cities = city.split('_')
+    DL = []
+    for i in cities:
+        # DL[str(i)+'_DL'] = list(centerz(eval(i)))
+        DL.append(str(i)+'_iDL')
     locations = ['DP']
     for i in cities:
         locations.extend([i for i in eval(i)])
-    locations.extend(['DL'])
+    # locations.extend(['DL'])
+    locations += DL
     for i in locations:
         visit_frequency.append(arcs[i][4])
     fam = [[1]]
     s = 2
-    for i in visit_frequency[1:-1]:
+    for i in visit_frequency[1:-2]:
         f = list(range(s, s+i))
         fam.append(f)
         s = f[-1]+1
     fam.append([s])
+    fam.append([s+1])
     return locations, visit_frequency, fam
 
 def arc2distance(locations):
@@ -101,14 +111,23 @@ def arc2distance(locations):
         ij = arc_data(travel_1_2)[1]
         travel_2_1 = [arcs[j][2], arcs[j][3], arcs[i][0], arcs[i][1]]
         ji = arc_data(travel_2_1)[1]
-        if i == 'DL' or j == 'DL':
-            ij = 0.01
-            ji = 0.01
+        # if i == 'DL' or j == 'DL':
+        #     ij = 0.01
+        #     ji = 0.01
         dist_mat[locations.index(i), locations.index(j)] = ij
         dist_mat[locations.index(j), locations.index(i)] = ji
     return dist_mat
 
+def centerz(lis):
+    length = 2*len(lis)
+    lis = [arcs[i][0:4] for i in lis]
+    lis = list(chain.from_iterable(lis))
+    sum_x = np.sum(lis[0::2])
+    sum_y = np.sum(lis[1::2])
+    return sum_x/length, sum_y/length, sum_x/length, sum_y/length, 0
+
+
 # SB_RS = [3, 'SB_RS', 8, 5, 1]
-# a, b, c, d, e = city
-#     ins = generate(ndrones=a, condition=b, slot=c, charge=d, itimes=e)
-#
+# a, b, c, d, e = SB_RS
+# ins = generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
+

@@ -3,8 +3,8 @@ from datetime import date
 import os
 from nl_pyomo2 import nl_pyo
 from lp_pyomo import lp_pyo
-from random_instance import generate
-# from instance_generator import generate
+# from random_instance import generate
+from instance_generator import generate
 from pyomo.environ import value
 import pickle
 import numpy as np
@@ -12,7 +12,7 @@ import time
 
 def run(city, verbose):
     a, b, c, d, e = city
-    ins = generate(ndrones=a, condition=b, slot=c, charge=d, itimes=e)
+    ins = generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
     # lp_pyo(ins, verbose)
     nl_pyo(ins, verbose)
 
@@ -124,8 +124,8 @@ if __name__ == '__main__':
     SB_RS = [3, 'SB_RS', 8, 5, 1]  # 21 nodes including idle
     # SB_RS2 = [4, 'SB_RS', 6, 5, 1]  # 21 nodes including idle
     SB_RS_LA = [5, 'SB_RS_LA', 20, 4, 5]  # 56 nodes including idle
-    run(fixed, verbose=True)
-    compare(fixed, report=False)
+    run(SB_RS, verbose=True)
+    compare(SB_RS, report=False)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False
