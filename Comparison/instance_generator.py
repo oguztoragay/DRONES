@@ -55,16 +55,22 @@ def generate(ndrones, city, slot, charge, itimes):
     due = np.array([24, 6, 10, 3, 16, 50, 180, 120, 60, 24, 24])
     due = np.array([0, 60, 90, 35, 120, 50, 180, 120, 60, 0, 0])
     due_date = []
+    due_date2 = []
     for i in families:
-        due_date.append([j*(24*60/len(i)) for j in range(1, len(i)+1)])
+        due_date.append([j * (24 * 60 / len(i)) for j in range(1, len(i) + 1)])
+        # due_date2.append([j * 0 for j in range(0, len(i))])
 
     due_date = reduce(operator.concat, due_date)
+    due_date2 = [i-10 for i in due_date]
+    # due_date2 = reduce(operator.concat, due_date2)
 
     # for i in range(len(families)):
     #     for j in range(len(families[i])):
     #         due_date.append(due[i] * (j + 1))
     charges = np.ones(ndrones) * charge
-    return t_matrix, due_date, monitor_times, slots, charges, i_times, families
+    membership = []
+    f = families[1:-2]
+    return t_matrix, due_date, monitor_times, slots, charges, i_times, membership, families, f, due_date2
 
 def arc_data(arc):
     coord1 = (arc[0], arc[1])
@@ -126,8 +132,4 @@ def centerz(lis):
     sum_y = np.sum(lis[1::2])
     return sum_x/length, sum_y/length, sum_x/length, sum_y/length, 0
 
-
-# SB_RS = [3, 'SB_RS', 8, 5, 1]
-# a, b, c, d, e = SB_RS
-# ins = generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
 

@@ -1,7 +1,8 @@
 from pyomo.environ import value
 import numpy as np
 
-def generate(ndrones, condition, slot, charge, itimes):
+def generate(ndrones, city, slot, charge, itimes):
+    condition = city
     t_matrix = []
     due_date = []
     monitor_times = []
