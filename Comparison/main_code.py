@@ -3,8 +3,8 @@ from datetime import date
 import os
 from nl_pyomo2 import nl_pyo
 from lp_pyomo import lp_pyo
-from random_instance import generate
-# from instance_generator import generate
+# from random_instance import generate
+from instance_generator import generate
 from pyomo.environ import value
 import pickle
 import numpy as np
@@ -118,14 +118,11 @@ def compare(instance, report):
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge, itimes)
     fixed = [2, 'fixed', 6, 10, 2]  # 10 nodes including idle --->OK
-    SB = [3, 'SB', 4, 0.3, 0.2]  # 12 nodes including idle
-    SB_M1 = [3, 'SB_M', 5, 20, 5]  # 12 nodes including idle
-    SB_M2 = [2, 'SB_M', 7, 25, 5]  # 12 nodes including idle
+    SB = [3, 'SB', 5, 400, 100]  # 12 nodes including idle
     SB_RS = [3, 'SB_RS', 8, 5, 1]  # 21 nodes including idle
-    # SB_RS2 = [4, 'SB_RS', 6, 5, 1]  # 21 nodes including idle
     SB_RS_LA = [5, 'SB_RS_LA', 20, 4, 5]  # 56 nodes including idle
-    run(fixed, verbose=True)
-    compare(fixed, report=False)
+    run(SB, verbose=True)
+    compare(SB, report=False)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False

@@ -21,11 +21,11 @@ def nl_pyo(data, verbose):
     # Pyomo Nonlinear (quadratic constrained) model for the problem-----------------
     m = ConcreteModel(name="Multiple drones QP model")
     m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
-    m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-    m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
+    m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 300))
+    m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 300))
     m.t = Var(slot_set, drones_set,  domain=NonNegativeReals, initialize=0, bounds=(0, full_charge))  # remaining charge AFTER visit completion
-    m.lmax = Var(domain=NonNegativeReals, initialize=0)
-    m.lmax2 = Var(domain=NonNegativeReals, initialize=0)
+    m.lmax = Var(domain=NonNegativeReals, initialize=0, bounds=(0, 300))
+    m.lmax2 = Var(domain=NonNegativeReals, initialize=0, bounds=(0, 300))
 
     m.obj_func = Objective(expr=m.lmax + m.lmax2, sense=minimize)
 
@@ -38,7 +38,7 @@ def nl_pyo(data, verbose):
     m.cons2 = ConstraintList()
     for i in drones_set:
         for r in slot_set:
-            m.cons2.add(sum(m.x[j, r, i] for j in demand_set) <= 1)
+            m.cons2.add(sum(m.x[j, r, i] for j in demand_set) == 1)
 
     # constraint:----------------------------- (3*)
     # for i in drones_set:
@@ -69,8 +69,8 @@ def nl_pyo(data, verbose):
     m.cons8 = ConstraintList()
     for r in slot_set:
         for i in drones_set:
-            m.cons8.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set))
-            m.cons8.add(m.lmax2 >= sum(due2[j - 1] * m.x[j, r, i] for j in demand_set) - m.s[r, i])
+            m.cons8.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set-{idle}))
+            m.cons8.add(m.lmax2 >= sum(due2[j - 1] * m.x[j, r, i] for j in demand_set-{idle}) - m.s[r, i])
 
     # constraint:----------------------------- (9*)
     m.cons9 = ConstraintList()
@@ -129,7 +129,7 @@ def nl_pyo(data, verbose):
     msolver.options['PreQLinearize'] = 0
     msolver.options['BarCorrectors'] = 100
     msolver.options['PreMIQCPForm'] = 1
-
+    # msolver = SolverFactory('knitro', executable='C:/AMPL/knitro.exe')
     solution = msolver.solve(m, tee=verbose)
 
 
@@ -141,3 +141,11 @@ def nl_pyo(data, verbose):
 
 
 
+# # constraint:----------------------------- (8*)
+# m.cons8 = ConstraintList()
+# for r in slot_set:
+#     for i in drones_set:
+#         m.cons8.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set))
+#         m.cons8.add(m.lmax2 >= sum(due2[j - 1] * m.x[j, r, i] for j in demand_set) - m.s[r, i]) # earliness
+# m.obj_func = Objective(expr=m.lmax + m.lmax2, sense=minimize)
+# due_date2 = np.array([0, 0, 1, 0, 1, 0, 0, 0, 0, 2, 2, 0])
