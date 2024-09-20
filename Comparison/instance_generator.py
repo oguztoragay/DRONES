@@ -57,14 +57,15 @@ def generate(ndrones, city, slot, charge, itimes):
     due_date = []
     due_date2 = []
     for i in families:
-        due_date.append([j * (24 * 1 / len(i)) for j in range(1, len(i) + 1)])
-        due_date2.append([j * (24 * 0 / len(i)) for j in range(1, len(i) + 1)])
+        due_date.append([j * (24 * (1 / len(i))) for j in range(1, len(i) + 1)])
+        due_date2.append([j * (24 * (0 / len(i))) for j in range(1, len(i) + 1)])
 
     due_date = reduce(operator.concat, due_date)
     due_date2 = reduce(operator.concat, due_date2)
     charges = np.ones(ndrones) * charge
     membership = []
-    f = families[1:-2]
+    bura = len(visit_frequency) - np.max(np.nonzero(visit_frequency)) - 1
+    f = [i[:-1] for i in families[1:-bura]]
     return t_matrix, due_date, monitor_times, slots, charges, i_times, membership, families, f, due_date2
 
 def arc_data(arc):
@@ -97,12 +98,13 @@ def city2arc(city):
         visit_frequency.append(arcs[i][4])
     fam = [[1]]
     s = 2
-    for i in visit_frequency[1:-2]:
+    for i in visit_frequency[1:-len(DL)]:
         f = list(range(s, s+i))
         fam.append(f)
         s = f[-1]+1
-    fam.append([s])
-    fam.append([s+1])
+    for i in range(len(DL)):
+        fam.append([s])
+        s += 1
     return locations, visit_frequency, fam
 
 def arc2distance(locations):

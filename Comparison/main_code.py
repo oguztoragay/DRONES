@@ -1,9 +1,12 @@
 from datetime import date
 
 import os
+
+import random_instance
+from Comparison import instance_generator
 from nl_pyomo2 import nl_pyo
 from lp_pyomo import lp_pyo
-# from random_instance import generate
+from random_instance import generate
 from instance_generator import generate
 from pyomo.environ import value
 import pickle
@@ -12,7 +15,8 @@ import time
 
 def run(city, verbose):
     a, b, c, d, e = city
-    ins = generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
+    # ins = random_instance.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
+    ins = instance_generator.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
     # lp_pyo(ins, verbose)
     nl_pyo(ins, verbose)
 
@@ -119,10 +123,10 @@ if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge, itimes)
     fixed = [2, 'fixed', 6, 10, 2]  # 10 nodes including idle --->OK
     SB = [3, 'SB', 5, 400, 100]  # 12 nodes including idle
-    SB_RS = [3, 'SB_RS', 8, 5, 1]  # 21 nodes including idle
+    SB_RS = [3, 'SB_RS', 10, 300, 100]  # 21 nodes including idle
     SB_RS_LA = [5, 'SB_RS_LA', 20, 4, 5]  # 56 nodes including idle
-    run(SB, verbose=True)
-    compare(SB, report=False)
+    run(SB_RS, verbose=True)
+    compare(SB_RS, report=False)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False

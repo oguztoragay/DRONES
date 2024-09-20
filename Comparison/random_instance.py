@@ -100,13 +100,16 @@ def generate(ndrones, city, slot, charge, itimes):
                         else:
                             t_matrix[ii - 1, jj - 1] = distances[(i, j)]
         due = np.array([5, 0.1, 0.23, 0.03, 0.15, 0.3, 0.46, 0.8, 0.7, 0.9, 1.1, 5])
-        # due = np.array([i*0.2 for i in due])
+        due2 = np.array([0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0])
+        # sss = 0
         membership = []
-        for i in range(len(families)):
-            for j in range(len(families[i])):
-                due_date.append(due[i])
-                membership.append(i + 1)
+        # for i in range(len(families)):
+        #     for j in range(len(families[i])):
+        #         due_date.append(due[sss])
+        #         sss =+ 1
+        #         membership.append(i + 1)
         due_date = due
+        due_date2 = due2
         charges = np.ones(ndrones) * charge_
         # i_times = 4  # max intervisit time
         # slots = 7
