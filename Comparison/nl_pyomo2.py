@@ -1,6 +1,7 @@
 # Cleaned on 03/25/2024 (oguz)
 # Cleaned on 07/25/2024 (oguz)
 # Cleaned on 08/07/2024 (oguz)
+# Cleaned on 09/22/2024 (oguz)
 
 from pyomo.environ import (ConcreteModel, Var, Constraint, ConstraintList, NonNegativeReals,
                            Binary, Integers, NonNegativeIntegers, Param, Objective, minimize,
@@ -36,7 +37,7 @@ def nl_pyo(data, verbose):
             m.cons1_2.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set-{idle}))
             m.cons1_2.add(m.lmax2 >= sum(due2[j - 1] * m.x[j, r, i] for j in demand_set-{idle}) - m.s[r, i])
 
-    # Constraint:----------------------------- (3__)
+    # constraint:----------------------------- (3__)
     m.cons3 = ConstraintList()
     for j in demand_set-{1, idle}:
         m.cons3.add(sum(m.x[j, r, i] for r in slot_set for i in drones_set) == 1)
@@ -45,7 +46,7 @@ def nl_pyo(data, verbose):
     m.cons4 = ConstraintList()
     for i in drones_set:
         for r in slot_set:
-            m.cons4.add(sum(m.x[j, r, i] for j in demand_set) <= 1)
+            m.cons4.add(sum(m.x[j, r, i] for j in demand_set) == 1)
 
     # constraint:----------------------------- (5__)
     m.cons5 = ConstraintList()

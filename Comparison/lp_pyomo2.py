@@ -3,12 +3,10 @@
 import pickle
 from pyomo.environ import ConcreteModel, Var, Constraint, ConstraintList, NonNegativeReals, Binary, Integers, NonNegativeIntegers, Param, Objective, minimize, SolverFactory, value, maximize
 from itertools import combinations, product
-from pyomo.contrib.latex_printer import latex_printer
-import pandas as pd
-import scipy as sp
+from pyomo.util.infeasible import find_infeasible_constraints
 
 def lp_pyo(data, verbose):
-    # datam = data
+    datam = data
     t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f, due2 = data
     demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
     drones_set = set(range(1, len(data[4]) + 1))  # use index i for M drones
@@ -19,6 +17,7 @@ def lp_pyo(data, verbose):
 
     B = 10000
     UB = 10000
+    LB = 0
     full_charge = drone_Charge[0]
 
     # Pyomo Linear model for the problem------------------------------------------------
@@ -27,196 +26,164 @@ def lp_pyo(data, verbose):
     m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
     m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)
 
-    m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-    m.e = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
+    m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # start time of a slot
+    m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # completion time of a slot
 
-    m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
+    m.u = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.v = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
+    m.z = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # start time of a node
+    m.w = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # completion time of a node
 
-    # m.z = Var(slot_set, drones_set, domain=Binary, initialize=0)
-    # m.w = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.t = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, full_charge))
 
-    m.lmax = Var(domain=NonNegativeReals, initialize=0)
+    m.lmax = Var(domain=NonNegativeReals, initialize=0, bounds=(0, 360))
+    m.lmax2 = Var(domain=NonNegativeReals, initialize=0, bounds=(0, 360))
 
-    m.obj_func = Objective(expr=m.lmax, sense=minimize)
+    m.obj_func = Objective(expr=m.lmax + m.lmax2, sense=minimize)
 
-    # Constraint 1:-------------------------------------------------------------------------- (1) in new model
-    m.cons1 = ConstraintList()
+    # constraint: ++++++++++++++++++++++++++++++ (1__ & 2__)
+    m.cons1_2 = ConstraintList()
+    for r in slot_set:
+        for i in drones_set:
+            m.cons1_2.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set-{idle}))
+            m.cons1_2.add(m.lmax2 >= sum(due2[j - 1] * m.x[j, r, i] for j in demand_set - {idle}) - m.s[r, i])
+
+    # constraint: ++++++++++++++++++++++++++++++  (3__)
+    m.cons3 = ConstraintList()
     for j in demand_set-{1, idle}:
-        m.cons1.add(sum(m.x[j, r, i] for r in slot_set for i in drones_set) == 1)
+        m.cons3.add(sum(m.x[j, r, i] for r in slot_set for i in drones_set) == 1)
 
-    # constraint 2:-------------------------------------------------------------------------- (2) in new model
-    m.cons2 = ConstraintList()
-    for i in drones_set:
-        for r in slot_set:
-            m.cons2.add(sum(m.x[j, r, i] for j in demand_set) == 1)
-
-    # constraint 3:-------------------------------------------------------------------------- (3) in new model
-    for i in drones_set:
-        m.x[1, 1, i].fix(0)
-
-    # constraint 4:-------------------------------------------------------------------------- (4) in new model
+    # constraint: ++++++++++++++++++++++++++++++  (4__)
     m.cons4 = ConstraintList()
     for i in drones_set:
-        m.cons4.add(m.c[1, i] == sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set))
+        for r in slot_set:
+            m.cons4.add(sum(m.x[j, r, i] for j in demand_set) == 1)
 
-    # constraint 5:-------------------------------------------------------------------------- (5) in new model
+    # constraint: ++++++++++++++++++++++++++++++  (5__)
     m.cons5 = ConstraintList()
     for i in drones_set:
-        for r in slot_set - {1}:
-            m.cons5.add(m.c[r, i] == m.c[r-1, i] + + sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
-    # m.cons5_1 = ConstraintList()
-    # for i in drones_set:
-    #     m.cons5_1.add(m.c[n_slot, i] - m.s[n_slot, i] == sum(m_time[j - 1] * m.x[j, n_slot, i] for j in demand_set))
+        m.cons5.add(m.c[1, i] == sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set))
 
-    # constraint 6:-------------------------------------------------------------------------- (6) in new model
-    for i in drones_set:
-        m.s[1, i].fix(0)
-
-    # constraint 7:-------------------------------------------------------------------------- (7) in new model
-    m.cons7 = ConstraintList()
+    # constraint: ++++++++++++++++++++++++++++++  (6a__)
+    m.cons6a = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons7.add(m.s[r, i] == m.c[r, i] - sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
+            m.cons6a.add(m.c[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
 
-    # constraint 8 & 9:-------------------------------------------------------------------- (8) & (9) in new model
-    m.cons8 = ConstraintList()
-    m.cons9 = ConstraintList()
+    # constraint: ++++++++++++++++++++++++++++++  (6b__ & 6c__)
+    m.cons6b = ConstraintList()
+    m.cons6c = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
             for jk in demand_set_combin2:
                 j = jk[0]
                 k = jk[1]
-                m.cons8.add(m.x[j, r, i] + m.x[k, r-1, i] <= 1 + m.y[j, k, r, i])
-                m.cons9.add(m.y[j, k, r, i] <= 0.5*(m.x[j, r, i] + m.x[k, r-1, i]))
+                m.cons6b.add(m.x[j, r, i] + m.x[k, r-1, i] - 1 <= m.y[j, k, r, i])
+                m.cons6c.add(m.y[j, k, r, i] <= 0.5 * (m.x[j, r, i] + m.x[k, r - 1, i]))
 
-    # constraint 10:-------------------------------------------------------------------------- (10) in new model
-    m.cons10 = ConstraintList()
-    for r in slot_set:
-        for i in drones_set:
-            m.cons10.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set))
-
-    # # constraint 11 and 12:-------------------------------------------------------------------------- (11) & (12) in new model
-    # m.cons11 = ConstraintList()
-    # m.cons12 = ConstraintList()
-    # for i in drones_set:
-    #     m.cons11.add(m.c[1, i] - drone_Charge[i - 1] <= B * m.z[2, i])
-    #     m.cons12.add(m.c[1, i] - drone_Charge[i - 1] >= -B * (1 - m.z[2, i]))
-    #
-    # # constraint 13 and 14:-------------------------------------------------------------------------- (13) & (14) in new model
-    # m.cons13 = ConstraintList()
-    # m.cons14 = ConstraintList()
-    # for i in drones_set:
-    #     for r in slot_set - {1, n_slot}:
-    #         m.cons13.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - drone_Charge[i - 1] <= B * m.z[r + 1, i])
-    #         m.cons14.add(m.c[r, i] - sum(m.w[b, i] for b in range(1, r)) - drone_Charge[i - 1] >= -B * (1 - m.z[r + 1, i]))
-    #
-
-    m.cons11 = ConstraintList()
+    # constraint: ++++++++++++++++++++++++++++++  (7__)
     for i in drones_set:
-        m.cons11.add(m.t[1, i] == full_charge - m.c[1, i])
+        m.s[1, i].fix(0)
 
-    # m.cons13 = ConstraintList()
-    # for i in drones_set:
-    #     for r in slot_set - {1}:
-    #         # m.cons13.add(m.t[r, i] == (full_charge - m.c[r,i] + m.c[r-1, i]) * m.x[1, r-1, i] + (m.t[r-1, i] - m.c[r,i] + m.c[r-1, i]) * (1-m.x[1, r-1, i]))
-    #         # m.cons13.add(m.t[r, i] == (full_charge - m.c[r,i]) * m.x[1, r-1, i] + (m.t[r-1, i] - m.c[r,i] + m.c[r-1, i]) * (1-m.x[1, r-1, i]))
-    #         m.cons13.add(m.t[r, i] == (full_charge * m.x[1, r, i]) + ((m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i]) * (1 - m.x[1, r, i])))
-
-    # # constraint 15 & 16 & 17:--------------------------------------------------------------- (15) to (17) in new model
-    m.cons15 = ConstraintList()
-    m.cons16 = ConstraintList()
-    m.cons17 = ConstraintList()
+    # constraint: ++++++++++++++++++++++++++++++  (8__)
+    m.cons8 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons15.add(m.t[r, i] <= full_charge * m.x[1, r, i] + B * (1-m.x[1, r, i]))
-            m.cons17.add(m.t[r, i] <= full_charge * m.x[1, r, i] + (m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i]))
-            m.cons16.add(m.t[r, i] >= full_charge * m.x[1, r, i] - B * (1 - m.x[1, r, i]))
-            m.cons17.add(m.t[r, i] >= full_charge * m.x[1, r, i] + (m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i]) - B * m.x[1, r, i])
+            m.cons8.add(m.s[r, i] == m.c[r, i] - sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
 
+    # constraint: ++++++++++++++++++++++++++++++  (9__)
+    m.cons9 = ConstraintList()
+    for i in drones_set:
+        m.cons9.add(m.t[1, i] == full_charge - m.c[1, i])
 
-    # constraint 18:-------------------------------------------------------------------------- (18) in new model
-    # for i in drones_set:
-    #     m.w[1, i].fix(0)
+    # constraint: ++++++++++++++++++++++++++++++  (10a__)
+    m.cons10a = ConstraintList()
+    for i in drones_set:
+        for r in slot_set - {1}:
+            m.cons10a.add(m.t[r, i] == full_charge * m.x[1, r, i] + m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i] - m.u[1, r-1, i] + m.v[1, r, i] - m.w[1, r-1, i])
 
-    # constraint 19:-------------------------------------------------------------------------- (19) in new model
-    # m.cons19 = ConstraintList()
-    # for i in drones_set:
-    #     for r in slot_set:
-    #         m.cons19.add(m.x[1, r, i] == m.z[r, i])
+    # constraint: ++++++++++++++++++++++++++++++  (10b__ & 10c__ & 10d__ & 10e__)
+    m.cons10b = ConstraintList()
+    m.cons10c = ConstraintList()
+    m.cons10d = ConstraintList()
+    m.cons10e = ConstraintList()
+    for i in drones_set:
+        for r in slot_set - {1}:
+            for j in demand_set:
+                m.cons10b.add(m.u[j, r, i] >= m.t[r-1, i] - UB * (1 - m.x[1, r, i]))
+                m.cons10c.add(m.u[j, r, i] <= m.t[r - 1, i] - LB * (1 - m.x[1, r, i]))
+                m.cons10d.add(m.u[j, r, i] <= UB * (m.x[1, r, i]))
+                m.cons10e.add(m.u[j, r, i] >= LB * (m.x[1, r, i]))
 
-    # constraint 20:-------------------------------------------------------------------------- (20) in new model
-    m.cons20 = ConstraintList()
+    # constraint: ++++++++++++++++++++++++++++++  (10f__ & 10g__ & 10h__ & 10i__)
+    m.cons10f = ConstraintList()
+    m.cons10g = ConstraintList()
+    m.cons10h = ConstraintList()
+    m.cons10i = ConstraintList()
+    for i in drones_set:
+        for r in slot_set:
+            for j in demand_set:
+                m.cons10f.add(m.v[j, r, i] >= m.c[r, i] - UB * (1 - m.x[1, r, i]))
+                m.cons10g.add(m.v[j, r, i] <= m.c[r, i] - LB * (1 - m.x[1, r, i]))
+                m.cons10h.add(m.v[j, r, i] <= UB * (m.x[1, r, i]))
+                m.cons10i.add(m.v[j, r, i] >= LB * (m.x[1, r, i]))
+
+    # constraint: ++++++++++++++++++++++++++++++  (10j__ & 10k__ & 10l__ & 10m__)
+    m.cons10j = ConstraintList()
+    m.cons10k = ConstraintList()
+    m.cons10l = ConstraintList()
+    m.cons10m = ConstraintList()
+    for i in drones_set:
+        for r in slot_set - {1}:
+            for j in demand_set:
+                m.cons10f.add(m.w[j, r, i] >= m.c[r, i] - UB * (1 - m.x[1, r, i]))
+                m.cons10g.add(m.w[j, r, i] <= m.c[r, i] - LB * (1 - m.x[1, r, i]))
+                m.cons10h.add(m.w[j, r, i] <= UB * (m.x[1, r, i]))
+                m.cons10i.add(m.w[j, r, i] >= LB * (m.x[1, r, i]))
+
+    # constraint: ++++++++++++++++++++++++++++++  (11a__)
+    m.cons11a = ConstraintList()
     for f in families:
         for j in f:
-            m.cons20.add(sum(m.e[j + 1, r, i] for r in slot_set for i in drones_set) - sum(m.v[j, r, i] for r in slot_set for i in drones_set) <= i_times)
+            m.cons11a.add(sum(m.z[j + 1, r, i] for r in slot_set for i in drones_set) - sum(m.w[j, r, i] for r in slot_set for i in drones_set) <= i_times)
 
-    # constraint 21:-------------------------------------------------------------------------- (21) in new model
-    # m.cons21 = ConstraintList()
-    # for f in families:
-    #     for j in f:
-    #         m.cons21.add(sum(m.v[j + 1, r, i] for r in slot_set for i in drones_set) - sum(m.v[j, r, i] for r in slot_set for i in drones_set) >= 0)
-
-    # constraint 22 & 23:-------------------------------------------------------------------------- (22) and (23) in new model
-    m.cons22 = ConstraintList()
+    # constraint: ++++++++++++++++++++++++++++++  (12a__)
+    m.cons12a = ConstraintList()
     for f in families:
         for j in f:
-            m.cons22.add(sum(m.e[j+1, r, i] for r in slot_set for i in drones_set) - sum(m.v[j, r, i]  for r in slot_set for i in drones_set) >= 0)
+            m.cons12a.add(sum(m.z[j + 1, r, i] for r in slot_set for i in drones_set) - sum(m.w[j, r, i] for r in slot_set for i in drones_set) >= 0)
 
-    # constraint 24 to 26:-------------------------------------------------------------------------- (24) to (26) in new model
-    m.cons24 = ConstraintList()
-    m.cons25 = ConstraintList()
-    m.cons26 = ConstraintList()
+    # constraint: ++++++++++++++++++++++++++++++  (11b__ & 11c__ & 11d__ & 11e)
+    m.cons11b = ConstraintList()
+    m.cons11c = ConstraintList()
+    m.cons11d = ConstraintList()
+    m.cons11e = ConstraintList()
     for j in demand_set:
         for r in slot_set:
             for i in drones_set:
-                m.cons24.add(m.v[j, r, i] <= UB * m.x[j, r, i])
-                m.cons25.add(m.v[j, r, i] <= m.c[r, i])
-                m.cons26.add(m.v[j, r, i] >= m.c[r, i] - UB*(1 - m.x[j, r, i]))
+                m.cons11b.add(m.z[j, r, i] >= m.s[r, i] - UB * (1 - m.x[j, r, i]))
+                m.cons11c.add(m.z[j, r, i] <= m.s[r, i] - LB * (1 - m.x[j, r, i]))
+                m.cons11d.add(m.z[j, r, i] <= UB * m.x[j, r, i])
+                m.cons11e.add(m.z[j, r, i] >= LB * m.x[j, r, i])
 
-    # constraint 27 to 29:-------------------------------------------------------------------------- (27) to (29) in new model
-    m.cons27 = ConstraintList()
-    m.cons28 = ConstraintList()
-    m.cons29 = ConstraintList()
-    for j in demand_set:
-        for r in slot_set:
-            for i in drones_set:
-                m.cons27.add(m.e[j, r, i] <= UB * m.x[j, r, i])
-                m.cons28.add(m.e[j, r, i] <= m.s[r, i])
-                m.cons29.add(m.e[j, r, i] >= m.s[r, i] - UB*(1 - m.x[j, r, i]))
-
-    # # constraint 30:-------------------------------------------------------------------------- (30) in new model
-    # m.cons30 = ConstraintList()
-    # for f in families:
-    #     for j in f:
-    #         for r in slot_set - {n_slot}:
-    #             for i in drones_set:
-    #                 m.cons30.add(sum(m.x[jj, r + 1, i] for jj in range(j+1, len(demand_set))) <= B*(1-m.x[j, r, i]))
-    #
-    # # constraint 31:-------------------------------------------------------------------------- (31) in new model
-    # m.cons31 = ConstraintList()
-    # for r in slot_set:
-    #     for i in drones_set:
-    #         m.cons31.add(m.x[len(due_dates)-1, r, i] == 1 - sum(m.x[j, r, i] for j in demand_set-{len(due_dates)-1}))
-
+    # Info about the model:------------------------------------------
     # m.pprint()
-    num_of_cons = {}
-    total_cons = 0
-    for c in m.component_objects(Constraint):
-        num_of_cons[c.name] = len(c)
-        total_cons += len(c)
-
-    num_of_var = {}
-    total_var = 0
-    for c in m.component_objects(Var):
-        num_of_var[c.name] = len(c)
-        total_var += len(c)
-
+    # num_of_cons = {}
+    # total_cons = 0
+    # for c in m.component_objects(Constraint):
+    #     num_of_cons[c.name] = len(c)
+    #     total_cons += len(c)
+    #
+    # num_of_var = {}
+    # total_var = 0
+    # for c in m.component_objects(Var):
+    #     num_of_var[c.name] = len(c)
+    #     total_var += len(c)
     # print('***** Total number of variables:%8d' %total_var)
     # print('***** Total number of constraints:%8d' %total_cons)
     # print('***** Variables =',num_of_var)
     # print('***** Constraints =',num_of_cons)
+
     msolver = SolverFactory('gurobi')
     msolver.options['Threads'] = 20
     msolver.options['FeasibilityTol'] = 1e-7
@@ -231,7 +198,11 @@ def lp_pyo(data, verbose):
     # msolver.options['PreMIQCPForm'] = 1
     # msolver.options['Cutoff'] = 1
 
-    solution = msolver.solve(m, warmstart= False, tee=verbose)
+    solution = msolver.solve(m, tee=verbose)
+
+    for constr, body_value, infeasible in find_infeasible_constraints(m):
+        # print(f"Constraint {constr.name} is infeasible: body_value={body_value}, infeasible={infeasible}")
+        print(f"Constraint {constr.name} is infeasible: {constr.expr}")
 
     # Extracting A matrix into a csv file --------------------------
     # solver1 = SolverFactory('gurobi_persistent', model=m)
