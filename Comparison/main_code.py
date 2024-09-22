@@ -5,7 +5,7 @@ import os
 import random_instance
 from Comparison import instance_generator
 from nl_pyomo2 import nl_pyo
-from lp_pyomo import lp_pyo
+from lp_pyomo2 import lp_pyo
 from random_instance import generate
 from instance_generator import generate
 from pyomo.environ import value
@@ -122,11 +122,15 @@ def compare(instance, report):
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge, itimes)
     fixed = [2, 'fixed', 6, 10, 2]  # 10 nodes including idle --->OK
-    SB = [3, 'SB', 5, 400, 100]  # 12 nodes including idle
-    SB_RS = [3, 'SB_RS', 10, 300, 100]  # 21 nodes including idle
-    SB_RS_LA = [5, 'SB_RS_LA', 20, 4, 5]  # 56 nodes including idle
-    run(SB_RS, verbose=True)
-    compare(SB_RS, report=False)
+    SB = [3, 'SB', 5, 100, 60]  # 12 nodes including idle
+    RS = [3, 'RS', 5, 100, 60]
+    LA = [3, 'LA', 5, 100, 60]
+    SB_RS = [4, 'SB_RS', 7, 300, 100]  # 21 nodes including idle
+    SB_LA = [4, 'SB_LA', 7, 300, 100]
+    RS_LA = [4, 'RS_LA', 7, 300, 100]
+    SB_RS_LA = [5, 'SB_RS_LA', 15, 4, 5]  # 56 nodes including idle
+    run(SB, verbose=True)
+    compare(SB, report=False)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False

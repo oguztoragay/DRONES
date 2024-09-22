@@ -57,8 +57,8 @@ def generate(ndrones, city, slot, charge, itimes):
     due_date = []
     due_date2 = []
     for i in families:
-        due_date.append([j * (24 * (1 / len(i))) for j in range(1, len(i) + 1)])
-        due_date2.append([j * (24 * (0 / len(i))) for j in range(1, len(i) + 1)])
+        due_date.append([j * (360 * (1 / len(i))) for j in range(1, len(i) + 1)])
+        due_date2.append([j * (360 * (0.1 / len(i))) for j in range(1, len(i) + 1)])
 
     due_date = reduce(operator.concat, due_date)
     due_date2 = reduce(operator.concat, due_date2)
