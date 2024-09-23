@@ -10,23 +10,24 @@ import pickle
 
 def nl_pyo(data, verbose):
     datam = data
-    t_matrix, due_dates, m_time, n_slot, drone_charge, i_times, membership, families, f, due2 = datam
+    t_matrix, due_dates, m_time, n_slot, drone_charge, i_times, membership, families, f, due2, len_DL = datam
     demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
     drones_set = set(range(1, len(data[4]) + 1))  # use index i for M drones
     slot_set = set(range(1, n_slot + 1))  # use index r for R slots in each drone
     families = f
-    idle = len(demand_set)
+    # idle = len(demand_set)
+    idle = set([i for i in range(len(demand_set)-len_DL+1, len(demand_set)+1)])
 
     full_charge = drone_charge[0]
 
     # Pyomo Nonlinear (quadratic constrained) model for the problem-----------------
     m = ConcreteModel(name="Multiple drones QP model")
     m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
-    m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 360))
-    m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 360))
+    m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
+    m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.t = Var(slot_set, drones_set,  domain=NonNegativeReals, initialize=0, bounds=(0, full_charge))  # remaining charge AFTER visit completion H_{r,i}
-    m.lmax = Var(domain=NonNegativeReals, initialize=0, bounds=(0, 360))
-    m.lmax2 = Var(domain=NonNegativeReals, initialize=0, bounds=(0, 360))
+    m.lmax = Var(domain=NonNegativeReals, initialize=0)
+    m.lmax2 = Var(domain=NonNegativeReals, initialize=0)
 
     m.obj_func = Objective(expr=m.lmax + m.lmax2, sense=minimize)
 
@@ -34,12 +35,12 @@ def nl_pyo(data, verbose):
     m.cons1_2 = ConstraintList()
     for r in slot_set:
         for i in drones_set:
-            m.cons1_2.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set-{idle}))
-            m.cons1_2.add(m.lmax2 >= sum(due2[j - 1] * m.x[j, r, i] for j in demand_set-{idle}) - m.s[r, i])
+            m.cons1_2.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set-idle))
+            m.cons1_2.add(m.lmax2 >= sum(due2[j - 1] * m.x[j, r, i] for j in demand_set-idle) - m.s[r, i])
 
     # constraint:----------------------------- (3__)
     m.cons3 = ConstraintList()
-    for j in demand_set-{1, idle}:
+    for j in demand_set-{1}-idle:
         m.cons3.add(sum(m.x[j, r, i] for r in slot_set for i in drones_set) == 1)
 
     # constraint:----------------------------- (4__)
@@ -78,7 +79,7 @@ def nl_pyo(data, verbose):
     m.cons10 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons10.add(m.t[r, i] == (full_charge * m.x[1, r, i]) + ((m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i]) * (1 - m.x[1, r, i])))
+            m.cons10.add(m.t[r, i] == (full_charge * m.x[1, r, i]) + ((m.t[r - 1, i] - m.c[r, i]) * (1 - m.x[1, r, i])))
 
     # constraint:----------------------------- (11__)
     m.cons11 = ConstraintList()
@@ -116,7 +117,7 @@ def nl_pyo(data, verbose):
     # msolver.set_gurobi_param('LazyConstraints', 1)
 
     msolver = SolverFactory('gurobi')
-    msolver.options['Threads'] = 20
+    msolver.options['Threads'] = 24
     msolver.options['FeasibilityTol'] = 1e-7
     msolver.options['MIPFocus'] = 2
     msolver.options['Cuts'] = 3

@@ -7,13 +7,14 @@ from pyomo.util.infeasible import find_infeasible_constraints
 
 def lp_pyo(data, verbose):
     datam = data
-    t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f, due2 = data
+    t_matrix, due_dates, m_time, n_slot, drone_Charge, i_times, membership, families, f, due2, len_DL = data
     demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
     drones_set = set(range(1, len(data[4]) + 1))  # use index i for M drones
     slot_set = set(range(1, n_slot + 1))  # use index r for R slots in each drone
     demand_set_combin2 = [[i, j] for (i, j) in product(demand_set, demand_set) if i != j]
     families = f
-    idle = len(demand_set)
+    # idle = len(demand_set)
+    idle = set([i for i in range(len(demand_set)-len_DL+1, len(demand_set)+1)])
 
     B = 10000
     UB = 10000
@@ -29,8 +30,8 @@ def lp_pyo(data, verbose):
     m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # start time of a slot
     m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # completion time of a slot
 
-    m.u = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-    m.v = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
+    m.u = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
+    m.v = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.z = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # start time of a node
     m.w = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # completion time of a node
 
@@ -45,12 +46,12 @@ def lp_pyo(data, verbose):
     m.cons1_2 = ConstraintList()
     for r in slot_set:
         for i in drones_set:
-            m.cons1_2.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set-{idle}))
-            m.cons1_2.add(m.lmax2 >= sum(due2[j - 1] * m.x[j, r, i] for j in demand_set - {idle}) - m.s[r, i])
+            m.cons1_2.add(m.lmax >= m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set-idle))
+            m.cons1_2.add(m.lmax2 >= sum(due2[j - 1] * m.x[j, r, i] for j in demand_set-idle) - m.s[r, i])
 
     # constraint: ++++++++++++++++++++++++++++++  (3__)
     m.cons3 = ConstraintList()
-    for j in demand_set-{1, idle}:
+    for j in demand_set-{1}-idle:
         m.cons3.add(sum(m.x[j, r, i] for r in slot_set for i in drones_set) == 1)
 
     # constraint: ++++++++++++++++++++++++++++++  (4__)
@@ -100,7 +101,7 @@ def lp_pyo(data, verbose):
     m.cons10a = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons10a.add(m.t[r, i] == full_charge * m.x[1, r, i] + m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i] - m.u[1, r-1, i] + m.v[1, r, i] - m.w[1, r-1, i])
+            m.cons10a.add(m.t[r, i] == full_charge * m.x[1, r, i] + m.t[r - 1, i] - m.c[r, i] - m.u[r, i] + m.v[r, i])
 
     # constraint: ++++++++++++++++++++++++++++++  (10b__ & 10c__ & 10d__ & 10e__)
     m.cons10b = ConstraintList()
@@ -109,11 +110,10 @@ def lp_pyo(data, verbose):
     m.cons10e = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            for j in demand_set:
-                m.cons10b.add(m.u[j, r, i] >= m.t[r-1, i] - UB * (1 - m.x[1, r, i]))
-                m.cons10c.add(m.u[j, r, i] <= m.t[r - 1, i] - LB * (1 - m.x[1, r, i]))
-                m.cons10d.add(m.u[j, r, i] <= UB * (m.x[1, r, i]))
-                m.cons10e.add(m.u[j, r, i] >= LB * (m.x[1, r, i]))
+            m.cons10b.add(m.u[r, i] <= m.t[r-1, i] + UB * (1 - m.x[1, r, i]))
+            m.cons10c.add(m.u[r, i] >= m.t[r-1, i] - UB * (1 - m.x[1, r, i]))
+            m.cons10d.add(m.u[r, i] <= UB * (m.x[1, r, i]))
+            m.cons10e.add(m.u[r, i] >= -UB * (m.x[1, r, i]))
 
     # constraint: ++++++++++++++++++++++++++++++  (10f__ & 10g__ & 10h__ & 10i__)
     m.cons10f = ConstraintList()
@@ -122,24 +122,10 @@ def lp_pyo(data, verbose):
     m.cons10i = ConstraintList()
     for i in drones_set:
         for r in slot_set:
-            for j in demand_set:
-                m.cons10f.add(m.v[j, r, i] >= m.c[r, i] - UB * (1 - m.x[1, r, i]))
-                m.cons10g.add(m.v[j, r, i] <= m.c[r, i] - LB * (1 - m.x[1, r, i]))
-                m.cons10h.add(m.v[j, r, i] <= UB * (m.x[1, r, i]))
-                m.cons10i.add(m.v[j, r, i] >= LB * (m.x[1, r, i]))
-
-    # constraint: ++++++++++++++++++++++++++++++  (10j__ & 10k__ & 10l__ & 10m__)
-    m.cons10j = ConstraintList()
-    m.cons10k = ConstraintList()
-    m.cons10l = ConstraintList()
-    m.cons10m = ConstraintList()
-    for i in drones_set:
-        for r in slot_set - {1}:
-            for j in demand_set:
-                m.cons10f.add(m.w[j, r, i] >= m.c[r, i] - UB * (1 - m.x[1, r, i]))
-                m.cons10g.add(m.w[j, r, i] <= m.c[r, i] - LB * (1 - m.x[1, r, i]))
-                m.cons10h.add(m.w[j, r, i] <= UB * (m.x[1, r, i]))
-                m.cons10i.add(m.w[j, r, i] >= LB * (m.x[1, r, i]))
+            m.cons10f.add(m.v[r, i] <= m.c[r, i] + UB * (1 - m.x[1, r, i]))
+            m.cons10g.add(m.v[r, i] >= m.c[r, i] - UB * (1 - m.x[1, r, i]))
+            m.cons10h.add(m.v[r, i] <= UB * (m.x[1, r, i]))
+            m.cons10i.add(m.v[r, i] >= -UB * (m.x[1, r, i]))
 
     # constraint: ++++++++++++++++++++++++++++++  (11a__)
     m.cons11a = ConstraintList()
@@ -161,10 +147,23 @@ def lp_pyo(data, verbose):
     for j in demand_set:
         for r in slot_set:
             for i in drones_set:
-                m.cons11b.add(m.z[j, r, i] >= m.s[r, i] - UB * (1 - m.x[j, r, i]))
-                m.cons11c.add(m.z[j, r, i] <= m.s[r, i] - LB * (1 - m.x[j, r, i]))
+                m.cons11b.add(m.z[j, r, i] <= m.s[r, i] + UB * (1 - m.x[j, r, i]))
+                m.cons11c.add(m.z[j, r, i] >= m.s[r, i] - UB * (1 - m.x[j, r, i]))
                 m.cons11d.add(m.z[j, r, i] <= UB * m.x[j, r, i])
-                m.cons11e.add(m.z[j, r, i] >= LB * m.x[j, r, i])
+                m.cons11e.add(m.z[j, r, i] >= -UB * m.x[j, r, i])
+
+    # constraint: ++++++++++++++++++++++++++++++  (11f__ & 11g__ & 11h__ & 11i__)
+    m.cons11f = ConstraintList()
+    m.cons11g = ConstraintList()
+    m.cons11h = ConstraintList()
+    m.cons11i = ConstraintList()
+    for i in drones_set:
+        for r in slot_set - {1}:
+            for j in demand_set:
+                m.cons11f.add(m.w[j, r, i] <= m.c[r, i] + UB * (1 - m.x[j, r, i]))
+                m.cons11g.add(m.w[j, r, i] >= m.c[r, i] - UB * (1 - m.x[j, r, i]))
+                m.cons11h.add(m.w[j, r, i] <= UB * (m.x[j, r, i]))
+                m.cons11i.add(m.w[j, r, i] >= -UB * (m.x[j, r, i]))
 
     # Info about the model:------------------------------------------
     # m.pprint()
@@ -185,7 +184,7 @@ def lp_pyo(data, verbose):
     # print('***** Constraints =',num_of_cons)
 
     msolver = SolverFactory('gurobi')
-    msolver.options['Threads'] = 20
+    msolver.options['Threads'] = 24
     msolver.options['FeasibilityTol'] = 1e-7
     msolver.options['MIPFocus'] = 2
     msolver.options['Cuts'] = 3
@@ -199,31 +198,13 @@ def lp_pyo(data, verbose):
     # msolver.options['Cutoff'] = 1
 
     solution = msolver.solve(m, tee=verbose)
-
-    for constr, body_value, infeasible in find_infeasible_constraints(m):
-        # print(f"Constraint {constr.name} is infeasible: body_value={body_value}, infeasible={infeasible}")
-        print(f"Constraint {constr.name} is infeasible: {constr.expr}")
-
-    # Extracting A matrix into a csv file --------------------------
-    # solver1 = SolverFactory('gurobi_persistent', model=m)
-    # A = solver1._solver_model.getA()
-    # denseMatrix = pd.DataFrame(data=sp.sparse.csr_matrix.todense(A))
-    # denseMatrix.to_csv('Amatrix.csv', index=False)
+    # for constr, body_value, infeasible in find_infeasible_constraints(m):
+    #     print(f"Constraint {constr.name} is infeasible: {constr.expr}")
 
     pickle_out = open('lp.pickle', "wb")
     pickle.dump([m, solution, datam], pickle_out)
     pickle_out.close()
     print('~~~~~~~~~~  LP has been finalized ~~~~~~~~~~ -->', solution.Solver.Termination_condition)
-
-    # print('\nLINEAR!------------------------------------')
-    # mprint(m, solution, datam)
-    # route_battery(m, solution, datam)
-    # if ws is not None:
-    #     print('Hexaly results!------------------------------------')
-    #     for i in ws:
-    #         print(*i, sep=' --> ')
-    # for i in drones_set:
-    #     print([value(m.w[r, i]) for r in slot_set])
     return None
 
 
