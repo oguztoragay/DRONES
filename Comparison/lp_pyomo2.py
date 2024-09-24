@@ -101,7 +101,7 @@ def lp_pyo(data, verbose):
     m.cons10a = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons10a.add(m.t[r, i] == full_charge * m.x[1, r, i] + m.t[r - 1, i] - m.c[r, i] - m.u[r, i] + m.v[r, i])
+            m.cons10a.add(m.t[r, i] == full_charge * m.x[1, r, i] + m.t[r - 1, i] - m.c[r, i] - m.u[r, i] + m.v[r, i]- m.v[r-1, i])
 
     # constraint: ++++++++++++++++++++++++++++++  (10b__ & 10c__ & 10d__ & 10e__)
     m.cons10b = ConstraintList()
