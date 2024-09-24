@@ -10,8 +10,8 @@ from itertools import chain
 DP = [34.067330, -117.545154, 34.067330, -117.545154]  # coordinates of depot location
 DL = [34.067330, -117.545154, 34.067330, -117.545154]  # coordinates of idle location
 drone_speed = 50 # kilometers per hour
-arcs = {'DP': [34.067330, -117.545154, 34.067330, -117.545154, 0],
-        # 'DP': [34.003607, -118.300085,34.003607, -118.300085, 0],
+arcs = {#'DP': [34.067330, -117.545154, 34.067330, -117.545154, 0],
+        'DP': [34.003607, -118.300085,34.003607, -118.300085, 0],
         'SB1': [34.06748049349774, -117.58627467784373, 34.06733829280365, -117.56805711511826, 2],
         'SB2': [34.073664262003916, -117.54478073959717, 34.07880072708419, -117.54469490891294, 3],
         'SB3': [34.055221667702725, -117.54707552414482, 34.042942672497496, -117.55046155255096, 2],
@@ -121,12 +121,12 @@ def arc2distance(locations):
         dist_mat[locations.index(j), locations.index(i)] = ji
     return dist_mat
 
-def centerz(lis):
-    length = 2*len(lis)
-    lis = [arcs[i][0:4] for i in lis]
-    lis = list(chain.from_iterable(lis))
-    sum_x = np.sum(lis[0::2])
-    sum_y = np.sum(lis[1::2])
-    return sum_x/length, sum_y/length, sum_x/length, sum_y/length, 0
+# def centerz(lis):
+#     length = 2*len(lis)
+#     lis = [arcs[i][0:4] for i in lis]
+#     lis = list(chain.from_iterable(lis))
+#     sum_x = np.sum(lis[0::2])
+#     sum_y = np.sum(lis[1::2])
+#     return sum_x/length, sum_y/length, sum_x/length, sum_y/length, 0
 
 
