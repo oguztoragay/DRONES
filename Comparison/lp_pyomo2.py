@@ -30,8 +30,9 @@ def lp_pyo(data, verbose):
     m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # start time of a slot
     m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # completion time of a slot
 
-    m.u = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-    m.v = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
+    m.u1 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
+    m.u2 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
+    m.u3 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.z = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # start time of a node
     m.w = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # completion time of a node
 
@@ -101,7 +102,7 @@ def lp_pyo(data, verbose):
     m.cons10a = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons10a.add(m.t[r, i] == full_charge * m.x[1, r, i] + m.t[r - 1, i] - m.c[r, i] - m.u[r, i] + m.v[r, i]- m.v[r-1, i])
+            m.cons10a.add(m.t[r, i] == full_charge * m.x[1, r, i] + m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i] - m.u1[r, i] + m.u2[r, i]- m.u3[r-1, i])
 
     # constraint: ++++++++++++++++++++++++++++++  (10b__ & 10c__ & 10d__ & 10e__)
     m.cons10b = ConstraintList()
@@ -110,10 +111,10 @@ def lp_pyo(data, verbose):
     m.cons10e = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons10b.add(m.u[r, i] <= m.t[r-1, i] + UB * (1 - m.x[1, r, i]))
-            m.cons10c.add(m.u[r, i] >= m.t[r-1, i] - UB * (1 - m.x[1, r, i]))
-            m.cons10d.add(m.u[r, i] <= UB * (m.x[1, r, i]))
-            m.cons10e.add(m.u[r, i] >= -UB * (m.x[1, r, i]))
+            m.cons10b.add(m.u1[r, i] <= m.t[r-1, i] + UB * (1 - m.x[1, r, i]))
+            m.cons10c.add(m.u1[r, i] >= m.t[r-1, i] - UB * (1 - m.x[1, r, i]))
+            m.cons10d.add(m.u1[r, i] <= UB * (m.x[1, r, i]))
+            m.cons10e.add(m.u1[r, i] >= -UB * (m.x[1, r, i]))
 
     # constraint: ++++++++++++++++++++++++++++++  (10f__ & 10g__ & 10h__ & 10i__)
     m.cons10f = ConstraintList()
@@ -122,10 +123,22 @@ def lp_pyo(data, verbose):
     m.cons10i = ConstraintList()
     for i in drones_set:
         for r in slot_set:
-            m.cons10f.add(m.v[r, i] <= m.c[r, i] + UB * (1 - m.x[1, r, i]))
-            m.cons10g.add(m.v[r, i] >= m.c[r, i] - UB * (1 - m.x[1, r, i]))
-            m.cons10h.add(m.v[r, i] <= UB * (m.x[1, r, i]))
-            m.cons10i.add(m.v[r, i] >= -UB * (m.x[1, r, i]))
+            m.cons10f.add(m.u2[r, i] <= m.c[r, i] + UB * (1 - m.x[1, r, i]))
+            m.cons10g.add(m.u2[r, i] >= m.c[r, i] - UB * (1 - m.x[1, r, i]))
+            m.cons10h.add(m.u2[r, i] <= UB * (m.x[1, r, i]))
+            m.cons10i.add(m.u2[r, i] >= -UB * (m.x[1, r, i]))
+
+    # # constraint: ++++++++++++++++++++++++++++++  (10f__ & 10g__ & 10h__ & 10i__)
+    m.cons10j = ConstraintList()
+    m.cons10k = ConstraintList()
+    m.cons10l = ConstraintList()
+    m.cons10m = ConstraintList()
+    for i in drones_set:
+        for r in slot_set - {1}:
+            m.cons10j.add(m.u3[r-1, i] <= m.c[r-1, i] + UB * (1 - m.x[1, r, i]))
+            m.cons10k.add(m.u3[r-1, i] >= m.c[r-1, i] - UB * (1 - m.x[1, r, i]))
+            m.cons10l.add(m.u3[r-1, i] <= UB * (m.x[1, r, i]))
+            m.cons10m.add(m.u3[r-1, i] >= -UB * (m.x[1, r, i]))
 
     # constraint: ++++++++++++++++++++++++++++++  (11a__)
     m.cons11a = ConstraintList()
