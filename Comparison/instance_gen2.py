@@ -9,7 +9,7 @@ from itertools import chain
 
 DP = [34.067330, -117.545154, 34.067330, -117.545154]  # coordinates of depot location
 DL = [34.067330, -117.545154, 34.067330, -117.545154]  # coordinates of idle location
-drone_speed = 50 # kilometers per hour
+drone_speed = 50  # kilometers per hour
 arcs = {#'DP': [34.067330, -117.545154, 34.067330, -117.545154, 0],
         'DP': [34.003607, -118.300085,34.003607, -118.300085, 0],
         'SB1': [34.06748049349774, -117.58627467784373, 34.06733829280365, -117.56805711511826, 2],
@@ -40,7 +40,7 @@ def generate(ndrones, city, slot, charge, itimes):
     monitoring = [arc_data(arcs[i])[1] for i in locations]
     monitor_times = list(np.repeat(monitoring, [len(i) for i in families]))
     t_matrix = np.zeros((len(monitor_times), len(monitor_times)))
-    penalty = 1000
+    penalty = 100000
     for i in range(len(families)):
         for j in range(len(families)):
             i_mem = families[i]
@@ -88,7 +88,6 @@ def city2arc(city):
     cities = city.split('_')
     DL = []
     for i in cities:
-        # DL[str(i)+'_DL'] = list(centerz(eval(i)))
         DL.append(str(i)+'_iDL')
     locations = ['DP']
     for i in cities:

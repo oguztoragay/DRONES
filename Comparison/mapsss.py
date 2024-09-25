@@ -31,16 +31,13 @@ midpoint = [(sum(i[0]+i[2] for i in coordinates) / (2*len(coordinates))),
 my_map = folium.Map(location=midpoint, zoom_start=10)
 
 for i, coord in fixed_points.items():
-    folium.Marker(location=(coord[0], coord[1]), color='blue', tooltip=folium.Tooltip(i)).add_to(my_map)
-    folium.Marker(location=(coord[0], coord[1]), icon=folium.DivIcon(html=f"""
-            <div style="font-size: 15px; color: red">{str(i)}</div>""")).add_to(my_map)
-
-
+    folium.Marker(location=(coord[0], coord[1]), color='blue', tooltip=folium.Tooltip(str(i)+' ('+str(coord[0])+','+str(coord[1])+')')).add_to(my_map)
+    # folium.Marker(location=(coord[0], coord[1]), icon=folium.DivIcon(html=f"""<div style="font-size: 15px; color: red">{str(i)}</div>""")).add_to(my_map)
 
 
 for i, coord in arcs.items():
-    folium.CircleMarker(location=(coord[0], coord[1]), radius=3, color='blue', fill=True, fill_color='blue', fill_opacity=0.7, tooltip=folium.Tooltip(str(i+'_O'))).add_to(my_map)
-    folium.CircleMarker(location=(coord[2], coord[3]), radius=3, color='red', fill=True, fill_color='red', fill_opacity=0.7, tooltip=folium.Tooltip(str(i+'_D'))).add_to(my_map)
+    folium.CircleMarker(location=(coord[0], coord[1]), radius=3, color='blue', fill=True, fill_color='blue', fill_opacity=0.7, tooltip=folium.Tooltip(str(i)+' ('+str(coord[0])+','+str(coord[1])+')')).add_to(my_map)
+    folium.CircleMarker(location=(coord[2], coord[3]), radius=3, color='red', fill=True, fill_color='red', fill_opacity=0.7, tooltip=folium.Tooltip(str(i)+' ('+str(coord[2])+','+str(coord[3])+')')).add_to(my_map)
 
 # Draw separate lines between each consecutive pair of points
 for j,i in enumerate(coordinates):
@@ -48,9 +45,9 @@ for j,i in enumerate(coordinates):
     end_coord = (i[2], i[3])
 
     # Add line between start and end coordinates
-    if j<4:
+    if j < 4:
         folium.PolyLine([start_coord, end_coord], color="blue", weight=2.5, opacity=1).add_to(my_map)
-    elif 4 <= j <=11:
+    elif 4 <= j <= 11:
         folium.PolyLine([start_coord, end_coord], color="red", weight=2.5, opacity=1).add_to(my_map)
     else:
         folium.PolyLine([start_coord, end_coord], color="green", weight=2.5, opacity=1).add_to(my_map)
