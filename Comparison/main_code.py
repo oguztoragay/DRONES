@@ -119,15 +119,15 @@ def compare(instance, report):
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge, itimes)
     fixed = [2, 'fixed', 6, 10, 2]  # 10 nodes including idle
-    SB = [3, 'SB', 5, 360, 50]  # 12 nodes including iDL and DP
+    SB = [2, 'SB', 8, 360, 50]  # 12 nodes including iDL and DP
     RS = [3, 'RS', 4, 360, 100]  # 11 nodes including iDL and DP
     LA = [6, 'LA', 7, 360, 100]  # 37 nodes including iDL and DP
     SB_RS = [4, 'SB_RS', 7, 300, 100]  # 22 nodes including iDLs and DP
     SB_LA = [4, 'SB_LA', 7, 300, 100]  # 48 nodes including iDLs and DP
     RS_LA = [4, 'RS_LA', 7, 300, 100]  # 47 nodes including iDLs and DP
     SB_RS_LA = [5, 'SB_RS_LA', 15, 4, 5]  # 58 nodes including idle
-    run(LA, verbose=True)
-    compare(LA, report=True)
+    run(SB, verbose=True)
+    compare(SB, report=True)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False

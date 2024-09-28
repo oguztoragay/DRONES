@@ -59,7 +59,7 @@ def lp_pyo(data, verbose):
     m.cons4 = ConstraintList()
     for i in drones_set:
         for r in slot_set:
-            m.cons4.add(sum(m.x[j, r, i] for j in demand_set) == 1)
+            m.cons4.add(sum(m.x[j, r, i] for j in demand_set) <= 1)
 
     # constraint: ++++++++++++++++++++++++++++++  (5__)
     m.cons5 = ConstraintList()
@@ -157,13 +157,13 @@ def lp_pyo(data, verbose):
     m.cons11c = ConstraintList()
     m.cons11d = ConstraintList()
     m.cons11e = ConstraintList()
-    for j in demand_set:
+    for j in demand_set-{len(demand_set)}:
         for r in slot_set:
             for i in drones_set:
-                m.cons11b.add(m.z[j, r, i] <= m.s[r, i] + UB * (1 - m.x[j, r, i]))
-                m.cons11c.add(m.z[j, r, i] >= m.s[r, i] - UB * (1 - m.x[j, r, i]))
-                m.cons11d.add(m.z[j, r, i] <= UB * m.x[j, r, i])
-                m.cons11e.add(m.z[j, r, i] >= -UB * m.x[j, r, i])
+                m.cons11b.add(m.z[j+1, r, i] <= m.s[r, i] + UB * (1 - m.x[j+1, r, i]))
+                m.cons11c.add(m.z[j+1, r, i] >= m.s[r, i] - UB * (1 - m.x[j+1, r, i]))
+                m.cons11d.add(m.z[j+1, r, i] <= UB * m.x[j+1, r, i])
+                m.cons11e.add(m.z[j+1, r, i] >= -UB * m.x[j+1, r, i])
 
     # constraint: ++++++++++++++++++++++++++++++  (11f__ & 11g__ & 11h__ & 11i__)
     m.cons11f = ConstraintList()
@@ -171,7 +171,7 @@ def lp_pyo(data, verbose):
     m.cons11h = ConstraintList()
     m.cons11i = ConstraintList()
     for i in drones_set:
-        for r in slot_set - {1}:
+        for r in slot_set:
             for j in demand_set:
                 m.cons11f.add(m.w[j, r, i] <= m.c[r, i] + UB * (1 - m.x[j, r, i]))
                 m.cons11g.add(m.w[j, r, i] >= m.c[r, i] - UB * (1 - m.x[j, r, i]))
