@@ -120,12 +120,10 @@ def arc2distance(locations):
         dist_mat[locations.index(j), locations.index(i)] = ji
     return dist_mat
 
-# def centerz(lis):
-#     length = 2*len(lis)
-#     lis = [arcs[i][0:4] for i in lis]
-#     lis = list(chain.from_iterable(lis))
-#     sum_x = np.sum(lis[0::2])
-#     sum_y = np.sum(lis[1::2])
-#     return sum_x/length, sum_y/length, sum_x/length, sum_y/length, 0
-
-
+def centerz(lis):
+    length = 2*len(lis)
+    lis = [arcs[i][0:4] for i in lis]
+    lis = list(chain.from_iterable(lis))
+    sum_x = np.sum(lis[0::2])
+    sum_y = np.sum(lis[1::2])
+    return sum_x/length, sum_y/length, sum_x/length, sum_y/length, 0

@@ -47,7 +47,7 @@ def nl_pyo(data, verbose):
     m.cons4 = ConstraintList()
     for i in drones_set:
         for r in slot_set:
-            m.cons4.add(sum(m.x[j, r, i] for j in demand_set) <= 1)
+            m.cons4.add(sum(m.x[j, r, i] for j in demand_set) == 1)
 
     # constraint:----------------------------- (5__)
     m.cons5 = ConstraintList()
