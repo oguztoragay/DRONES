@@ -1,6 +1,8 @@
 from datetime import date
 
 import os
+from os import waitpid
+
 from Comparison import instance_gen3
 from nl_pyomo2 import nl_pyo
 from lp_pyomo2 import lp_pyo
@@ -92,38 +94,53 @@ def compare(instance, report):
             os.mkdir(f_loc + '/'+folder_name)
         except:
             print('The named folder exists in the given path.')
-        c_f = open(folder_name+'/'+'Output_record '+time.strftime("%Y%m%d-%H%M%S")+'.txt', 'w+')
-        c_f.write('~~~~~~~~~~~~~~~~~~~ ' + str(instance) + ' ~~~~~~~~~~~~~~~~~~~\n')
-        c_f.write(' Families: ' + str(nlp_[2][7])+'\n')
-        c_f.write('Due_dates: ' + str(nlp_[2][1])+'\n')
-        c_f.write('Ear_dates: ' + str(nlp_[2][9])+'\n')
-        c_f.write('Monitor_t: ' + str(nlp_[2][2])+'\n')
-        c_f.write('~~~~~~~~~~~~~~~~~~~ Comparing the results ~~~~~~~~~~~~~~~~~~~\n')
-        c_f.write('***** lp_objective: ' + str(value(lp_[0].obj_func))+'\n')
-        c_f.write('***** lp_Sol_time: ' + str(round(lp_[1].Solver.Time, 3))+'\n')
-        for i in range(0, lassign_list.shape[0]):
-            c_f.write('Drone(' + str(i + 1) + '): ' + ' --> '.join(map(str, lassign_list[i])) + '\n')
-            c_f.write(' s_times: ' + ' --> '.join(map(str, lps_values[i])) + '\n')
-            c_f.write(' c_times: ' + ' --> '.join(map(str, lpc_values[i])) + '\n')
-            c_f.write('  charge: ' + ' --> '.join(map(str, lpt_values[i])) + '\n')
-            c_f.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
-        c_f.write('***** nlp_objective: ' + str(value(nlp_[0].obj_func)) + '\n')
-        # c_f.write('***** nlp_Sol_time:' + str(round(nlp_[1].Solver[0]['Wallclock time'], 3)) + '\n')
-        c_f.write('***** nlp_Sol_time:' + str(round(nlp_[1].Solver.Time, 3)) + '\n')
-        for i in range(0, assign_list.shape[0]):
-            c_f.write('Drone(' + str(i + 1) + '): ' + ' --> '.join(map(str, assign_list[i])) + '\n')
-            c_f.write(' s_times: ' + ' --> '.join(map(str, nlps_values[i])) + '\n')
-            c_f.write(' c_times: ' + ' --> '.join(map(str, nlpc_values[i])) + '\n')
-            c_f.write('  charge: ' + ' --> '.join(map(str, nlpt_values[i])) + '\n')
-            c_f.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
-        c_f.write('==========================================\n')
-        c_f.close()
+        with open(folder_name+'/'+'Output_record '+time.strftime("%Y%m%d-%H%M%S")+'.txt', 'w+') as file:
+            file.write('~~~~~~~~~~~~~~~~~~~ ' + str(instance) + ' ~~~~~~~~~~~~~~~~~~~\n')
+            file.write(' Families: ' + str(nlp_[2][7])+'\n')
+            file.write('Due_dates: ' + str(nlp_[2][1])+'\n')
+            file.write('Ear_dates: ' + str(nlp_[2][9])+'\n')
+            file.write('Monitor_t: ' + str(nlp_[2][2])+'\n')
+            file.write('~~~~~~~~~~~~~~~~~~~~~~~~~~ Instance ~~~~~~~~~~~~~~~~~~~~~~~~~\n')
+            file.write(f' Families: {nlp_[2][7]}\n')
+            file.write(f'Due_dates: {nlp_[2][1]}\n')
+            file.write(f'Monitor_t: {nlp_[2][2]}\n')
+            file.write('~~~~~~~~~~~~~~~~~~~ Comparing the results ~~~~~~~~~~~~~~~~~~~\n')
+            file.write(f'***** lp_objective: {value(lp_[0].obj_func)}\n')
+            file.write(f'***** lp_Sol_time: {round(lp_[1].Solver.Time, 3)}\n')
+            col_widths = 10
+            for i in range(0, lassign_list.shape[0]):
+                file.write(f'     Drone ({i + 1}):\n')
+                file.write(
+                    ''.ljust(col_widths) + " | ".join(str(item).ljust(col_widths) for item in lassign_list[i]) + '\n')
+                file.write('s_times'.ljust(col_widths) + " | ".join(
+                    str(item).ljust(col_widths) for item in lps_values[i]) + '\n')
+                file.write('c_times'.ljust(col_widths) + " | ".join(
+                    str(item).ljust(col_widths) for item in lpc_values[i]) + '\n')
+                file.write('charges'.ljust(col_widths) + " | ".join(
+                    str(item).ljust(col_widths) for item in lpt_values[i]) + '\n')
+                file.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
+            file.write(f'***** nlp_objective: {value(nlp_[0].obj_func)}\n')
+            file.write(f'***** nlp_Sol_time: {round(nlp_[1].Solver.Time, 3)}\n')
+            for i in range(0, assign_list.shape[0]):
+                file.write(f'     Drone ({i + 1}):\n')
+                file.write(
+                    ''.ljust(col_widths) + " | ".join(str(item).ljust(col_widths) for item in assign_list[i]) + '\n')
+                file.write('s_times'.ljust(col_widths) + " | ".join(
+                    str(item).ljust(col_widths) for item in nlps_values[i]) + '\n')
+                file.write('c_times'.ljust(col_widths) + " | ".join(
+                    str(item).ljust(col_widths) for item in nlpc_values[i]) + '\n')
+                file.write('charges'.ljust(col_widths) + " | ".join(
+                    str(item).ljust(col_widths) for item in nlpt_values[i]) + '\n')
+                file.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
+        #     file.write('==========================================\n')
+        # file.write('==========================================\n')
+        # file.close()
 
 
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge, itimes)
-    SB = [2, 'SB', 6, 360, 600]  # 12 nodes including iDL and DP
-    RS = [3, 'RS', 4, 360, 600]  # 11 nodes including iDL and DP
+    SB = [3, 'SB', 5, 360, 60]  # 12 nodes including iDL and DP
+    RS = [3, 'RS', 4, 360, 60]  # 11 nodes including iDL and DP
     LA = [5, 'LA', 8, 360, 100]  # 37 nodes including iDL and DP
     SB_RS = [4, 'SB_RS', 7, 360, 120]  # 22 nodes including iDLs and DP
     SB_LA = [4, 'SB_LA', 7, 360, 120]  # 48 nodes including iDLs and DP
@@ -131,6 +148,7 @@ if __name__ == '__main__':
     SB_RS_LA = [5, 'SB_RS_LA', 15, 360, 180]  # 58 nodes including idle
     run(SB, verbose=True)
     compare(SB, report=True)
+    print('wait just before exiting')
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False

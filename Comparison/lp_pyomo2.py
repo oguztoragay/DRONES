@@ -102,7 +102,7 @@ def lp_pyo(data, verbose):
     m.cons10a = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons10a.add(m.t[r, i] == (full_charge * m.x[1, r, i]) + m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i] - m.u1[r, i] + m.u2[r, i] - m.u3[r-1, i])
+            m.cons10a.add(m.t[r, i] == (full_charge * m.x[1, r, i]) + m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i] - m.u1[r, i] + m.u2[r, i] - m.u3[r, i])
 
     # constraint: ++++++++++++++++++++++++++++++  (10b__ & 10c__ & 10d__ & 10e__)
     m.cons10b = ConstraintList()
@@ -213,6 +213,10 @@ def lp_pyo(data, verbose):
     solution = msolver.solve(m, tee=verbose)
     # for constr, body_value, infeasible in find_infeasible_constraints(m):
     #     print(f"Constraint {constr.name} is infeasible: {constr.expr}")
+    # for i in m.u1.index_set():
+    #     print(i,':', [value(m.u1[i]), value(m.u2[i]), value(m.u3[i]), value(m.t[i])])
+
+
 
     pickle_out = open('lp.pickle', "wb")
     pickle.dump([m, solution, datam], pickle_out)
