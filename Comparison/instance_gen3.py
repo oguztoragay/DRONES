@@ -8,7 +8,7 @@ from functools import reduce
 from itertools import chain
 
 drone_speed = 50  # kilometers per hour
-arcs = {'DP': [],
+arcs = {'DP': [34.02889809043227, -117.83417609430023, 34.02889809043227, -117.83417609430023, 0],
         'SB1': [34.06748049349774, -117.58627467784373, 34.06733829280365, -117.56805711511826, 2],
         'SB2': [34.073664262003916, -117.54478073959717, 34.07880072708419, -117.54469490891294, 3],
         'SB3': [34.055221667702725, -117.54707552414482, 34.042942672497496, -117.55046155255096, 2],
@@ -50,19 +50,20 @@ def generate(ndrones, city, slot, charge, itimes):
                         t_matrix[ii - 1, jj - 1] = distances[(i, j)]
                     else:
                         t_matrix[ii - 1, jj - 1] = distances[(i, j)]
-    # due = np.array([24, 6, 10, 3, 16, 50, 180, 120, 60, 24, 24])
-    # due = np.array([0, 60, 90, 35, 120, 50, 180, 120, 60, 0, 0])
-    due_date = []
-    due_date2 = []
-    for i in families:
+    bura = len(visit_frequency) - np.max(np.nonzero(visit_frequency)) - 1
+    due_date = [[360]]
+    due_date2 = [[0]]
+    for i in families[1:-bura]:
         due_date.append([j * (360 * (1 / len(i))) for j in range(1, len(i) + 1)])
         due_date2.append([j * (360 * (0.1 / len(i))) for j in range(1, len(i) + 1)])
+    for i in range(bura):
+        due_date.append([360])
+        due_date2.append([0])
 
     due_date = reduce(operator.concat, due_date)
     due_date2 = reduce(operator.concat, due_date2)
     charges = np.ones(ndrones) * charge
     membership = []
-    bura = len(visit_frequency) - np.max(np.nonzero(visit_frequency)) - 1
     f = [i[:-1] for i in families[1:-bura]]
     return t_matrix, due_date, monitor_times, slots, charges, i_times, membership, families, f, due_date2, len_DL
 
@@ -88,7 +89,7 @@ def city2arc(city):
     for i in cities:
         locations.extend([i for i in eval(i)])
     locations += DL
-    locations = loc_up(locations)
+    # locations = loc_up(locations)
     for i in locations:
         visit_frequency.append(arcs[i][4])
     fam = [[1]]
@@ -121,8 +122,8 @@ def centerz(lis):
     sum_y = np.sum(lis[1::2])
     return sum_x/length, sum_y/length, sum_x/length, sum_y/length, 0
 
-def loc_up(locations):
-    latitudes = np.mean([(arcs[coord][0] + arcs[coord][2])/2 for coord in locations[1:]])
-    longitudes = np.mean([(arcs[coord][1] + arcs[coord][3])/2 for coord in locations[1:]])
-    arcs['DP'] = [latitudes, longitudes, latitudes, longitudes, 0]
-    return locations
+# def loc_up(locations):
+#     latitudes = np.mean([(arcs[coord][0] + arcs[coord][2])/2 for coord in locations[1:]])
+#     longitudes = np.mean([(arcs[coord][1] + arcs[coord][3])/2 for coord in locations[1:]])
+#     arcs['DP'] = [latitudes, longitudes, latitudes, longitudes, 0]
+#     return locations
