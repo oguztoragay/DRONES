@@ -102,7 +102,7 @@ def lp_pyo(data, verbose):
     m.cons10a = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons10a.add(m.t[r, i] == full_charge * m.x[1, r, i] + m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i] - m.u1[r, i] + m.u2[r, i] - m.u3[r-1, i])
+            m.cons10a.add(m.t[r, i] == (full_charge * m.x[1, r, i]) + m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i] - m.u1[r, i] + m.u2[r, i] - m.u3[r-1, i])
 
     # constraint: ++++++++++++++++++++++++++++++  (10b__ & 10c__ & 10d__ & 10e__)
     m.cons10b = ConstraintList()
@@ -111,8 +111,8 @@ def lp_pyo(data, verbose):
     m.cons10e = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons10b.add(m.u1[r, i] <= m.t[r-1, i] + UB * (1 - m.x[1, r, i]))
-            m.cons10c.add(m.u1[r, i] >= m.t[r-1, i] - UB * (1 - m.x[1, r, i]))
+            m.cons10b.add(m.u1[r, i] <= m.t[r-1, i] + (UB * (1 - m.x[1, r, i])))
+            m.cons10c.add(m.u1[r, i] >= m.t[r-1, i] - (UB * (1 - m.x[1, r, i])))
             m.cons10d.add(m.u1[r, i] <= UB * (m.x[1, r, i]))
             m.cons10e.add(m.u1[r, i] >= -UB * (m.x[1, r, i]))
 
@@ -123,8 +123,8 @@ def lp_pyo(data, verbose):
     m.cons10i = ConstraintList()
     for i in drones_set:
         for r in slot_set:
-            m.cons10f.add(m.u2[r, i] <= m.c[r, i] + UB * (1 - m.x[1, r, i]))
-            m.cons10g.add(m.u2[r, i] >= m.c[r, i] - UB * (1 - m.x[1, r, i]))
+            m.cons10f.add(m.u2[r, i] <= m.c[r, i] + (UB * (1 - m.x[1, r, i])))
+            m.cons10g.add(m.u2[r, i] >= m.c[r, i] - (UB * (1 - m.x[1, r, i])))
             m.cons10h.add(m.u2[r, i] <= UB * (m.x[1, r, i]))
             m.cons10i.add(m.u2[r, i] >= -UB * (m.x[1, r, i]))
 
@@ -135,8 +135,8 @@ def lp_pyo(data, verbose):
     m.cons10m = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons10j.add(m.u3[r, i] <= m.c[r-1, i] + UB * (1 - m.x[1, r, i]))
-            m.cons10k.add(m.u3[r, i] >= m.c[r-1, i] - UB * (1 - m.x[1, r, i]))
+            m.cons10j.add(m.u3[r, i] <= m.c[r-1, i] + (UB * (1 - m.x[1, r, i])))
+            m.cons10k.add(m.u3[r, i] >= m.c[r-1, i] - (UB * (1 - m.x[1, r, i])))
             m.cons10l.add(m.u3[r, i] <= UB * (m.x[1, r, i]))
             m.cons10m.add(m.u3[r, i] >= -UB * (m.x[1, r, i]))
 

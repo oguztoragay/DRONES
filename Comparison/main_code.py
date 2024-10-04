@@ -1,7 +1,7 @@
 from datetime import date
 
 import os
-from Comparison import instance_gen2
+from Comparison import instance_gen3
 from nl_pyomo2 import nl_pyo
 from lp_pyomo2 import lp_pyo
 from pyomo.environ import value
@@ -12,7 +12,7 @@ import time
 def run(city, verbose):
     a, b, c, d, e = city
     # ins = random_instance.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
-    ins = instance_gen2.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
+    ins = instance_gen3.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
     lp_pyo(ins, verbose)
     nl_pyo(ins, verbose)
 
@@ -65,20 +65,24 @@ def compare(instance, report):
     print('~~~~~~~~~~~~~~~~~~~ Comparing the results ~~~~~~~~~~~~~~~~~~~')
     print('***** lp_objective:', value(lp_[0].obj_func))
     print('***** lp_Sol_time:', round(lp_[1].Solver.Time, 3))
+    col_widths = 10
     for i in range(0, lassign_list.shape[0]):
-        print('     Drone (' + str(i + 1) + '):', *lassign_list[i], sep=' --> ')
-        print('     s_times', *lps_values[i], sep=' --> ')
-        print('     c_times', *lpc_values[i], sep=' --> ')
-        print('      charge', *lpt_values[i], sep=' --> ')
+        print('     Drone (' + str(i + 1) + '):')
+        print(''.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lassign_list[i]))
+        print('s_times'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lps_values[i]))
+        print('c_times'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lpc_values[i]))
+        print('charges'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lpt_values[i]))
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+
     print('***** nlp_objective:', value(nlp_[0].obj_func))
-    # print('***** nlp_Sol_time:', round(nlp_[1].Solver[0]['Wallclock time'], 3))
     print('***** nlp_Sol_time:', round(nlp_[1].Solver.Time, 3))
+
     for i in range(0, assign_list.shape[0]):
-        print('     Drone (' + str(i + 1) + '):', *assign_list[i], sep=' --> ')
-        print('     s_times', *nlps_values[i], sep=' --> ')
-        print('     c_times', *nlpc_values[i], sep=' --> ')
-        print('      charge', *nlpt_values[i], sep=' --> ')
+        print('     Drone (' + str(i + 1) + '):')
+        print(''.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in assign_list[i]))
+        print('s_times'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in nlps_values[i]))
+        print('c_times'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in nlpc_values[i]))
+        print('charges'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in nlpt_values[i]))
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     print('==========================================')
     if report:
@@ -118,16 +122,15 @@ def compare(instance, report):
 
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge, itimes)
-    fixed = [2, 'fixed', 6, 10, 2]  # 10 nodes including idle
-    SB = [2, 'SB', 8, 360, 60]  # 12 nodes including iDL and DP
-    RS = [3, 'RS', 4, 360, 60]  # 11 nodes including iDL and DP
+    SB = [2, 'SB', 6, 360, 600]  # 12 nodes including iDL and DP
+    RS = [3, 'RS', 4, 360, 600]  # 11 nodes including iDL and DP
     LA = [5, 'LA', 8, 360, 100]  # 37 nodes including iDL and DP
-    SB_RS = [4, 'SB_RS', 7, 300, 100]  # 22 nodes including iDLs and DP
-    SB_LA = [4, 'SB_LA', 7, 300, 100]  # 48 nodes including iDLs and DP
-    RS_LA = [4, 'RS_LA', 7, 300, 100]  # 47 nodes including iDLs and DP
-    SB_RS_LA = [5, 'SB_RS_LA', 15, 4, 5]  # 58 nodes including idle
-    run(SB_RS, verbose=True)
-    compare(SB_RS, report=True)
+    SB_RS = [4, 'SB_RS', 7, 360, 120]  # 22 nodes including iDLs and DP
+    SB_LA = [4, 'SB_LA', 7, 360, 120]  # 48 nodes including iDLs and DP
+    RS_LA = [4, 'RS_LA', 7, 360, 120]  # 47 nodes including iDLs and DP
+    SB_RS_LA = [5, 'SB_RS_LA', 15, 360, 180]  # 58 nodes including idle
+    run(SB, verbose=True)
+    compare(SB, report=True)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False
