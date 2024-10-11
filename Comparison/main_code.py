@@ -3,6 +3,8 @@ from datetime import date
 import os
 from os import waitpid
 
+from sympy import pretty_print
+
 from Comparison import instance_gen3
 from nl_pyomo2 import nl_pyo
 from lp_pyomo2 import lp_pyo
@@ -15,8 +17,8 @@ def run(city, verbose):
     a, b, c, d, e = city
     # ins = random_instance.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
     ins = instance_gen3.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
-    lp_pyo(ins, verbose)
-    # nl_pyo(ins, verbose)
+    # lp_pyo(ins, verbose)
+    nl_pyo(ins, verbose)
 
 def compare(instance, report):
     nlp_pickle = open('nlp.pickle', "rb")
@@ -138,13 +140,13 @@ if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge, itimes)
     SB = [2, 'SB', 6, 360, 45]  # 12 nodes including iDL and DP
     RS = [3, 'RS', 4, 360, 90]  # 11 nodes including iDL and DP
-    LA = [6, 'LA', 7, 480, 1200]  # 37 nodes including iDL and DP
-    SB_RS = [4, 'SB_RS', 6, 360, 120]  # 22 nodes including iDLs and DP
+    LA = [6, 'LA', 7, 600, 600]  # 37 nodes including iDL and DP
+    SB_RS = [4, 'SB_RS', 6, 360, 1200]  # 22 nodes including iDLs and DP
     SB_LA = [7, 'SB_LA', 7, 480, 1200]  # 48 nodes including iDLs and DP
     RS_LA = [7, 'RS_LA', 7, 480, 1200]  # 47 nodes including iDLs and DP
-    SB_RS_LA = [5, 'SB_RS_LA', 15, 360, 180]  # 58 nodes including idle
-    run(RS, verbose=True)
-    compare(RS, report=True)
+    SB_RS_LA = [8, 'SB_RS_LA', 8, 600, 180]  # 58 nodes including idle
+    run(LA, verbose=True)
+    compare(LA, report=True)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False

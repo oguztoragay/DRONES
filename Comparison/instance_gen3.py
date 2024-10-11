@@ -7,7 +7,7 @@ import operator
 from functools import reduce
 from itertools import chain
 
-drone_speed = 50  # kilometers per hour
+drone_speed = 100  # kilometers per hour
 arcs = {'DP': [34.02889809043227, -117.83417609430023, 34.02889809043227, -117.83417609430023, 0],
         'SB1': [34.06748049349774, -117.58627467784373, 34.06733829280365, -117.56805711511826, 2],
         'SB2': [34.073664262003916, -117.54478073959717, 34.07880072708419, -117.54469490891294, 3],

@@ -23,7 +23,6 @@ def lp_pyo(data, verbose):
 
     # Pyomo Linear model for the problem------------------------------------------------
     m = ConcreteModel(name="Multiple drones LP model")
-
     m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
     m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)
 
@@ -38,8 +37,8 @@ def lp_pyo(data, verbose):
 
     m.t = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, full_charge))
 
-    m.lmax = Var(domain=NonNegativeReals, initialize=0, bounds=(0, 360))
-    m.lmax2 = Var(domain=NonNegativeReals, initialize=0, bounds=(0, 360))
+    m.lmax = Var(domain=NonNegativeReals, initialize=0)
+    m.lmax2 = Var(domain=NonNegativeReals, initialize=0)
 
     m.obj_func = Objective(expr=m.lmax + m.lmax2, sense=minimize)
 
@@ -59,7 +58,7 @@ def lp_pyo(data, verbose):
     m.cons4 = ConstraintList()
     for i in drones_set:
         for r in slot_set:
-            m.cons4.add(sum(m.x[j, r, i] for j in demand_set) == 1)
+            m.cons4.add(sum(m.x[j, r, i] for j in demand_set) <= 1)
 
     # constraint: ++++++++++++++++++++++++++++++  (5__)
     m.cons5 = ConstraintList()

@@ -47,7 +47,7 @@ def nl_pyo(data, verbose):
     m.cons4 = ConstraintList()
     for i in drones_set:
         for r in slot_set:
-            m.cons4.add(sum(m.x[j, r, i] for j in demand_set) == 1)
+            m.cons4.add(sum(m.x[j, r, i] for j in demand_set) <= 1)
 
     # constraint:----------------------------- (5__)
     m.cons5 = ConstraintList()
@@ -119,13 +119,14 @@ def nl_pyo(data, verbose):
     msolver = SolverFactory('gurobi')
     msolver.options['Threads'] = 24
     msolver.options['FeasibilityTol'] = 1e-7
-    msolver.options['MIPFocus'] = 2
+    msolver.options['MIPFocus'] = 1
     msolver.options['Cuts'] = 3
     msolver.options['Heuristics'] = 1
-    msolver.options['RINS'] = 5
+    msolver.options['RINS'] = 10
     msolver.options['PreQLinearize'] = 0
-    msolver.options['BarCorrectors'] = 100
-    msolver.options['PreMIQCPForm'] = 1
+    msolver.options['Presolve'] = 1
+    msolver.options['BarCorrectors'] = 3
+    msolver.options['PreMIQCPForm'] = 2
     solution = msolver.solve(m, tee=verbose)
 
 
