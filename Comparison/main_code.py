@@ -17,7 +17,7 @@ def run(city, verbose):
     a, b, c, d, e = city
     # ins = random_instance.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
     ins = instance_gen3.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
-    # lp_pyo(ins, verbose)
+    lp_pyo(ins, verbose)
     nl_pyo(ins, verbose)
 
 def compare(instance, report):
@@ -141,12 +141,12 @@ if __name__ == '__main__':
     SB = [2, 'SB', 6, 360, 45]  # 12 nodes including iDL and DP
     RS = [3, 'RS', 4, 360, 90]  # 11 nodes including iDL and DP
     LA = [6, 'LA', 7, 600, 600]  # 37 nodes including iDL and DP
-    SB_RS = [4, 'SB_RS', 6, 360, 1200]  # 22 nodes including iDLs and DP
+    SB_RS = [4, 'SB_RS', 6, 360, 120]  # 22 nodes including iDLs and DP
     SB_LA = [7, 'SB_LA', 7, 480, 1200]  # 48 nodes including iDLs and DP
     RS_LA = [7, 'RS_LA', 7, 480, 1200]  # 47 nodes including iDLs and DP
     SB_RS_LA = [8, 'SB_RS_LA', 8, 600, 180]  # 58 nodes including idle
-    run(LA, verbose=True)
-    compare(LA, report=True)
+    run(RS_LA, verbose=True)
+    compare(RS_LA, report=True)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False
