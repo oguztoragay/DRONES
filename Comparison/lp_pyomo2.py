@@ -177,6 +177,8 @@ def lp_pyo(data, verbose):
                 m.cons11h.add(m.w[j, r, i] <= UB * (m.x[j, r, i]))
                 m.cons11i.add(m.w[j, r, i] >= -UB * (m.x[j, r, i]))
 
+
+    # m.cons_komaki = Constraint(expr=m.lmax + m.lmax2>=7)
     # Info about the model:------------------------------------------
     # m.pprint()
     # num_of_cons = {}
@@ -198,7 +200,7 @@ def lp_pyo(data, verbose):
     msolver = SolverFactory('gurobi')
     msolver.options['Threads'] = 24
     msolver.options['FeasibilityTol'] = 1e-7
-    msolver.options['MIPFocus'] = 2
+    msolver.options['MIPFocus'] = 3
     msolver.options['Cuts'] = 3
     msolver.options['Heuristics'] = 1
     msolver.options['RINS'] = 5
