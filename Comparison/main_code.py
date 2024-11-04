@@ -145,8 +145,8 @@ if __name__ == '__main__':
     SB_LA = [7, 'SB_LA', 7, 480, 120]  # 48 nodes including iDLs and DP
     RS_LA = [10, 'RS_LA', 5, 480, 120]  # 47 nodes including iDLs and DP
     SB_RS_LA = [8, 'SB_RS_LA', 8, 600, 180]  # 58 nodes including idle
-    run(RS_LA, verbose=True)
-    compare(RS_LA, report=True)
+    run(SB_RS_LA, verbose=True)
+    compare(SB_RS_LA, report=True)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False
