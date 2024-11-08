@@ -19,8 +19,8 @@ arcs = {'SB1': [34.06748049349774, -117.58627467784373, 34.06733829280365, -117.
         'RS3': [33.88454308524973, -117.62931466068288, 33.88289535845872, -117.644110477192, 2],
         'RS4': [33.897340150833756, -117.48842212774255, 33.894628991533885, -117.50064506537053, 2]}
 
-fixed_points = {'DP': [34.003607, -118.300085],
-                'RS_iDL': [34.02889809043227, -117.83417609430023],
+fixed_points = {'DP': [34.02889809043227, -117.83417609430023],
+                'RS_iDL': [33.93341044928401, -117.45850404694579],
                 'SB_iDL': [34.082150272643005, -117.56158799481022],
                 'LA_iDL': [34.03829254642072, -118.28026863444143]}
 
@@ -46,7 +46,7 @@ for j,i in enumerate(coordinates):
 
     # Add line between start and end coordinates
     if j < 4:
-        folium.PolyLine([start_coord, end_coord], color="blue", weight=2.5, opacity=1).add_to(my_map)
+        folium.PolyLine([start_coord, end_coord], color="black", weight=2.5, opacity=1).add_to(my_map)
     elif 4 <= j <= 11:
         folium.PolyLine([start_coord, end_coord], color="red", weight=2.5, opacity=1).add_to(my_map)
     else:

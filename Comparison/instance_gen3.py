@@ -51,13 +51,13 @@ def generate(ndrones, city, slot, charge, itimes):
                     else:
                         t_matrix[ii - 1, jj - 1] = distances[(i, j)]
     bura = len(visit_frequency) - np.max(np.nonzero(visit_frequency)) - 1
-    due_date = [[360]]
+    due_date = [[1440]] # 1440 minutes means 24 hours
     due_date2 = [[0]]
     for i in families[1:-bura]:
-        due_date.append([j * (360 * (1 / len(i))) for j in range(1, len(i) + 1)])
-        due_date2.append([j * (360 * (0.1 / len(i))) for j in range(1, len(i) + 1)])
+        due_date.append([j * (1440 * (1 / len(i))) for j in range(1, len(i) + 1)])
+        due_date2.append([round(j * (1440 * (0.1 / len(i))),2) for j in range(1, len(i) + 1)])
     for i in range(bura):
-        due_date.append([360])
+        due_date.append([1440])
         due_date2.append([0])
 
     due_date = reduce(operator.concat, due_date)

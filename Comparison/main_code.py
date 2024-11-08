@@ -1,10 +1,6 @@
 from datetime import date
 
 import os
-from os import waitpid
-
-from sympy import pretty_print
-
 from Comparison import instance_gen3
 from nl_pyomo2 import nl_pyo
 from lp_pyomo2 import lp_pyo
@@ -65,6 +61,7 @@ def compare(instance, report):
     print('~~~~~~~~~~~~~~~~~~~~~~~~~~ Instance ~~~~~~~~~~~~~~~~~~~~~~~~~')
     print(' Families:', nlp_[2][7])
     print('Due_dates:', nlp_[2][1])
+    print('Ear_dates:', nlp_[2][9])
     print('Monitor_t:', [round(x, 2) for x in nlp_[2][2]])
     print('~~~~~~~~~~~~~~~~~~~ Comparing the results ~~~~~~~~~~~~~~~~~~~')
     print('***** lp_objective:', value(lp_[0].obj_func))
@@ -91,7 +88,7 @@ def compare(instance, report):
     print('==========================================')
 
     if report:
-        folder_name = 'result_'+str(date.today())
+        folder_name = 'result_'+str(date.today())+'F'
         f_loc = os.getcwd()
         try:
             os.mkdir(f_loc + '/'+folder_name)
@@ -138,15 +135,15 @@ def compare(instance, report):
 
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge, itimes)
-    SB = [2, 'SB', 6, 360, 45]  # 12 nodes including iDL and DP
-    RS = [3, 'RS', 4, 360, 90]  # 11 nodes including iDL and DP
-    LA = [6, 'LA', 7, 600, 600]  # 37 nodes including iDL and DP
-    SB_RS = [4, 'SB_RS', 6, 360, 120]  # 22 nodes including iDLs and DP
-    SB_LA = [7, 'SB_LA', 7, 480, 120]  # 48 nodes including iDLs and DP
-    RS_LA = [10, 'RS_LA', 5, 480, 120]  # 47 nodes including iDLs and DP
-    SB_RS_LA = [8, 'SB_RS_LA', 8, 600, 180]  # 58 nodes including idle
-    run(SB_RS_LA, verbose=True)
-    compare(SB_RS_LA, report=True)
+    SB = [2, 'SB', 6, 720, 45]  # 12 nodes including iDL and DP
+    RS = [3, 'RS', 4, 720, 90]  # 11 nodes including iDL and DP
+    LA = [5, 'LA', 8, 720, 600]  # 37 nodes including iDL and DP
+    SB_RS = [4, 'SB_RS', 6, 720, 120]  # 22 nodes including iDLs and DP
+    SB_LA = [5, 'SB_LA', 10, 720, 120]  # 48 nodes including iDLs and DP
+    RS_LA = [5, 'RS_LA', 10, 720, 120]  # 47 nodes including iDLs and DP
+    SB_RS_LA = [8, 'SB_RS_LA', 8, 720, 180]  # 58 nodes including idle
+    run(SB_LA, verbose=True)
+    compare(SB_LA, report=True)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False

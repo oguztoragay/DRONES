@@ -1,9 +1,9 @@
 # Cleaned on 03/25/2024 (oguz)
 # Cleaned on 07/25/2024 (oguz)
 import pickle
-from pyomo.environ import ConcreteModel, Var, Constraint, ConstraintList, NonNegativeReals, Binary, Integers, NonNegativeIntegers, Param, Objective, minimize, SolverFactory, value, maximize
-from itertools import combinations, product
-from pyomo.util.infeasible import find_infeasible_constraints
+from pyomo.environ import ConcreteModel, Var, ConstraintList, NonNegativeReals, Binary, Integers, NonNegativeIntegers, Objective, minimize, SolverFactory
+from itertools import product
+# from pyomo.util.infeasible import find_infeasible_constraints
 
 def lp_pyo(data, verbose):
     datam = data

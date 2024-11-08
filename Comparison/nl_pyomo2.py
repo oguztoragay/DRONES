@@ -3,9 +3,9 @@
 # Cleaned on 08/07/2024 (oguz)
 # Cleaned on 09/22/2024 (oguz)
 
-from pyomo.environ import (ConcreteModel, Var, Constraint, ConstraintList, NonNegativeReals,
-                           Binary, Integers, NonNegativeIntegers, Param, Objective, minimize,
-                           SolverFactory, value, maximize)
+from pyomo.environ import (ConcreteModel, Var, ConstraintList, NonNegativeReals,
+                           Binary, Integers, NonNegativeIntegers, Objective, minimize,
+                           SolverFactory)
 import pickle
 
 def nl_pyo(data, verbose):
