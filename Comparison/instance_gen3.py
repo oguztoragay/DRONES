@@ -47,15 +47,19 @@ def generate(ndrones, city, slot, charge, itimes):
                     if i_mem == j_mem and i != len(families)-1:
                         t_matrix[ii - 1, jj - 1] = penalty
                     elif j_mem == i_mem and j == len(families)-1:
-                        t_matrix[ii - 1, jj - 1] = distances[(i, j)]
+                        t_matrix[ii - 1, jj - 1] = round(distances[(i, j)], 2)
                     else:
-                        t_matrix[ii - 1, jj - 1] = distances[(i, j)]
+                        t_matrix[ii - 1, jj - 1] = round(distances[(i, j)], 2)
     bura = len(visit_frequency) - np.max(np.nonzero(visit_frequency)) - 1
+    for i in range(families[-bura][0]-1, families[-1][0]-1):
+        t_matrix[i][i] = 0
     due_date = [[1440]] # 1440 minutes means 24 hours
     due_date2 = [[0]]
     for i in families[1:-bura]:
         due_date.append([j * (1440 * (1 / len(i))) for j in range(1, len(i) + 1)])
-        due_date2.append([round(j * (1440 * (0.1 / len(i))),2) for j in range(1, len(i) + 1)])
+        due_date2.append([round(j * (1440 * (0.1 / len(i))), 2) for j in range(1, len(i) + 1)])
+        # due_date2.append([round(0 * (1440 * (0.1 / len(i))), 2) for j in range(1, len(i) + 1)])
+        # due_date2.append([round((j-1) * (1440 * (1 / len(i))), 2) for j in range(1, len(i) + 1)])
     for i in range(bura):
         due_date.append([1440])
         due_date2.append([0])

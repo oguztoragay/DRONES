@@ -156,7 +156,7 @@ def lp_pyo(data, verbose):
     m.cons11c = ConstraintList()
     m.cons11d = ConstraintList()
     m.cons11e = ConstraintList()
-    for j in demand_set-{len(demand_set)}:
+    for j in demand_set-idle:
         for r in slot_set:
             for i in drones_set:
                 m.cons11b.add(m.z[j+1, r, i] <= m.s[r, i] + UB * (1 - m.x[j+1, r, i]))

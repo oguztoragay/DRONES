@@ -13,6 +13,7 @@ def run(city, verbose):
     a, b, c, d, e = city
     # ins = random_instance.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
     ins = instance_gen3.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
+    print(ins[-1])
     lp_pyo(ins, verbose)
     nl_pyo(ins, verbose)
 
@@ -29,10 +30,14 @@ def compare(instance, report):
     nlpc_values = []
     nlps_values = []
     nlpt_values = []
+    nlptr_values = np.zeros([len(nlp_[2][4]), nlp_[2][3]])
     for ind in nllist_c:
         nlpc_values.append(round(value(nlp_[0].c[ind]), 4))
         nlps_values.append(round(value(nlp_[0].s[ind]), 4))
         nlpt_values.append(round(value(nlp_[0].t[ind]), 4))
+    for i in range(assign_list.shape[0]):
+        for j in range(assign_list.shape[1]-1):
+            nlptr_values[i][j] = nlp_[2][0][assign_list[i][j]-1][assign_list[i][j+1]-1]
     nlpc_values = np.reshape(nlpc_values, (len(nlp_[2][4]), nlp_[2][3]))
     nlps_values = np.reshape(nlps_values, (len(nlp_[2][4]), nlp_[2][3]))
     nlpt_values = np.reshape(nlpt_values, (len(nlp_[2][4]), nlp_[2][3]))
@@ -49,10 +54,14 @@ def compare(instance, report):
     lpc_values = []
     lps_values = []
     lpt_values = []
+    lptr_values = np.zeros([len(lp_[2][4]), lp_[2][3]])
     for ind in lplist_c:
         lpc_values.append(round(value(lp_[0].c[ind]),4))
         lps_values.append(round(value(lp_[0].s[ind]),4))
         lpt_values.append(round(value(lp_[0].t[ind]),4))
+    for i in range(lassign_list.shape[0]):
+        for j in range(lassign_list.shape[1]-1):
+            lptr_values[i][j] = lp_[2][0][lassign_list[i][j]-1][lassign_list[i][j+1]-1]
     lpc_values = np.reshape(lpc_values, (len(lp_[2][4]), lp_[2][3]))
     lps_values = np.reshape(lps_values, (len(lp_[2][4]), lp_[2][3]))
     lpt_values = np.reshape(lpt_values, (len(lp_[2][4]), lp_[2][3]))
@@ -72,6 +81,7 @@ def compare(instance, report):
         print(''.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lassign_list[i]))
         print('s_times'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lps_values[i]))
         print('c_times'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lpc_values[i]))
+        print('travels'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lptr_values[i]))
         print('charges'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lpt_values[i]))
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
@@ -83,6 +93,7 @@ def compare(instance, report):
         print(''.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in assign_list[i]))
         print('s_times'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in nlps_values[i]))
         print('c_times'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in nlpc_values[i]))
+        print('travels'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in nlptr_values[i]))
         print('charges'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in nlpt_values[i]))
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
     print('==========================================')
@@ -112,6 +123,8 @@ def compare(instance, report):
                     str(item).ljust(col_widths) for item in lps_values[i]) + '\n')
                 file.write('c_times'.ljust(col_widths) + " | ".join(
                     str(item).ljust(col_widths) for item in lpc_values[i]) + '\n')
+                file.write('travels'.ljust(col_widths) + " | ".join(
+                    str(item).ljust(col_widths) for item in lptr_values[i]) + '\n')
                 file.write('charges'.ljust(col_widths) + " | ".join(
                     str(item).ljust(col_widths) for item in lpt_values[i]) + '\n')
                 file.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
@@ -125,6 +138,8 @@ def compare(instance, report):
                     str(item).ljust(col_widths) for item in nlps_values[i]) + '\n')
                 file.write('c_times'.ljust(col_widths) + " | ".join(
                     str(item).ljust(col_widths) for item in nlpc_values[i]) + '\n')
+                file.write('travels'.ljust(col_widths) + " | ".join(
+                    str(item).ljust(col_widths) for item in nlptr_values[i]) + '\n')
                 file.write('charges'.ljust(col_widths) + " | ".join(
                     str(item).ljust(col_widths) for item in nlpt_values[i]) + '\n')
                 file.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
@@ -135,15 +150,15 @@ def compare(instance, report):
 
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge, itimes)
-    SB = [2, 'SB', 6, 720, 45]  # 12 nodes including iDL and DP
+    SB = [2, 'SB', 6, 720, 120]  # 12 nodes including iDL and DP
     RS = [3, 'RS', 4, 720, 90]  # 11 nodes including iDL and DP
     LA = [5, 'LA', 8, 720, 600]  # 37 nodes including iDL and DP
     SB_RS = [4, 'SB_RS', 6, 720, 120]  # 22 nodes including iDLs and DP
     SB_LA = [5, 'SB_LA', 10, 720, 120]  # 48 nodes including iDLs and DP
     RS_LA = [5, 'RS_LA', 10, 720, 120]  # 47 nodes including iDLs and DP
     SB_RS_LA = [8, 'SB_RS_LA', 8, 720, 180]  # 58 nodes including idle
-    run(SB_LA, verbose=True)
-    compare(SB_LA, report=True)
+    run(SB_RS, verbose=True)
+    compare(SB_RS, report=True)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False

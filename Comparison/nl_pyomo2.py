@@ -93,7 +93,7 @@ def nl_pyo(data, verbose):
         for j in f:
             m.cons12.add(sum(m.s[r3, i3]*m.x[j+1, r3, i3] for r3 in slot_set for i3 in drones_set) - sum(m.c[r2, i2]*m.x[j, r2, i2] for r2 in slot_set for i2 in drones_set) >= 0)
 
-    # m.cons_komaki = Constraint(expr=m.lmax + m.lmax2 >= 7)
+
     # Info about the model:------------------------------------------
     # m.pprint()
     # num_of_cons = {}
@@ -118,7 +118,7 @@ def nl_pyo(data, verbose):
     # msolver.set_gurobi_param('LazyConstraints', 1)
 
     msolver = SolverFactory('gurobi')
-    msolver.options['Threads'] = 24
+    msolver.options['Threads'] = 20
     msolver.options['FeasibilityTol'] = 1e-7
     msolver.options['MIPFocus'] = 3
     msolver.options['Cuts'] = 3
