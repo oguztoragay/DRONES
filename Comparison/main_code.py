@@ -99,7 +99,7 @@ def compare(instance, report):
     print('==========================================')
 
     if report:
-        folder_name = 'result_'+str(date.today())+'F'
+        folder_name = 'result_'+str(date.today())+'VM'
         f_loc = os.getcwd()
         try:
             os.mkdir(f_loc + '/'+folder_name)
@@ -150,15 +150,15 @@ def compare(instance, report):
 
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge, itimes)
-    SB = [2, 'SB', 6, 720, 120]  # 12 nodes including iDL and DP
+    SB = [2, 'SB', 6, 360, 120]  # 12 nodes including iDL and DP
     RS = [3, 'RS', 4, 720, 90]  # 11 nodes including iDL and DP
-    LA = [5, 'LA', 8, 720, 600]  # 37 nodes including iDL and DP
-    SB_RS = [4, 'SB_RS', 6, 720, 120]  # 22 nodes including iDLs and DP
-    SB_LA = [5, 'SB_LA', 10, 720, 120]  # 48 nodes including iDLs and DP
-    RS_LA = [5, 'RS_LA', 10, 720, 120]  # 47 nodes including iDLs and DP
-    SB_RS_LA = [8, 'SB_RS_LA', 8, 720, 180]  # 58 nodes including idle
-    run(SB_RS, verbose=True)
-    compare(SB_RS, report=True)
+    LA = [5, 'LA', 7, 720, 120]  # 37 nodes including iDL and DP
+    SB_RS = [4, 'SB_RS', 6, 720, 1200]  # 22 nodes including iDLs and DP
+    SB_LA = [5, 'SB_LA', 10, 720, 1200]  # 48 nodes including iDLs and DP
+    RS_LA = [5, 'RS_LA', 10, 720, 1200]  # 47 nodes including iDLs and DP
+    SB_RS_LA = [8, 'SB_RS_LA', 8, 720, 11200]  # 58 nodes including idle
+    run(SB, verbose=True)
+    compare(SB, report=True)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False
