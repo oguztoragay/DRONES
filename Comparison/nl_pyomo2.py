@@ -123,7 +123,7 @@ def nl_pyo(data, verbose):
     msolver.options['MIPFocus'] = 3
     msolver.options['Cuts'] = 3
     msolver.options['Heuristics'] = 1
-    msolver.options['RINS'] = 10
+    msolver.options['RINS'] = 5
     msolver.options['PreQLinearize'] = 0
     msolver.options['Presolve'] = 1
     msolver.options['BarCorrectors'] = 3

@@ -13,7 +13,6 @@ def run(city, verbose):
     a, b, c, d, e = city
     # ins = random_instance.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
     ins = instance_gen3.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
-    print(ins[-1])
     lp_pyo(ins, verbose)
     nl_pyo(ins, verbose)
 
@@ -71,7 +70,7 @@ def compare(instance, report):
     print(' Families:', nlp_[2][7])
     print('Due_dates:', nlp_[2][1])
     print('Ear_dates:', nlp_[2][9])
-    print('Monitor_t:', [round(x, 2) for x in nlp_[2][2]])
+    print('Monitor_t:', nlp_[2][2])
     print('~~~~~~~~~~~~~~~~~~~ Comparing the results ~~~~~~~~~~~~~~~~~~~')
     print('***** lp_objective:', value(lp_[0].obj_func))
     print('***** lp_Sol_time:', round(lp_[1].Solver.Time, 3))
@@ -110,7 +109,7 @@ def compare(instance, report):
             file.write(' Families: ' + str(nlp_[2][7])+'\n')
             file.write('Due_dates: ' + str(nlp_[2][1])+'\n')
             file.write('Ear_dates: ' + str(nlp_[2][9])+'\n')
-            file.write('Monitor_t: ' + str([round(x, 2) for x in nlp_[2][2]])+'\n')
+            file.write('Monitor_t: ' + str(nlp_[2][2])+'\n')
             file.write('~~~~~~~~~~~~~~~~~~~ Comparing the results ~~~~~~~~~~~~~~~~~~~\n')
             file.write(f'***** lp_objective: {value(lp_[0].obj_func)}\n')
             file.write(f'***** lp_Sol_time: {round(lp_[1].Solver.Time, 3)}\n')
@@ -153,12 +152,12 @@ if __name__ == '__main__':
     SB = [2, 'SB', 6, 360, 120]  # 12 nodes including iDL and DP
     RS = [3, 'RS', 4, 720, 1000]  # 11 nodes including iDL and DP
     LA = [5, 'LA', 7, 720, 120]  # 37 nodes including iDL and DP
-    SB_RS = [4, 'SB_RS', 6, 720, 1200]  # 22 nodes including iDLs and DP
+    SB_RS = [4, 'SB_RS', 6, 720, 360]  # 22 nodes including iDLs and DP
     SB_LA = [5, 'SB_LA', 10, 720, 1200]  # 48 nodes including iDLs and DP
     RS_LA = [5, 'RS_LA', 10, 720, 1200]  # 47 nodes including iDLs and DP
-    SB_RS_LA = [8, 'SB_RS_LA', 8, 720, 1200]  # 58 nodes including idle
-    run(RS, verbose=True)
-    compare(RS, report=True)
+    SB_RS_LA = [5, 'SB_RS_LA', 11, 720, 1200]  # 58 nodes including idle
+    run(SB_RS_LA, verbose=True)
+    compare(SB_RS_LA, report=True)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False
