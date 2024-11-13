@@ -98,7 +98,7 @@ def compare(instance, report):
     print('==========================================')
 
     if report:
-        folder_name = 'result_'+str(date.today())+'VM'
+        folder_name = 'result_'+str(date.today())+'VM-with lessthan'
         f_loc = os.getcwd()
         try:
             os.mkdir(f_loc + '/'+folder_name)
@@ -155,9 +155,9 @@ if __name__ == '__main__':
     SB_RS = [4, 'SB_RS', 6, 720, 360]  # 22 nodes including iDLs and DP
     SB_LA = [5, 'SB_LA', 10, 720, 1200]  # 48 nodes including iDLs and DP
     RS_LA = [5, 'RS_LA', 10, 720, 1200]  # 47 nodes including iDLs and DP
-    SB_RS_LA = [5, 'SB_RS_LA', 11, 720, 1200]  # 58 nodes including idle
-    run(SB_RS_LA, verbose=True)
-    compare(SB_RS_LA, report=True)
+    SB_RS_LA = [5, 'SB_RS_LA', 11, 720, 1200]  # 58 nodes including iDLs and DP (now 50)
+    run(LA, verbose=True)
+    compare(LA, report=True)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False
