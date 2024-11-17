@@ -1,11 +1,15 @@
-import itertools
+## 11/15/2024 change in the code to implement slotting of the 24 hours and randomly assign slots for each visit
+## to facilitate the due times, early times, and i_times assignments.
 
-from pyomo.environ import value
+import sys
+import itertools
+import random
 import numpy as np
 import geopy.distance
 import operator
 from functools import reduce
 from itertools import chain
+# random.seed(42)
 
 drone_speed = 100  # kilometers per hour
 arcs = {'DP': [34.02889809043227, -117.83417609430023, 34.02889809043227, -117.83417609430023, 0],
@@ -29,9 +33,11 @@ arcs = {'DP': [34.02889809043227, -117.83417609430023, 34.02889809043227, -117.8
         'SB_iDL': [34.082150272643005, -117.56158799481022, 34.082150272643005, -117.56158799481022, 0],
         'LA_iDL': [34.03829254642072, -118.28026863444143, 34.03829254642072, -118.28026863444143, 0]}
 
-def generate(ndrones, city, slot, charge, itimes):
+def generate(ndrones, city, slot, charge):
+    seed1 = random.randrange(sys.maxsize)
+    random.seed(seed1)
     slots = slot
-    i_times = itimes
+    # i_times = itimes
     locations, visit_frequency, families, len_DL = city2arc(city)
     distances = arc2distance(locations)
     monitoring = [arc_data(arcs[i])[1] for i in locations]
@@ -53,13 +59,24 @@ def generate(ndrones, city, slot, charge, itimes):
     bura = len(visit_frequency) - np.max(np.nonzero(visit_frequency)) - 1
     for i in range(families[-bura][0]-1, families[-1][0]-1):
         t_matrix[i][i] = 0
-    due_date = [[1440]] # 1440 minutes means 24 hours
+    num_slots = 8
+    time_slots = {}
+    for i in range(num_slots):
+        time_slots[i] = [i*(1440/num_slots), (i+1)*(1440/num_slots)]
+    i_times = []
+    due_date = [[1440]]  # 1440 minutes means 24 hours
     due_date2 = [[0]]
-    for i in families[1:-bura]:
-        due_date.append([j * (1440 * (1 / len(i))) for j in range(1, len(i) + 1)])
-        due_date2.append([round(j * (1440 * (0.1 / len(i))), 2) for j in range(1, len(i) + 1)])
-        # due_date2.append([round(0 * (1440 * (0.1 / len(i))), 2) for j in range(1, len(i) + 1)])
-        # due_date2.append([round((j-1) * (1440 * (1 / len(i))), 2) for j in range(1, len(i) + 1)])
+    fs_slot = []
+    for i in families:
+        if len(i) > 1:
+            selected_slots = random.sample(list(range(num_slots)), len(i))
+            selected_slots.sort()
+            fs_slot.append(selected_slots)
+            due_date.append([time_slots[j][1] for j in selected_slots])
+            due_date2.append([time_slots[j][0] for j in selected_slots])
+            # i_times.append(time_slots[max(selected_slots)][1]-time_slots[min(selected_slots)][0] + 60)
+            i_times.append(max([time_slots[selected_slots[i+1]][0]-time_slots[selected_slots[i]][1] for i in range(len(selected_slots)-1)]) + 120)
+
     for i in range(bura):
         due_date.append([1440])
         due_date2.append([0])
@@ -69,7 +86,7 @@ def generate(ndrones, city, slot, charge, itimes):
     charges = np.ones(ndrones) * charge
     membership = []
     f = [i[:-1] for i in families[1:-bura]]
-    return t_matrix, due_date, monitor_times, slots, charges, i_times, membership, families, f, due_date2, len_DL
+    return t_matrix, due_date, monitor_times, slots, charges, i_times, membership, families, f, due_date2, len_DL, fs_slot, seed1
 
 def arc_data(arc):
     coord1 = (arc[0], arc[1])

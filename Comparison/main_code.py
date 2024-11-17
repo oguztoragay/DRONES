@@ -1,7 +1,6 @@
 from datetime import date
-
 import os
-from Comparison import instance_gen3
+from Comparison import instance_gen4
 from nl_pyomo2 import nl_pyo
 from lp_pyomo2 import lp_pyo
 from pyomo.environ import value
@@ -10,9 +9,9 @@ import numpy as np
 import time
 
 def run(city, verbose):
-    a, b, c, d, e = city
+    a, b, c, d = city
     # ins = random_instance.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
-    ins = instance_gen3.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
+    ins = instance_gen4.generate(ndrones=a, city=b, slot=c, charge=d)
     lp_pyo(ins, verbose)
     nl_pyo(ins, verbose)
 
@@ -67,10 +66,14 @@ def compare(instance, report):
 
 
     print('~~~~~~~~~~~~~~~~~~~~~~~~~~ Instance ~~~~~~~~~~~~~~~~~~~~~~~~~')
+    print('     seed:', nlp_[2][12])
     print(' Families:', nlp_[2][7])
-    print('Due_dates:', nlp_[2][1])
+    print('  i_times:', nlp_[2][5])
+    print('Fam slots:', nlp_[2][11])
     print('Ear_dates:', nlp_[2][9])
+    print('Due_dates:', nlp_[2][1])
     print('Monitor_t:', nlp_[2][2])
+
     print('~~~~~~~~~~~~~~~~~~~ Comparing the results ~~~~~~~~~~~~~~~~~~~')
     print('***** lp_objective:', value(lp_[0].obj_func))
     print('***** lp_Sol_time:', round(lp_[1].Solver.Time, 3))
@@ -98,7 +101,7 @@ def compare(instance, report):
     print('==========================================')
 
     if report:
-        folder_name = 'result_'+str(date.today())+'VM-with lessthan'
+        folder_name = 'result_'+str(date.today())+'equality'
         f_loc = os.getcwd()
         try:
             os.mkdir(f_loc + '/'+folder_name)
@@ -106,11 +109,16 @@ def compare(instance, report):
             print('The named folder exists in the given path.')
         with open(folder_name+'/'+instance[1]+' solution_'+time.strftime("%Y%m%d-%H%M%S")+'.txt', 'w+') as file:
             file.write('~~~~~~~~~~~~~~~~~~~ ' + str(instance) + ' ~~~~~~~~~~~~~~~~~~~\n')
+            file.write('     seed: ' + str(nlp_[2][12])+'\n')
             file.write(' Families: ' + str(nlp_[2][7])+'\n')
-            file.write('Due_dates: ' + str(nlp_[2][1])+'\n')
+            file.write('  i_times: ' + str(nlp_[2][5])+'\n')
+            file.write('Fam slots: ' + str(nlp_[2][11])+'\n')
             file.write('Ear_dates: ' + str(nlp_[2][9])+'\n')
+            file.write('Due_dates: ' + str(nlp_[2][1])+'\n')
             file.write('Monitor_t: ' + str(nlp_[2][2])+'\n')
             file.write('~~~~~~~~~~~~~~~~~~~ Comparing the results ~~~~~~~~~~~~~~~~~~~\n')
+            file.write(f'***** lp_Variables: {lp_[3]}\n')
+            file.write(f'***** lp_Constraints: {lp_[4]}\n')
             file.write(f'***** lp_objective: {value(lp_[0].obj_func)}\n')
             file.write(f'***** lp_Sol_time: {round(lp_[1].Solver.Time, 3)}\n')
             col_widths = 10
@@ -127,6 +135,8 @@ def compare(instance, report):
                 file.write('charges'.ljust(col_widths) + " | ".join(
                     str(item).ljust(col_widths) for item in lpt_values[i]) + '\n')
                 file.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
+            file.write(f'***** nlp_Variables: {nlp_[3]}\n')
+            file.write(f'***** nlp_Constraints: {nlp_[4]}\n')
             file.write(f'***** nlp_objective: {value(nlp_[0].obj_func)}\n')
             file.write(f'***** nlp_Sol_time: {round(nlp_[1].Solver.Time, 3)}\n')
             for i in range(0, assign_list.shape[0]):
@@ -148,16 +158,16 @@ def compare(instance, report):
 
 
 if __name__ == '__main__':
-    # instance values = [ndrones, condition, slot, charge, itimes)
-    SB = [2, 'SB', 6, 360, 120]  # 12 nodes including iDL and DP
-    RS = [3, 'RS', 4, 720, 1000]  # 11 nodes including iDL and DP
-    LA = [5, 'LA', 7, 720, 120]  # 37 nodes including iDL and DP
-    SB_RS = [4, 'SB_RS', 6, 720, 360]  # 22 nodes including iDLs and DP
-    SB_LA = [5, 'SB_LA', 10, 720, 1200]  # 48 nodes including iDLs and DP
-    RS_LA = [5, 'RS_LA', 10, 720, 1200]  # 47 nodes including iDLs and DP
-    SB_RS_LA = [5, 'SB_RS_LA', 11, 720, 1200]  # 58 nodes including iDLs and DP (now 50)
-    run(LA, verbose=True)
-    compare(LA, report=True)
+    # instance values = [ndrones, condition, slot, charge)
+    SB = [3, 'SB', 6, 240]  # 12 nodes including iDL and DP
+    RS = [3, 'RS', 6, 240]  # 11 nodes including iDL and DP
+    LA = [5, 'LA', 8, 240]  # 37 nodes including iDL and DP
+    SB_RS = [5, 'SB_RS', 7, 300]  # 22 nodes including iDLs and DP
+    SB_LA = [5, 'SB_LA', 10, 720]  # 48 nodes including iDLs and DP
+    RS_LA = [5, 'RS_LA', 10, 720]  # 47 nodes including iDLs and DP
+    SB_RS_LA = [5, 'SB_RS_LA', 11, 720]  # 58 nodes including iDLs and DP (now 50)
+    run(SB, verbose=True)
+    compare(SB, report=True)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False
