@@ -9,3 +9,5 @@
 (4) 09 Apr 2024: The branches have been converted to folders in the main branch of the repository
 
 (5) 31 May 2024: The _Combined_ branch includes all the models (MILP, NLP, Hexaly).
+
+(6) 15 Nov 2024: The idea of time slots (# of visits out of 8, 3-hours slots) for each visit and family specific i_times have been implemented.
