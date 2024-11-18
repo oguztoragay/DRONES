@@ -1,12 +1,11 @@
 # Cleaned on 03/25/2024 (oguz)
 # Multi-drone capable
 
-from pyomo.environ import ConcreteModel, Var, Constraint, ConstraintList, NonNegativeReals, Binary, Integers, NonNegativeIntegers, Param, Objective, minimize, SolverFactory, value, maximize
+from pyomo.environ import ConcreteModel, Var, Constraint, ConstraintList, NonNegativeReals, Binary, Objective, minimize, SolverFactory
 from itertools import combinations, product
-from random_instance import generate
-from random_instance import mprint
-from random_instance import route_battery
-import random
+from ARCHIVE.random_instance import mprint
+from ARCHIVE.random_instance import route_battery
+
 
 def nl_pyo(data, ws, ws_x, ws_y, ws_z):
     datam = data  #generate(n_drones, 'SB')
