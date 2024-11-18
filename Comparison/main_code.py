@@ -12,8 +12,8 @@ def run(city, verbose):
     a, b, c, d = city
     # ins = random_instance.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
     ins = instance_gen4.generate(ndrones=a, city=b, slot=c, charge=d)
-    lp_pyo(ins, verbose)
-    nl_pyo(ins, verbose)
+    # lp_pyo(ins, verbose)
+    # nl_pyo(ins, verbose)
 
 def compare(instance, report):
     nlp_pickle = open('nlp.pickle', "rb")
@@ -101,13 +101,12 @@ def compare(instance, report):
     print('==========================================')
 
     if report:
-        folder_name = 'result_'+str(date.today())+'equality'
+        folder_name = 'res_'+str(date.today())+'_equality'
         f_loc = os.getcwd()
-        try:
-            os.mkdir(f_loc + '/'+folder_name)
-        except:
-            print('The named folder exists in the given path.')
-        with open(folder_name+'/'+instance[1]+' solution_'+time.strftime("%Y%m%d-%H%M%S")+'.txt', 'w+') as file:
+        directory_path = os.path.join(f_loc, 'Comparison', 'Results', folder_name)
+        os.makedirs(directory_path, exist_ok=True)
+        # file name: City + number of drones + number of slots + max charge
+        with open(directory_path+'/'+instance[1]+'_'+str(instance[0])+'_'+str(instance[2])+'_'+str(instance[3])+'_'+time.strftime("%H%M%S")+'.txt', 'w+') as file:
             file.write('~~~~~~~~~~~~~~~~~~~ ' + str(instance) + ' ~~~~~~~~~~~~~~~~~~~\n')
             file.write('     seed: ' + str(nlp_[2][12])+'\n')
             file.write(' Families: ' + str(nlp_[2][7])+'\n')
