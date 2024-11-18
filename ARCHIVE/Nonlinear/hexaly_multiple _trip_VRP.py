@@ -3,7 +3,7 @@ import sys
 import math
 
 def read_elem(filename):
-    with open('C:\\Users\\otoragay\\PycharmProjects\\DRONES\\Nonlinear\\coordChrist100.dat') as f:
+    with open('/ARCHIVE/Nonlinear/coordChrist100.dat') as f:
         return [str(elem) for elem in f.read().split()]
 
 def main(instance_file, str_time_limit, output_file):
