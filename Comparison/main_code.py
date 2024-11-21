@@ -12,8 +12,8 @@ def run(city, verbose):
     a, b, c, d = city
     # ins = random_instance.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
     ins = instance_gen4.generate(ndrones=a, city=b, slot=c, charge=d)
-    # lp_pyo(ins, verbose)
-    # nl_pyo(ins, verbose)
+    lp_pyo(ins, verbose)
+    nl_pyo(ins, verbose)
 
 def compare(instance, report):
     nlp_pickle = open('nlp.pickle', "rb")
@@ -161,12 +161,12 @@ if __name__ == '__main__':
     SB = [3, 'SB', 6, 240]  # 12 nodes including iDL and DP
     RS = [3, 'RS', 6, 240]  # 11 nodes including iDL and DP
     LA = [5, 'LA', 8, 240]  # 37 nodes including iDL and DP
-    SB_RS = [5, 'SB_RS', 7, 300]  # 22 nodes including iDLs and DP
+    SB_RS = [5, 'SB_RS', 8, 240]  # 22 nodes including iDLs and DP
     SB_LA = [5, 'SB_LA', 10, 720]  # 48 nodes including iDLs and DP
     RS_LA = [5, 'RS_LA', 10, 720]  # 47 nodes including iDLs and DP
     SB_RS_LA = [5, 'SB_RS_LA', 11, 720]  # 58 nodes including iDLs and DP (now 50)
-    run(SB, verbose=True)
-    compare(SB, report=True)
+    run(SB_RS, verbose=True)
+    compare(SB_RS, report=True)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False
