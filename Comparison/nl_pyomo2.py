@@ -22,12 +22,12 @@ def nl_pyo(data, verbose):
 
     # Pyomo Nonlinear (quadratic constrained) model for the problem-----------------
     m = ConcreteModel(name="Multiple drones QP model")
-    m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=1)
-    m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-    m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
+    m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
+    m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))
+    m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))
     m.t = Var(slot_set, drones_set,  domain=NonNegativeReals, initialize=0, bounds=(0, full_charge))  # remaining charge AFTER visit completion H_{r,i}
-    m.lmax = Var(domain=NonNegativeReals, initialize=0)
-    m.lmax2 = Var(domain=NonNegativeReals, initialize=0)
+    m.lmax = Var(domain=NonNegativeReals, initialize=0, bounds=(0, 1440))
+    m.lmax2 = Var(domain=NonNegativeReals, initialize=0, bounds=(0, 1440))
 
     m.obj_func = Objective(expr=m.lmax + m.lmax2, sense=minimize)
 
@@ -61,13 +61,13 @@ def nl_pyo(data, verbose):
             m.cons6.add(m.c[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.x[k, r-1, i]*m.x[j, r, i] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
 
     # constraint:----------------------------- (7__)
-    # for i in drones_set:
-    #     m.s[1, i].fix(0)
+    for i in drones_set:
+        m.s[1, i].fix(0)
 
     # constraint:----------------------------- (8__)
     m.cons8 = ConstraintList()
     for i in drones_set:
-        for r in slot_set:
+        for r in slot_set-{1}:
             m.cons8.add(m.s[r, i] == m.c[r, i] - sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
 
     # constraint:----------------------------- (9__)

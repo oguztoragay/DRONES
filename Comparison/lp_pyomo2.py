@@ -25,11 +25,11 @@ def lp_pyo(data, verbose):
 
     # Pyomo Linear model for the problem------------------------------------------------
     m = ConcreteModel(name="Multiple drones LP model")
-    m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=1)
+    m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
     m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)
 
-    m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # start time of a slot
-    m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # completion time of a slot
+    m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))  # start time of a slot
+    m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))  # completion time of a slot
 
     m.u1 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.u2 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
@@ -46,10 +46,13 @@ def lp_pyo(data, verbose):
 
     # constraint: ++++++++++++++++++++++++++++++ (1__ & 2__)
     m.cons1_2 = ConstraintList()
-    for i in drones_set:
-        for r in slot_set:
-            m.cons1_2.add(m.lmax >= (m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set)))
-            m.cons1_2.add(m.lmax2 >= sum(due2[j - 1] * m.x[j, r, i] for j in demand_set) - m.s[r, i])
+    # for i in drones_set:
+    #     for r in slot_set:
+            # m.cons1_2.add(m.lmax >= (m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set)))
+            # m.cons1_2.add(m.lmax2 >= sum(due2[j - 1] * m.x[j, r, i] for j in demand_set) - m.s[r, i])
+    for j in demand_set-{1}-idle:
+        m.cons1_2.add(m.lmax >= sum(m.w[j, r, i] for r in slot_set for i in drones_set) - due_dates[j - 1])
+        m.cons1_2.add(m.lmax2 >= due2[j - 1] - sum(m.z[j, r, i] for r in slot_set for i in drones_set))
 
     # constraint: ++++++++++++++++++++++++++++++  (3__)
     m.cons3 = ConstraintList()
@@ -60,7 +63,7 @@ def lp_pyo(data, verbose):
     m.cons4 = ConstraintList()
     for i in drones_set:
         for r in slot_set:
-            m.cons4.add(sum(m.x[j, r, i] for j in demand_set) == 1)
+            m.cons4.add(sum(m.x[j, r, i] for j in demand_set) <= 1)
 
     # constraint: ++++++++++++++++++++++++++++++  (5__)
     m.cons5 = ConstraintList()
@@ -85,13 +88,13 @@ def lp_pyo(data, verbose):
                 m.cons6c.add(m.y[j, k, r, i] <= 0.5 * (m.x[j, r, i] + m.x[k, r - 1, i]))
 
     # constraint: ++++++++++++++++++++++++++++++  (7__)
-    # for i in drones_set:
-    #     m.s[1, i].fix(0)
+    for i in drones_set:
+        m.s[1, i].fix(0)
 
     # constraint: ++++++++++++++++++++++++++++++  (8__)
     m.cons8 = ConstraintList()
     for i in drones_set:
-        for r in slot_set:
+        for r in slot_set-{1}:
             m.cons8.add(m.s[r, i] == m.c[r, i] - sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
 
     # constraint: ++++++++++++++++++++++++++++++  (9__)
@@ -200,7 +203,7 @@ def lp_pyo(data, verbose):
     msolver = SolverFactory('gurobi')
     msolver.options['Threads'] = 256
     msolver.options['FeasibilityTol'] = 1e-7
-    msolver.options['MIPFocus'] = 3
+    msolver.options['MIPFocus'] = 1
     msolver.options['Cuts'] = 3
     msolver.options['Heuristics'] = 1
     msolver.options['RINS'] = 5

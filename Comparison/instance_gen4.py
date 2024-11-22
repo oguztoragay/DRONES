@@ -9,7 +9,7 @@ import geopy.distance
 import operator
 from functools import reduce
 from itertools import chain
-# random.seed(42)
+random.seed(3377)
 
 drone_speed = 100  # kilometers per hour
 arcs = {'DP': [34.02889809043227, -117.83417609430023, 34.02889809043227, -117.83417609430023, 0],
@@ -34,8 +34,9 @@ arcs = {'DP': [34.02889809043227, -117.83417609430023, 34.02889809043227, -117.8
         'LA_iDL': [34.03829254642072, -118.28026863444143, 34.03829254642072, -118.28026863444143, 0]}
 
 def generate(ndrones, city, slot, charge):
-    seed1 = random.randrange(sys.maxsize)
-    random.seed(seed1)
+    # seed1 = random.randrange(sys.maxsize)
+    # random.seed(seed1)
+    seed1 = 3377
     slots = slot
     # i_times = itimes
     locations, visit_frequency, families, len_DL = city2arc(city)
@@ -75,7 +76,7 @@ def generate(ndrones, city, slot, charge):
             due_date.append([time_slots[j][1] for j in selected_slots])
             due_date2.append([time_slots[j][0] for j in selected_slots])
             # i_times.append(time_slots[max(selected_slots)][1]-time_slots[min(selected_slots)][0] + 60)
-            i_times.append(max([time_slots[selected_slots[i+1]][0]-time_slots[selected_slots[i]][1] for i in range(len(selected_slots)-1)]) + 120)
+            i_times.append(time_slots[selected_slots[-1]][1]-time_slots[selected_slots[0]][0] + 10)
 
     for i in range(bura):
         due_date.append([1440])
