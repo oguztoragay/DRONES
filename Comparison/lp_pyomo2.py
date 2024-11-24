@@ -28,14 +28,14 @@ def lp_pyo(data, verbose):
     m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
     m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)
 
-    m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))  # start time of a slot
-    m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))  # completion time of a slot
+    m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))  # start time of a slot
+    m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))  # completion time of a slot
 
     m.u1 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.u2 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.u3 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-    m.z = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # start time of a node
-    m.w = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # completion time of a node
+    m.z = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))  # start time of a node
+    m.w = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))  # completion time of a node
 
     m.t = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, full_charge))
 
