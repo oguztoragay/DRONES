@@ -8,7 +8,7 @@ from itertools import product
 import gurobipy as gp
 def lp_pyo(data, verbose):
     datam = data
-    t_matrix, due_dates, m_time, n_slot, drone_charge, i_times, membership, families, f, due2, len_dl, fs_slot, seed = data
+    t_matrix, due_dates, m_time, n_slot, drone_charge, i_times, membership, families, f, due2, len_dl, fs_slot = data
     demand_set = set(range(1, len(due_dates) + 1))  # use index j for N locations
     drones_set = set(range(1, len(data[4]) + 1))  # use index i for M drones
     slot_set = set(range(1, n_slot + 1))  # use index r for R slots in each drone
@@ -88,13 +88,13 @@ def lp_pyo(data, verbose):
                 m.cons6c.add(m.y[j, k, r, i] <= 0.5 * (m.x[j, r, i] + m.x[k, r - 1, i]))
 
     # constraint: ++++++++++++++++++++++++++++++  (7__)
-    for i in drones_set:
-        m.s[1, i].fix(0)
+    # for i in drones_set:
+    #     m.s[1, i].fix(0)
 
     # constraint: ++++++++++++++++++++++++++++++  (8__)
     m.cons8 = ConstraintList()
     for i in drones_set:
-        for r in slot_set-{1}:
+        for r in slot_set:
             m.cons8.add(m.s[r, i] == m.c[r, i] - sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
 
     # constraint: ++++++++++++++++++++++++++++++  (9__)
@@ -201,19 +201,20 @@ def lp_pyo(data, verbose):
     # print('***** Constraints =', num_of_cons)
 
     msolver = SolverFactory('gurobi')
-    msolver.options['Threads'] = 256
+    msolver.options['Threads'] = 20
     msolver.options['FeasibilityTol'] = 1e-7
     msolver.options['MIPFocus'] = 1
     msolver.options['Cuts'] = 3
     msolver.options['Heuristics'] = 1
     msolver.options['RINS'] = 5
+    msolver.options['TimeLimit'] = 1800
     # msolver.options['PoolSolutions'] = 5
     # msolver.options['SubMIPCuts'] = 2
     # msolver.options['SubMIPNodes'] = 500
     # msolver.options['PreQLinearize'] = 0
     # msolver.options['BarCorrectors'] = 100
     # msolver.options['PreMIQCPForm'] = 1
-    # msolver.options['Cutoff'] = 1
+    # msolver.options['Cutoff'] = 1500
 
     solution = msolver.solve(m, tee=verbose)
     # for constr, body_value, infeasible in find_infeasible_constraints(m):

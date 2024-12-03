@@ -1,5 +1,7 @@
 from datetime import date
 import os
+import random
+import sys
 from Comparison import instance_gen4
 from nl_pyomo2 import nl_pyo
 from lp_pyomo2 import lp_pyo
@@ -66,7 +68,7 @@ def compare(instance, report):
 
 
     print('~~~~~~~~~~~~~~~~~~~~~~~~~~ Instance ~~~~~~~~~~~~~~~~~~~~~~~~~')
-    print('     seed:', nlp_[2][12])
+    print('     seed:', seed1)  # nlp_[2][12])
     print(' Families:', nlp_[2][7])
     print('  i_times:', nlp_[2][5])
     print('Fam slots:', nlp_[2][11])
@@ -108,7 +110,7 @@ def compare(instance, report):
         # file name: City + number of drones + number of slots + max charge
         with open(directory_path+'/'+instance[1]+'_'+str(instance[0])+'_'+str(instance[2])+'_'+str(instance[3])+'_'+time.strftime("%H%M%S")+'.txt', 'w+') as file:
             file.write('~~~~~~~~~~~~~~~~~~~ ' + str(instance) + ' ~~~~~~~~~~~~~~~~~~~\n')
-            file.write('     seed: ' + str(nlp_[2][12])+'\n')
+            file.write('     seed: ' + str(seed1)+'\n')  #  str(nlp_[2][12])
             file.write(' Families: ' + str(nlp_[2][7])+'\n')
             file.write('  i_times: ' + str(nlp_[2][5])+'\n')
             file.write('Fam slots: ' + str(nlp_[2][11])+'\n')
@@ -158,15 +160,19 @@ def compare(instance, report):
 
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge)
-    SB = [3, 'SB', 4, 360]  # 12 nodes including iDL and DP
+    SB = [3, 'SB', 5, 360]  # 12 nodes including iDL and DP
     RS = [3, 'RS', 4, 360]  # 11 nodes including iDL and DP
     LA = [3, 'LA', 13, 360]  # 37 nodes including iDL and DP
     SB_RS = [3, 'SB_RS', 8, 360]  # 22 nodes including iDLs and DP
     SB_LA = [3, 'SB_LA', 15, 720]  # 48 nodes including iDLs and DP
     RS_LA = [3, 'RS_LA', 15, 720]  # 47 nodes including iDLs and DP
     SB_RS_LA = [5, 'SB_RS_LA', 11, 720]  # 58 nodes including iDLs and DP (now 50)
-    run(SB_LA, verbose=True)
-    compare(SB_LA, report=True)
+    for i in range(10):
+        seed1 = random.randrange(sys.maxsize)
+        random.seed(seed1)
+        print(i, ': seed === ', seed1)
+        run(SB, verbose=True)
+        compare(SB, report=True)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False
