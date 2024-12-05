@@ -201,13 +201,14 @@ def lp_pyo(data, verbose):
     # print('***** Constraints =', num_of_cons)
 
     msolver = SolverFactory('gurobi')
-    msolver.options['Threads'] = 20
+    msolver.options['Threads'] = 24
     msolver.options['FeasibilityTol'] = 1e-7
     msolver.options['MIPFocus'] = 1
     msolver.options['Cuts'] = 3
     msolver.options['Heuristics'] = 1
     msolver.options['RINS'] = 5
     msolver.options['TimeLimit'] = 1800
+    msolver.options['Presolve'] = 2
     # msolver.options['PoolSolutions'] = 5
     # msolver.options['SubMIPCuts'] = 2
     # msolver.options['SubMIPNodes'] = 500

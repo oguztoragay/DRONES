@@ -103,7 +103,7 @@ def compare(instance, report):
     print('==========================================')
 
     if report:
-        folder_name = 'res_'+str(date.today())+'_equality'
+        folder_name = 'res_'+str(date.today())+'_iDL0min'
         f_loc = os.getcwd()
         directory_path = os.path.join(f_loc, 'Comparison', 'Results', folder_name)
         os.makedirs(directory_path, exist_ok=True)
