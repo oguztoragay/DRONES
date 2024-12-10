@@ -10,7 +10,7 @@ import operator
 from functools import reduce
 from itertools import chain
 
-drone_speed = 60  # kilometers per hour
+drone_speed = 100 # kilometers per hour
 arcs = {'DP': [34.02889809043227, -117.83417609430023, 34.02889809043227, -117.83417609430023, 0],
         'SB1': [34.06748049349774, -117.58627467784373, 34.06733829280365, -117.56805711511826, 2],
         'SB2': [34.073664262003916, -117.54478073959717, 34.07880072708419, -117.54469490891294, 3],
@@ -77,7 +77,7 @@ def generate(ndrones, city, slot, charge):
             # i_times.append(time_slots[selected_slots[-1]][1]-time_slots[selected_slots[0]][0] + 10)
             for ii in range(len(selected_slots) - 1):
                 ss.append(time_slots[selected_slots[ii + 1]][0] - time_slots[selected_slots[ii]][1])
-            i_times.append(max(ss) + 30)
+            i_times.append(max(ss) + 60)
     for i in range(bura):
         due_date.append([1440])
         due_date2.append([0])
@@ -93,7 +93,7 @@ def arc_data(arc):
     coord1 = (arc[0], arc[1])
     coord2 = (arc[2], arc[3])
     arc_length = geopy.distance.geodesic(coord1, coord2).kilometers  # distance in kilometers
-    monitoring = round((arc_length/(drone_speed*0.5))*60, 2)  # visit times in minutes, drone speed become half during the scan or visit
+    monitoring = round((arc_length/(drone_speed*0.75))*60, 2)  # visit times in minutes, drone speed become half during the scan or visit
     if arc == arcs['DP']:
         monitoring = 60
     elif arc == arcs['RS_iDL'] or arc == arcs['SB_iDL'] or arc == arcs['LA_iDL']:

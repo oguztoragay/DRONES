@@ -23,7 +23,7 @@ def nl_pyo(data, verbose):
     # Pyomo Nonlinear (quadratic constrained) model for the problem-----------------
     m = ConcreteModel(name="Multiple drones QP model")
     m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
-    m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))
+    m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))
     m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))
     m.t = Var(slot_set, drones_set,  domain=NonNegativeReals, initialize=full_charge, bounds=(0, full_charge))  # remaining charge AFTER visit completion H_{r,i}
     m.lmax = Var(domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))
@@ -119,13 +119,13 @@ def nl_pyo(data, verbose):
 
     msolver = SolverFactory('gurobi')
     msolver.options['Threads'] = 24
-    msolver.options['FeasibilityTol'] = 1e-7
+    msolver.options['FeasibilityTol'] = 1e-6
+    msolver.options['OptimalityTol'] = 1e-5
     msolver.options['MIPFocus'] = 3
     msolver.options['Cuts'] = 3
     msolver.options['Heuristics'] = 1
     msolver.options['RINS'] = 5
     msolver.options['PreQLinearize'] = 0
-    msolver.options['Presolve'] = 1
     msolver.options['BarCorrectors'] = 3
     msolver.options['PreMIQCPForm'] = 2
     msolver.options['Presolve'] = 2

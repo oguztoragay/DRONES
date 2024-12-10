@@ -164,10 +164,10 @@ if __name__ == '__main__':
     RS = [3, 'RS', 4, 360]  # 11 nodes including iDL and DP
     LA = [3, 'LA', 13, 360]  # 37 nodes including iDL and DP
     SB_RS = [3, 'SB_RS', 8, 360]  # 22 nodes including iDLs and DP
-    SB_LA = [3, 'SB_LA', 15, 720]  # 48 nodes including iDLs and DP
+    SB_LA = [6, 'SB_LA', 8, 720]  # 48 nodes including iDLs and DP
     RS_LA = [3, 'RS_LA', 15, 720]  # 47 nodes including iDLs and DP
     SB_RS_LA = [5, 'SB_RS_LA', 11, 720]  # 58 nodes including iDLs and DP (now 50)
-    for i in range(10):
+    for i in range(3):
         seed1 = random.randrange(sys.maxsize)
         random.seed(seed1)
         print(i, ': seed === ', seed1)

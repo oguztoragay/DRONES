@@ -25,8 +25,8 @@ def lp_pyo(data, verbose):
 
     # Pyomo Linear model for the problem------------------------------------------------
     m = ConcreteModel(name="Multiple drones LP model")
-    m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
-    m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)
+    m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=1)
+    m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=1)
 
     m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))  # start time of a slot
     m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))  # completion time of a slot
@@ -34,7 +34,7 @@ def lp_pyo(data, verbose):
     m.u1 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.u2 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.u3 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-    m.z = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))  # start time of a node
+    m.z = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))  # start time of a node
     m.w = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))  # completion time of a node
 
     m.t = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, full_charge))
@@ -202,12 +202,14 @@ def lp_pyo(data, verbose):
 
     msolver = SolverFactory('gurobi')
     msolver.options['Threads'] = 24
-    msolver.options['FeasibilityTol'] = 1e-7
-    msolver.options['MIPFocus'] = 1
+    msolver.options['FeasibilityTol'] = 1e-6
+    msolver.options['OptimalityTol'] = 1e-5
+    msolver.options['MIPFocus'] = 3
     msolver.options['Cuts'] = 3
     msolver.options['Heuristics'] = 1
     msolver.options['RINS'] = 5
     msolver.options['TimeLimit'] = 1800
+    msolver.options['VarBranch'] = 3
     msolver.options['Presolve'] = 2
     # msolver.options['PoolSolutions'] = 5
     # msolver.options['SubMIPCuts'] = 2
