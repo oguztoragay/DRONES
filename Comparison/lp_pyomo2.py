@@ -39,8 +39,8 @@ def lp_pyo(data, verbose):
 
     m.t = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, full_charge))
 
-    m.lmax = Var(domain=NonNegativeReals, initialize=1000)
-    m.lmax2 = Var(domain=NonNegativeReals, initialize=1000)
+    m.lmax = Var(domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))
+    m.lmax2 = Var(domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))
 
     m.obj_func = Objective(expr=m.lmax + m.lmax2, sense=minimize)
 

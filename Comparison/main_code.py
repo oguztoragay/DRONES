@@ -103,7 +103,7 @@ def compare(instance, report):
     print('==========================================')
 
     if report:
-        folder_name = 'res_'+str(date.today())+'_iDL0min'
+        folder_name = 'res_'+str(date.today())+'_FINAL_RUNS'
         f_loc = os.getcwd()
         directory_path = os.path.join(f_loc, 'Comparison', 'Results', folder_name)
         os.makedirs(directory_path, exist_ok=True)
@@ -160,15 +160,20 @@ def compare(instance, report):
 
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge)
-    SB = [3, 'SB', 5, 360]  # 12 nodes including iDL and DP
+    SB = [4, 'SB', 4, 360]  # 12 nodes including iDL and DP
     RS = [3, 'RS', 4, 360]  # 11 nodes including iDL and DP
     LA = [3, 'LA', 13, 360]  # 37 nodes including iDL and DP
     SB_RS = [3, 'SB_RS', 8, 360]  # 22 nodes including iDLs and DP
     SB_LA = [6, 'SB_LA', 8, 720]  # 48 nodes including iDLs and DP
     RS_LA = [3, 'RS_LA', 15, 720]  # 47 nodes including iDLs and DP
     SB_RS_LA = [5, 'SB_RS_LA', 11, 720]  # 58 nodes including iDLs and DP (now 50)
-    for i in range(3):
-        seed1 = random.randrange(sys.maxsize)
+    seed_gen = [5842917579678469337, 6739884464658267805,946622183561993134,
+                8466588787516917229, 7355049983161008923, 3521775807566813241,
+                3925465047589960536, 1756212420844415999, 294783262169012656,
+                5434789834338051980]
+    for i in range(10):
+        # seed1 = random.randrange(sys.maxsize)
+        seed1 = seed_gen[i]
         random.seed(seed1)
         print(i, ': seed === ', seed1)
         run(SB, verbose=True)
