@@ -2,6 +2,7 @@
 # Cleaned on 07/25/2024 (oguz)
 # Cleaned on 08/07/2024 (oguz)
 # Cleaned on 09/22/2024 (oguz)
+# Major update: Idles does not have fixed m_time that means drones can stay on idle points for as long as they need to without losing the remaining charges. 12/11/2024 (oguz)
 
 from pyomo.environ import (ConcreteModel, Var, ConstraintList, NonNegativeReals,
                            Binary, Integers, NonNegativeIntegers, Objective, minimize,
@@ -26,6 +27,7 @@ def nl_pyo(data, verbose):
     m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))
     m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))
     m.t = Var(slot_set, drones_set,  domain=NonNegativeReals, initialize=full_charge, bounds=(0, full_charge))  # remaining charge AFTER visit completion H_{r,i}
+    m.d = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))  # duration of the visit which is fixed for demand nodes and variable for idle nodes
     m.lmax = Var(domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))
     m.lmax2 = Var(domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))
 
@@ -47,52 +49,52 @@ def nl_pyo(data, verbose):
     m.cons4 = ConstraintList()
     for i in drones_set:
         for r in slot_set:
-            m.cons4.add(sum(m.x[j, r, i] for j in demand_set) <= 1)
+            m.cons4.add(sum(m.x[j, r, i] for j in demand_set) == 1)
 
     # constraint:----------------------------- (5__)
     m.cons5 = ConstraintList()
     for i in drones_set:
-        m.cons5.add(m.c[1, i] == sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set))
+        m.cons5.add(m.c[1, i] == sum((t_matrix[0][j-1] + m.d[j, 1, i]) * m.x[j, 1, i] for j in demand_set))
 
     # constraint:----------------------------- (6__)
     m.cons6 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons6.add(m.c[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.x[k, r-1, i]*m.x[j, r, i] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
+            m.cons6.add(m.c[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.x[k, r-1, i]*m.x[j, r, i] for j in demand_set for k in demand_set) + sum(m.d[j, r, i] * m.x[j, r, i] for j in demand_set))
 
     # constraint:----------------------------- (7__)
-    # for i in drones_set:
-    #     m.s[1, i].fix(0)
+    for i in drones_set:
+        m.s[1, i].fix(0)
 
     # constraint:----------------------------- (8__)
     m.cons8 = ConstraintList()
     for i in drones_set:
-        for r in slot_set:
-            m.cons8.add(m.s[r, i] == m.c[r, i] - sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
+        for r in slot_set-{1}:
+            m.cons8.add(m.s[r, i] == m.c[r, i] - sum(m.d[j, r, i] * m.x[j, r, i] for j in demand_set))
 
     # constraint:----------------------------- (9__)
     m.cons9 = ConstraintList()
     for i in drones_set:
-        m.cons9.add(m.t[1, i] == full_charge - m.c[1, i])
+        m.cons9.add(m.t[1, i] == full_charge - sum((t_matrix[0][j-1] + m.d[j, 1, i]) * m.x[j, 1, i] for j in demand_set-idle))
 
     # constraint:----------------------------- (10__)
     m.cons10 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons10.add(m.t[r, i] == (full_charge * m.x[1, r, i]) + ((m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i]) * (1 - m.x[1, r, i])))
+            m.cons10.add(m.t[r, i] == (full_charge * m.x[1, r, i]) + ((m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i]) * (1 - sum(m.x[id_, r, i] for id_ in idle))) + (m.t[r-1, i] * sum(m.x[id_, r, i] for id_ in idle)))
 
     # constraint:----------------------------- (11__)
     m.cons11 = ConstraintList()
     for ind_, f in indexed_families:
         for j in f:
-            m.cons11.add(sum(m.s[r0, i0]*m.x[j+1, r0, i0] for r0 in slot_set for i0 in drones_set) - sum(m.c[r1, i1]*m.x[j, r1, i1] for r1 in slot_set for i1 in drones_set) <= i_times[ind_])
+            m.cons11.add(sum(m.s[r, i]*m.x[j+1, r, i] for r in slot_set for i in drones_set) - sum(m.c[r, i]*m.x[j, r, i] for r in slot_set for i in drones_set) <= i_times[ind_])
+            m.cons11.add(sum(m.s[r, i]*m.x[j+1, r, i] for r in slot_set for i in drones_set) - sum(m.c[r, i]*m.x[j, r, i] for r in slot_set for i in drones_set) >= 0)
 
-    # constraint:----------------------------- (12__)
-    m.cons12 = ConstraintList()
-    for ind_, f in indexed_families:
-        for j in f:
-            m.cons12.add(sum(m.s[r3, i3]*m.x[j+1, r3, i3] for r3 in slot_set for i3 in drones_set) - sum(m.c[r2, i2]*m.x[j, r2, i2] for r2 in slot_set for i2 in drones_set) >= 0)
-
+    # constraint:----------------------------- (New fixed variables)
+    for i in drones_set:
+        for r in slot_set:
+            for j in demand_set-idle:
+                m.d[j, r, i].fix(m_time[j-1])
 
     # Info about the model:------------------------------------------
     # m.pprint()
