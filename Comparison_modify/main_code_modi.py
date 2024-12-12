@@ -160,17 +160,17 @@ def compare(instance, report):
 
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge)
-    SB = [3, 'SB', 7, 120]  # 12 nodes including iDL and DP
+    SB = [3, 'SB', 5, 120]  # 12 nodes including iDL and DP
     RS = [3, 'RS', 5, 360]  # 11 nodes including iDL and DP
     LA = [4, 'LA', 10, 360]  # 37 nodes including iDL and DP
     SB_RS = [4, 'SB_RS', 7, 360]  # 22 nodes including iDLs and DP
     SB_LA = [6, 'SB_LA', 8, 720]  # 48 nodes including iDLs and DP
     RS_LA = [3, 'RS_LA', 15, 720]  # 47 nodes including iDLs and DP
     SB_RS_LA = [5, 'SB_RS_LA', 11, 720]  # 58 nodes including iDLs and DP (now 50)
-    seed_gen = [7355049983161008923, 3521775807566813241,
+    seed_gen = [3521775807566813241,
                 3925465047589960536, 1756212420844415999, 294783262169012656,
                 5434789834338051980]
-    for i in range(3):
+    for i in range(1):
         # seed1 = random.randrange(sys.maxsize)
         seed1 = seed_gen[i]
         # seed1 = 6739884464658267805

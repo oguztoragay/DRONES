@@ -81,7 +81,7 @@ def nl_pyo(data, verbose):
     m.cons10 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons10.add(m.t[r, i] == (full_charge * m.x[1, r, i]) + ((m.t[r - 1, i] - m.c[r, i] + m.c[r - 1, i]) * (1 - sum(m.x[id_, r, i] for id_ in idle))) + (m.t[r-1, i] * sum(m.x[id_, r, i] for id_ in idle)))
+            m.cons10.add(m.t[r, i] == (full_charge * m.x[1, r, i]) + ((m.t[r-1, i] - m.c[r, i] + m.c[r - 1, i]) * (1 - sum(m.x[id_, r, i] for id_ in idle))) + ((m.t[r-1, i]-(m.s[r, i] - m.c[r-1, i])) * sum(m.x[id_, r, i] for id_ in idle)))
 
     # constraint:----------------------------- (11__)
     m.cons11 = ConstraintList()
