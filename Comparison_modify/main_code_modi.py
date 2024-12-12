@@ -14,7 +14,7 @@ def run(city, verbose):
     a, b, c, d = city
     # ins = random_instance.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
     ins = instance_gen5.generate(ndrones=a, city=b, slot=c, charge=d)
-    # lp_pyo(ins, verbose)
+    lp_pyo(ins, verbose)
     nl_pyo(ins, verbose)
 
 def compare(instance, report):
@@ -77,17 +77,17 @@ def compare(instance, report):
     print('Monitor_t:', nlp_[2][2])
 
     print('~~~~~~~~~~~~~~~~~~~ Comparing the results ~~~~~~~~~~~~~~~~~~~')
-    # print('***** lp_objective:', value(lp_[0].obj_func))
-    # print('***** lp_Sol_time:', round(lp_[1].Solver.Time, 3))
+    print('***** lp_objective:', value(lp_[0].obj_func))
+    print('***** lp_Sol_time:', round(lp_[1].Solver.Time, 3))
     col_widths = 10
-    # for i in range(0, lassign_list.shape[0]):
-    #     print('     Drone (' + str(i + 1) + '):')
-    #     print(''.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lassign_list[i]))
-    #     print('s_times'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lps_values[i]))
-    #     print('c_times'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lpc_values[i]))
-    #     print('travels'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lptr_values[i]))
-    #     print('charges'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lpt_values[i]))
-    #     print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
+    for i in range(0, lassign_list.shape[0]):
+        print('     Drone (' + str(i + 1) + '):')
+        print(''.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lassign_list[i]))
+        print('s_times'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lps_values[i]))
+        print('c_times'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lpc_values[i]))
+        print('travels'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lptr_values[i]))
+        print('charges'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in lpt_values[i]))
+        print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
     print('***** nlp_objective:', value(nlp_[0].obj_func))
     print('***** nlp_Sol_time:', round(nlp_[1].Solver.Time, 3))
@@ -160,25 +160,24 @@ def compare(instance, report):
 
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge)
-    SB = [3, 'SB', 6, 120]  # 12 nodes including iDL and DP
+    SB = [3, 'SB', 7, 120]  # 12 nodes including iDL and DP
     RS = [3, 'RS', 5, 360]  # 11 nodes including iDL and DP
     LA = [4, 'LA', 10, 360]  # 37 nodes including iDL and DP
     SB_RS = [4, 'SB_RS', 7, 360]  # 22 nodes including iDLs and DP
     SB_LA = [6, 'SB_LA', 8, 720]  # 48 nodes including iDLs and DP
     RS_LA = [3, 'RS_LA', 15, 720]  # 47 nodes including iDLs and DP
     SB_RS_LA = [5, 'SB_RS_LA', 11, 720]  # 58 nodes including iDLs and DP (now 50)
-    seed_gen = [5842917579678469337, 6739884464658267805,946622183561993134,
-                8466588787516917229, 7355049983161008923, 3521775807566813241,
+    seed_gen = [7355049983161008923, 3521775807566813241,
                 3925465047589960536, 1756212420844415999, 294783262169012656,
                 5434789834338051980]
-    for i in range(10):
+    for i in range(3):
         # seed1 = random.randrange(sys.maxsize)
         seed1 = seed_gen[i]
         # seed1 = 6739884464658267805
         random.seed(seed1)
         print(i, ': seed === ', seed1)
-        run(SB_RS, verbose=True)
-        compare(SB_RS, report=False)
+        run(SB, verbose=True)
+        compare(SB, report=False)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False

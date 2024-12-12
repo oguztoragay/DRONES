@@ -30,13 +30,13 @@ def lp_pyo(data, verbose):
 
     m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))  # start time of a slot
     m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))  # completion time of a slot
-
+    m.d = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))
     m.u1 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.u2 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.u3 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.z = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))  # start time of a node
     m.w = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))  # completion time of a node
-
+    m.xd = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.t = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, full_charge))
 
     m.lmax = Var(domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))
@@ -63,18 +63,18 @@ def lp_pyo(data, verbose):
     m.cons4 = ConstraintList()
     for i in drones_set:
         for r in slot_set:
-            m.cons4.add(sum(m.x[j, r, i] for j in demand_set) <= 1)
+            m.cons4.add(sum(m.x[j, r, i] for j in demand_set) == 1)
 
     # constraint: ++++++++++++++++++++++++++++++  (5__)
     m.cons5 = ConstraintList()
     for i in drones_set:
-        m.cons5.add(m.c[1, i] == sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set))
+        m.cons5.add(m.c[1, i] == sum((t_matrix[0][j - 1] * m.x[j, 1, i]) + m.xd[j, 1, i] for j in demand_set))
 
     # constraint: ++++++++++++++++++++++++++++++  (6a__)
     m.cons6a = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons6a.add(m.c[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set) + sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
+            m.cons6a.add(m.c[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set) + sum(m.xd[j, r, i] for j in demand_set))
 
     # constraint: ++++++++++++++++++++++++++++++  (6b__ & 6c__)
     m.cons6b = ConstraintList()
@@ -88,19 +88,19 @@ def lp_pyo(data, verbose):
                 m.cons6c.add(m.y[j, k, r, i] <= 0.5 * (m.x[j, r, i] + m.x[k, r - 1, i]))
 
     # constraint: ++++++++++++++++++++++++++++++  (7__)
-    # for i in drones_set:
-    #     m.s[1, i].fix(0)
+    for i in drones_set:
+        m.s[1, i].fix(0)
 
     # constraint: ++++++++++++++++++++++++++++++  (8__)
     m.cons8 = ConstraintList()
     for i in drones_set:
-        for r in slot_set:
-            m.cons8.add(m.s[r, i] == m.c[r, i] - sum(m_time[j - 1] * m.x[j, r, i] for j in demand_set))
+        for r in slot_set - {1}:
+            m.cons8.add(m.s[r, i] == m.c[r, i] - sum(m.xd[j, r, i] for j in demand_set))
 
     # constraint: ++++++++++++++++++++++++++++++  (9__)
     m.cons9 = ConstraintList()
     for i in drones_set:
-        m.cons9.add(m.t[1, i] == full_charge - m.c[1, i])
+        m.cons9.add(m.t[1, i] == full_charge - sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set))
 
     # constraint: ++++++++++++++++++++++++++++++  (10a__)
     m.cons10a = ConstraintList()
@@ -181,6 +181,14 @@ def lp_pyo(data, verbose):
                 m.cons11g.add(m.w[j, r, i] >= m.c[r, i] - UB * (1 - m.x[j, r, i]))
                 m.cons11h.add(m.w[j, r, i] <= UB * (m.x[j, r, i]))
                 m.cons11i.add(m.w[j, r, i] >= -UB * (m.x[j, r, i]))
+
+
+    m.cons12 = ConstraintList()
+    for i in drones_set:
+        for r in slot_set:
+            for j in demand_set:
+                m.cons12.add(m.xd[j, r, i] <= m_time[j-1] * m.x[j, r, i] + 1440 * sum(m.x[id_, r, i] for id_ in idle))
+                m.cons12.add(m.xd[j, r, i] >= m_time[j-1] * m.x[j, r, i])
 
     # Info about the model:------------------------------------------
     # m.pprint()
