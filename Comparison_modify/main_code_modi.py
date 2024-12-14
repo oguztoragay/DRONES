@@ -167,17 +167,14 @@ if __name__ == '__main__':
     SB_LA = [6, 'SB_LA', 8, 720]  # 48 nodes including iDLs and DP
     RS_LA = [3, 'RS_LA', 15, 720]  # 47 nodes including iDLs and DP
     SB_RS_LA = [5, 'SB_RS_LA', 11, 720]  # 58 nodes including iDLs and DP (now 50)
-    seed_gen = [3521775807566813241,
-                3925465047589960536, 1756212420844415999, 294783262169012656,
-                5434789834338051980]
-    for i in range(1):
+    seed_gen = [3521775807566813241, 3925465047589960536, 1756212420844415999, 294783262169012656, 5434789834338051980]
+    for i in range(5):
         # seed1 = random.randrange(sys.maxsize)
         seed1 = seed_gen[i]
-        # seed1 = 6739884464658267805
         random.seed(seed1)
         print(i, ': seed === ', seed1)
         run(SB, verbose=True)
-        compare(SB, report=False)
+        compare(SB, report=True)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False
