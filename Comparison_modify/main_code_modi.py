@@ -14,7 +14,7 @@ def run(city, verbose):
     a, b, c, d = city
     # ins = random_instance.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
     ins = instance_gen5.generate(ndrones=a, city=b, slot=c, charge=d)
-    lp_pyo(ins, verbose)
+    # lp_pyo(ins, verbose)
     nl_pyo(ins, verbose)
 
 def compare(instance, report):
@@ -105,7 +105,7 @@ def compare(instance, report):
     if report:
         folder_name = 'res_'+str(date.today())+'_Major'
         f_loc = os.getcwd()
-        directory_path = os.path.join(f_loc, 'Comparison', 'Results', folder_name)
+        directory_path = os.path.join(f_loc, 'Comparison_modify', 'Results', folder_name)
         os.makedirs(directory_path, exist_ok=True)
         # file name: City + number of drones + number of slots + max charge
         with open(directory_path+'/'+instance[1]+'_'+str(instance[0])+'_'+str(instance[2])+'_'+str(instance[3])+'_'+time.strftime("%H%M%S")+'.txt', 'w+') as file:
@@ -160,17 +160,17 @@ def compare(instance, report):
 
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge)
-    SB = [3, 'SB', 5, 120]  # 12 nodes including iDL and DP
+    SB = [3, 'SB', 6, 120]  # 12 nodes including iDL and DP
     RS = [3, 'RS', 5, 360]  # 11 nodes including iDL and DP
     LA = [4, 'LA', 10, 360]  # 37 nodes including iDL and DP
     SB_RS = [4, 'SB_RS', 7, 360]  # 22 nodes including iDLs and DP
     SB_LA = [6, 'SB_LA', 8, 720]  # 48 nodes including iDLs and DP
     RS_LA = [3, 'RS_LA', 15, 720]  # 47 nodes including iDLs and DP
     SB_RS_LA = [5, 'SB_RS_LA', 11, 720]  # 58 nodes including iDLs and DP (now 50)
-    seed_gen = [3521775807566813241, 3925465047589960536, 1756212420844415999, 294783262169012656, 5434789834338051980]
+    # seed_gen = [3521775807566813241, 3925465047589960536, 1756212420844415999, 294783262169012656, 5434789834338051980]
     for i in range(5):
-        # seed1 = random.randrange(sys.maxsize)
-        seed1 = seed_gen[i]
+        seed1 = random.randrange(sys.maxsize)
+        # seed1 = seed_gen[i]
         random.seed(seed1)
         print(i, ': seed === ', seed1)
         run(SB, verbose=True)
