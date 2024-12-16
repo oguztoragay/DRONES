@@ -123,7 +123,7 @@ def nl_pyo(data, verbose):
     msolver.options['Threads'] = 24
     msolver.options['FeasibilityTol'] = 1e-6
     msolver.options['OptimalityTol'] = 1e-5
-    msolver.options['MIPFocus'] = 3
+    msolver.options['MIPFocus'] = 2
     msolver.options['Cuts'] = 3
     msolver.options['Heuristics'] = 1
     msolver.options['RINS'] = 5
@@ -131,7 +131,7 @@ def nl_pyo(data, verbose):
     msolver.options['BarCorrectors'] = 3
     msolver.options['PreMIQCPForm'] = 2
     msolver.options['Presolve'] = 2
-    msolver.options['TimeLimit'] = 1800
+    msolver.options['TimeLimit'] = 3600
     # msolver.options['PoolSolutions'] = 5
     solution = msolver.solve(m, tee=verbose)
 

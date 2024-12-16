@@ -67,7 +67,7 @@ def lp_pyo(data, verbose):
     # constraint: ++++++++++++++++++++++++++++++  (5__)
     m.cons5 = ConstraintList()
     for i in drones_set:
-        m.cons5.add(m.c[1, i] == sum((t_matrix[0][j - 1] * m.x[j, 1, i]) + m.xd[j, 1, i] for j in demand_set-idle))
+        m.cons5.add(m.c[1, i] == sum((t_matrix[0][j - 1] + m_time[j-1])*m.x[j, 1, i] for j in demand_set-idle) + sum(m.xd[j, 1, i] for j in idle))
 
     # constraint: ++++++++++++++++++++++++++++++  (6a__)
     m.cons6a = ConstraintList()
@@ -188,7 +188,16 @@ def lp_pyo(data, verbose):
     for i in drones_set:
         for r in slot_set:
             for j in demand_set-idle:
-                m.xd[j, r, i].fix(m_time[j-1])
+                m.cons11i.add(m.xd[j, r, i] <= m_time[j - 1] * m.x[j, r, i])
+                m.cons11i.add(m.xd[j, r, i] >= m_time[j - 1] * m.x[j, r, i])
+
+    for i in drones_set:
+        for r in slot_set:
+            for j in idle:
+                m.cons11f.add(m.xd[j, r, i] <= 1440 * m.x[j, r, i])
+
+
+
 
     # m.cons12 = ConstraintList()
     # for i in drones_set:
