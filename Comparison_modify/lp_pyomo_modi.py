@@ -30,7 +30,6 @@ def lp_pyo(data, verbose):
 
     m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))  # start time of a slot
     m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))  # completion time of a slot
-    m.d = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))
     m.u1 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.u2 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
     m.u3 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)
