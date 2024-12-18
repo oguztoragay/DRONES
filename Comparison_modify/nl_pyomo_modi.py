@@ -54,7 +54,7 @@ def nl_pyo(data, verbose):
     # constraint:----------------------------- (5__)
     m.cons5 = ConstraintList()
     for i in drones_set:
-        m.cons5.add(m.c[1, i] == sum((t_matrix[0][j-1] + m.d[j, 1, i]) * m.x[j, 1, i] for j in demand_set))
+        m.cons5.add(m.c[1, i] == sum((t_matrix[0][j - 1] + m.d[j, 1, i]) * m.x[j, 1, i] for j in demand_set))
 
     # constraint:----------------------------- (6__)
     m.cons6 = ConstraintList()
@@ -81,7 +81,9 @@ def nl_pyo(data, verbose):
     m.cons10 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons10.add(m.t[r, i] == (full_charge * m.x[1, r, i]) + ((m.t[r-1, i] - m.c[r, i] + m.c[r - 1, i]) * (sum(m.x[j, r, i] for j in demand_set-{1}-idle))) + ((m.t[r-1, i]-(m.s[r, i] - m.c[r-1, i])) * sum(m.x[id_, r, i] for id_ in idle)))
+            m.cons10.add(m.t[r, i] == (full_charge * m.x[1, r, i])
+                         + ((m.t[r-1, i] - m.c[r, i] + m.c[r - 1, i]) * (sum(m.x[j, r, i] for j in demand_set-{1}-idle)))
+                         + ((m.t[r-1, i]-(m.s[r, i] - m.c[r-1, i])) * sum(m.x[id_, r, i] for id_ in idle)))
 
     # constraint:----------------------------- (11__)
     m.cons11 = ConstraintList()
