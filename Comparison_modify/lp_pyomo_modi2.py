@@ -35,6 +35,7 @@ def lp_pyo(data, verbose):
     m.w = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, bounds=(0, 1440))
     m.v = Var(slot_set, drones_set, domain=NonNegativeReals)
 
+
     # === Objective Function ===
     m.obj_func = Objective(expr=m.lmax + m.lmax2, sense=minimize)
 

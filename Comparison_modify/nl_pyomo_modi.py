@@ -131,7 +131,7 @@ def nl_pyo(data, verbose):
     msolver.options['RINS'] = 5
     msolver.options['PreQLinearize'] = 0
     msolver.options['BarCorrectors'] = 3
-    msolver.options['PreMIQCPForm'] = 2
+    msolver.options['PreMIQCPForm'] = 1
     msolver.options['Presolve'] = 2
     msolver.options['TimeLimit'] = 3600
     # msolver.options['PoolSolutions'] = 5

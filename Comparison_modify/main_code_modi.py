@@ -4,7 +4,8 @@ import random
 import sys
 from Comparison_modify import instance_gen5
 from nl_pyomo_modi import nl_pyo
-from lp_pyomo_modi import lp_pyo
+from lp_pyomo_modi3 import lp_pyo
+# from nl_gurobipy import nl_gurobipy
 from pyomo.environ import value
 import pickle
 import numpy as np
@@ -15,7 +16,8 @@ def run(city, verbose):
     # ins = random_instance.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
     ins = instance_gen5.generate(ndrones=a, city=b, slot=c, charge=d)
     lp_pyo(ins, verbose)
-    nl_pyo(ins, verbose)
+    # nl_pyo(ins, verbose)
+    # nl_gurobipy(ins, verbose)
 
 def compare(instance, report):
     nlp_pickle = open('nlp.pickle', "rb")
