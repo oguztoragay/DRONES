@@ -16,7 +16,7 @@ def run(city, verbose):
     # ins = random_instance.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
     ins = instance_gen5.generate(ndrones=a, city=b, slot=c, charge=d)
     lp_pyo(ins, verbose)
-    # nl_pyo(ins, verbose)
+    nl_pyo(ins, verbose)
     # nl_gurobipy(ins, verbose)
 
 def compare(instance, report):
