@@ -51,8 +51,8 @@ def lp_pyo(data, verbose):
     m.cons1_2 = ConstraintList()
     for i in drones_set:
         for r in slot_set:
-            m.cons1_2.add(m.lmax >= (m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set)))
-            m.cons1_2.add(m.lmax2 >= sum(due2[j - 1] * m.x[j, r, i] for j in demand_set) - m.s[r, i])
+            m.cons1_2.add(m.lmax >= (m.c[r, i] - sum(due_dates[j-1] * m.x[j, r, i] for j in demand_set-idle-{1})))
+            m.cons1_2.add(m.lmax2 >= sum(due2[j - 1] * m.x[j, r, i] for j in demand_set-idle-{1}) - m.s[r, i])
     # for j in demand_set-{1}-idle:
     #     m.cons1_2.add(m.lmax >= sum(m.w[j, r, i] for r in slot_set for i in drones_set) - due_dates[j - 1])
     #     m.cons1_2.add(m.lmax2 >= due2[j - 1] - sum(m.z[j, r, i] for r in slot_set for i in drones_set))
@@ -71,8 +71,7 @@ def lp_pyo(data, verbose):
     # constraint: ++++++++++++++++++++++++++++++  (5__)
     m.cons5 = ConstraintList()
     for i in drones_set:
-        m.cons5.add(m.c[1, i] == sum(t_matrix[0][j - 1]*m.x[j, 1, i] for j in demand_set) + sum(m_time[j-1]*m.x[j, 1, i] for j in demand_set-idle) + sum(m.a[j, 1, i] for j in idle))
-
+        m.cons5.add(m.c[1, i] == sum((t_matrix[0][j - 1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set-idle) + sum(m.a[j, 1, i] for j in idle))
     m.cons5a = ConstraintList()
     for i in drones_set:
         for r in slot_set:
@@ -85,7 +84,7 @@ def lp_pyo(data, verbose):
     m.cons6a = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons6a.add(m.c[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set) + sum(m_time[j-1]*m.x[j, 1, i] for j in demand_set-idle)+ sum(m.a[j, r, i] for j in idle))
+            m.cons6a.add(m.c[r, i] == m.c[r-1, i] + sum(t_matrix[k-1, j-1]*m.y[j, k, r, i] for j in demand_set for k in demand_set) + sum(m_time[j-1]*m.x[j, 1, i] for j in demand_set-idle) + sum(m.a[j, r, i] for j in idle))
 
     # constraint: ++++++++++++++++++++++++++++++  (6b__ & 6c__)
     m.cons6b = ConstraintList()
@@ -106,18 +105,18 @@ def lp_pyo(data, verbose):
     m.cons8 = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons8.add(m.s[r, i] == m.c[r, i] - sum(m_time[j-1]*m.x[j, 1, i] for j in demand_set-idle) + sum(m.a[j, 1, i] for j in idle))
+            m.cons8.add(m.s[r, i] == m.c[r, i] - sum(m_time[j-1]*m.x[j, 1, i] for j in demand_set-idle) - sum(m.a[j, 1, i] for j in idle))
 
     # constraint: ++++++++++++++++++++++++++++++  (9__)
     m.cons9 = ConstraintList()
     for i in drones_set:
-        m.cons9.add(m.t[1, i] == full_charge - sum(t_matrix[0][j-1]* m.x[j, 1, i] for j in demand_set) + sum(m_time[j-1] * m.x[j, 1, i] for j in demand_set-idle) - sum(m.a[j, 1, i] for j in idle))
+        m.cons9.add(m.t[1, i] == full_charge - sum((t_matrix[0][j-1]+m_time[j-1]) * m.x[j, 1, i] for j in demand_set-idle) - sum(m.a[j, 1, i] for j in idle))
 
     # constraint: ++++++++++++++++++++++++++++++  (10a__)
     m.cons10a = ConstraintList()
     for i in drones_set:
         for r in slot_set - {1}:
-            m.cons10a.add(m.t[r, i] == (full_charge * m.x[1, r, i]) + sum((m.u1[j, r-1, i] - m.u2[j, r, i] + m.u2[j, r-1, i]) for j in demand_set-idle-{1})
+            m.cons10a.add(m.t[r, i] == (full_charge * m.x[1, r, i]) + sum((m.u1[j, r-1, i] - m.u2[j, r, i] + m.u2[j, r-1, i]) for j in demand_set-idle)
                           + sum((m.u1[j, r-1, i] - m.z[j, r, i] + m.u2[j, r-1, i]) for j in idle))
 
     # constraint: ++++++++++++++++++++++++++++++  (10b__ & 10c__ & 10d__ & 10e__)
@@ -128,10 +127,10 @@ def lp_pyo(data, verbose):
     for i in drones_set:
         for r in slot_set - {1}:
             for j in demand_set:
-                m.cons10b.add(m.u1[j, r, i] <= m.t[r-1, i] - (LB * (1 - m.x[1, r, i])))
-                m.cons10c.add(m.u1[j, r, i] >= m.t[r-1, i] - (UB * (1 - m.x[1, r, i])))
-                m.cons10d.add(m.u1[j, r, i] <= UB * (m.x[1, r, i]))
-                # m.cons10e.add(m.u1[j, r, i] >= -LB * (m.x[1, r, i]))
+                m.cons10b.add(m.u1[j, r, i] <= m.t[r-1, i] + (UB * m.x[1, r, i]))
+                m.cons10c.add(m.u1[j, r, i] >= m.t[r-1, i] - (LB * m.x[1, r, i]))
+                m.cons10d.add(m.u1[j, r, i] <= UB * (1 - m.x[1, r, i]))
+                m.cons10e.add(m.u1[j, r, i] >= -LB * (1 - m.x[1, r, i]))
 
     # constraint: ++++++++++++++++++++++++++++++  (10f__ & 10g__ & 10h__ & 10i__)
     m.cons10f = ConstraintList()
@@ -139,12 +138,12 @@ def lp_pyo(data, verbose):
     m.cons10h = ConstraintList()
     m.cons10i = ConstraintList()
     for i in drones_set:
-        for r in slot_set:
+        for r in slot_set - {1}:
             for j in demand_set:
-                m.cons10f.add(m.u2[j, r, i] <= m.c[r, i] - LB * (1 - m.x[1, r, i]))
-                m.cons10g.add(m.u2[j, r, i] >= m.c[r, i] - UB * (1 - m.x[1, r, i]))
-                m.cons10h.add(m.u2[j, r, i] <= UB * (m.x[1, r, i]))
-                # m.cons10i.add(m.u2[j, r, i] >= -UB * (m.x[1, r, i]))
+                m.cons10f.add(m.u2[j, r, i] <= m.c[r, i] + (UB * m.x[1, r, i]))
+                m.cons10g.add(m.u2[j, r, i] >= m.c[r, i] - (LB * m.x[1, r, i]))
+                m.cons10h.add(m.u2[j, r, i] <= UB * (1 - m.x[1, r, i]))
+                m.cons10i.add(m.u2[j, r, i] >= -LB * (1 - m.x[1, r, i]))
 
     # # constraint: ++++++++++++++++++++++++++++++  (10f__ & 10g__ & 10h__ & 10i__)
     # m.cons10j = ConstraintList()
@@ -195,8 +194,6 @@ def lp_pyo(data, verbose):
     #             m.cons11g.add(m.w[j, r, i] >= m.c[r, i] - UB * (1 - m.x[j, r, i]))
     #             m.cons11h.add(m.w[j, r, i] <= UB * (m.x[j, r, i]))
     #             m.cons11i.add(m.w[j, r, i] >= -UB * (m.x[j, r, i]))
-
-
     # for i in drones_set:
     #     for r in slot_set:
     #         for j in demand_set-idle:
@@ -207,10 +204,6 @@ def lp_pyo(data, verbose):
     #     for r in slot_set:
     #         for j in idle:
     #             m.cons11f.add(m.xd[j, r, i] <= 1440 * m.x[j, r, i])
-
-
-
-
     # m.cons12 = ConstraintList()
     # for i in drones_set:
     #     for r in slot_set:
