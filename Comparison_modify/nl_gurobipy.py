@@ -3,9 +3,11 @@ from gurobipy import GRB
 import pickle
 
 from pyomo.core import Model
+# env = gp.Env(empty=True)
+# env.setParam("OutputFlag", 0)  # Disables output
+# env.start()
 
-
-def nl_gurobipy(data, verbose=False):
+def nl_gurobipy(data, verbose):
     t_matrix, due_dates, m_time, n_slot, drone_charge, i_times, membership, families, f, due2, len_dl, fs_slot = data
     demand_set = range(1, len(due_dates) + 1)  # Locations (j)
     drones_set = range(1, len(drone_charge) + 1)  # Drones (i)
@@ -16,7 +18,7 @@ def nl_gurobipy(data, verbose=False):
 
     # Create Gurobi model
     model = gp.Model("Multiple Drones QP Model")
-
+    model.setParam('OutputFlag', verbose)
     # Define variables
     x = model.addVars(demand_set, slot_set, drones_set, vtype=GRB.BINARY, name="x")
     s = model.addVars(slot_set, drones_set, vtype=GRB.CONTINUOUS, lb=0, ub=1440, name="s")

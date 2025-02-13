@@ -6,6 +6,7 @@ from Comparison_modify import instance_gen5
 from nl_pyomo_modi import nl_pyo
 from lp_pyomo_modi3 import lp_pyo
 from nl_gurobipy import nl_gurobipy
+from nl_hexaly import hexa
 from pyomo.environ import value
 import pickle
 import numpy as np
@@ -16,8 +17,15 @@ def run(city, verbose):
     # ins = random_instance.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
     ins = instance_gen5.generate(ndrones=a, city=b, slot=c, charge=d)
     # lp_pyo(ins, verbose)
-    # nl_pyo(ins, verbose)
-    nl_gurobipy(ins, verbose)
+    nl_pyo(ins, verbose)
+    # nl_gurobipy(ins, verbose)
+    # hexa_data = [a, c, ins[0], ins[4], ins[5], ins[2], ins[1], ins[7], ins[9]]
+    # gen_seq = []
+    # gen_st = []
+    # gen_ct = []
+    # bres = []
+    # hexa(hexa_data, gen_seq, gen_st, gen_ct, 60, bres, verbose)
+
 
 def compare(instance, report):
     nlp_pickle = open('nlp.pickle', "rb")
@@ -80,7 +88,7 @@ def compare(instance, report):
 
     print('~~~~~~~~~~~~~~~~~~~ Comparing the results ~~~~~~~~~~~~~~~~~~~')
     print('***** lp_objective:', value(lp_[0].obj_func))
-    print('***** lp_Sol_time:', round(lp_[1].Solver.Time, 3))
+    # print('***** lp_Sol_time:', round(lp_[1].Solver.Time, 3))
     col_widths = 10
     for i in range(0, lassign_list.shape[0]):
         print('     Drone (' + str(i + 1) + '):')
@@ -92,7 +100,7 @@ def compare(instance, report):
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
     print('***** nlp_objective:', value(nlp_[0].obj_func))
-    print('***** nlp_Sol_time:', round(nlp_[1].Solver.Time, 3))
+    # print('***** nlp_Sol_time:', round(nlp_[1].Solver.Time, 3))
 
     for i in range(0, assign_list.shape[0]):
         print('     Drone (' + str(i + 1) + '):')
@@ -175,8 +183,8 @@ if __name__ == '__main__':
         seed1 = seed_gen[i]
         random.seed(seed1)
         print(i, ': seed === ', seed1)
-        run(SB_RS, verbose=True)
-        compare(SB_RS, report=False)
+        run(SB, verbose=True)
+        compare(SB, report=False)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False
