@@ -97,8 +97,9 @@ def nl_gurobipy(data, verbose=False):
     model.Params.TimeLimit = 3600
     # model.Params.FuncNonlinear = 1
 
-    model.Params.MIPFocus =  2
-    model.Params.NoRelHeurWork = 120
+    model.Params.MIPFocus = 2
+    # model.Params.NoRelHeurWork = 120
+    model.Params.NoRelHeurTime = 120
     model.Params.GomoryPasses = 0
 
     # Solve the model

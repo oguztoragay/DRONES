@@ -16,7 +16,7 @@ def run(city, verbose):
     # ins = random_instance.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
     ins = instance_gen5.generate(ndrones=a, city=b, slot=c, charge=d)
     # lp_pyo(ins, verbose)
-    nl_pyo(ins, verbose)
+    # nl_pyo(ins, verbose)
     nl_gurobipy(ins, verbose)
 
 def compare(instance, report):
@@ -175,8 +175,8 @@ if __name__ == '__main__':
         seed1 = seed_gen[i]
         random.seed(seed1)
         print(i, ': seed === ', seed1)
-        run(RS, verbose=True)
-        compare(RS, report=False)
+        run(SB_RS, verbose=True)
+        compare(SB_RS, report=False)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False
