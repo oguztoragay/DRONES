@@ -75,7 +75,7 @@ def nl_pyo(data, verbose):
     # constraint:----------------------------- (9__)
     m.cons9 = ConstraintList()
     for i in drones_set:
-        m.cons9.add(m.t[1, i] == full_charge - sum((t_matrix[0][j-1] + m.d[j, 1, i]) * m.x[j, 1, i] for j in demand_set))#-idle
+        m.cons9.add(m.t[1, i] == full_charge - sum((t_matrix[0][j-1] + m.d[j, 1, i]) * m.x[j, 1, i] for j in demand_set-idle))  #
 
     # constraint:----------------------------- (10__)
     m.cons10 = ConstraintList()

@@ -170,7 +170,7 @@ def compare(instance, report):
 
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge)
-    SB = [3, 'SB', 5, 240]  # 12 nodes including iDL and DP
+    SB = [3, 'SB', 5, 120]  # 12 nodes including iDL and DP
     RS = [3, 'RS', 5, 360]  # 11 nodes including iDL and DP
     LA = [4, 'LA', 10, 360]  # 37 nodes including iDL and DP
     SB_RS = [4, 'SB_RS', 7, 360]  # 22 nodes including iDLs and DP
