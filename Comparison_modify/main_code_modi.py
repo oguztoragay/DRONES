@@ -4,7 +4,7 @@ import random
 import sys
 from Comparison_modify import instance_gen5
 from nl_pyomo_modi import nl_pyo
-from lp_pyomo_modi3 import lp_pyo
+from lp_pyomo_modi4 import lp_pyo
 from nl_gurobipy import nl_gurobipy
 from nl_hexaly import hexa
 from pyomo.environ import value
@@ -16,7 +16,7 @@ def run(city, verbose):
     a, b, c, d = city
     # ins = random_instance.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
     ins = instance_gen5.generate(ndrones=a, city=b, slot=c, charge=d)
-    # lp_pyo(ins, verbose)
+    lp_pyo(ins, verbose)
     nl_pyo(ins, verbose)
     # nl_gurobipy(ins, verbose)
     # hexa_data = [a, c, ins[0], ins[4], ins[5], ins[2], ins[1], ins[7], ins[9]]
@@ -170,20 +170,20 @@ def compare(instance, report):
 
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge)
-    SB = [3, 'SB', 5, 120]  # 12 nodes including iDL and DP
+    SB = [3, 'SB', 5, 240]  # 12 nodes including iDL and DP
     RS = [3, 'RS', 5, 360]  # 11 nodes including iDL and DP
     LA = [4, 'LA', 10, 360]  # 37 nodes including iDL and DP
     SB_RS = [4, 'SB_RS', 7, 360]  # 22 nodes including iDLs and DP
     SB_LA = [6, 'SB_LA', 8, 720]  # 48 nodes including iDLs and DP
     RS_LA = [3, 'RS_LA', 15, 720]  # 47 nodes including iDLs and DP
     SB_RS_LA = [5, 'SB_RS_LA', 11, 720]  # 58 nodes including iDLs and DP (now 50)
-    seed_gen = [3521775807566813241, 3925465047589960536, 1756212420844415999, 294783262169012656, 5434789834338051980]
-    for i in range(1):
+    seed_gen = [1756212420844415999, 294783262169012656, 5434789834338051980]
+    for i in range(3):
         # seed1 = random.randrange(sys.maxsize)
         seed1 = seed_gen[i]
         random.seed(seed1)
         print(i, ': seed === ', seed1)
-        run(SB, verbose=True)
+        run(SB, verbose=False)
         compare(SB, report=False)
 
     # Options:

@@ -24,8 +24,8 @@ def nl_pyo(data, verbose):
     # Pyomo Nonlinear (quadratic constrained) model for the problem-----------------
     m = ConcreteModel(name="Multiple drones QP model")
     m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
-    m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))
-    m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))
+    m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))  # start time of a slot
+    m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))  # completion time of a slot
     m.t = Var(slot_set, drones_set,  domain=NonNegativeReals, initialize=full_charge, bounds=(0, full_charge))  # remaining charge AFTER visit completion H_{r,i}
     m.d = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))  # duration of the visit which is fixed for demand nodes and variable for idle nodes
     m.lmax = Var(domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))
@@ -75,7 +75,7 @@ def nl_pyo(data, verbose):
     # constraint:----------------------------- (9__)
     m.cons9 = ConstraintList()
     for i in drones_set:
-        m.cons9.add(m.t[1, i] == full_charge - sum((t_matrix[0][j-1] + m.d[j, 1, i]) * m.x[j, 1, i] for j in demand_set-idle))
+        m.cons9.add(m.t[1, i] == full_charge - sum((t_matrix[0][j-1] + m.d[j, 1, i]) * m.x[j, 1, i] for j in demand_set))#-idle
 
     # constraint:----------------------------- (10__)
     m.cons10 = ConstraintList()
