@@ -6,7 +6,7 @@ from Comparison_modify import instance_gen5
 from nl_pyomo_modi import nl_pyo
 from lp_pyomo_modi4 import lp_pyo
 from nl_gurobipy import nl_gurobipy
-from nl_hexaly import hexa
+# from nl_hexaly import hexa
 from pyomo.environ import value
 import pickle
 import numpy as np
@@ -177,10 +177,10 @@ if __name__ == '__main__':
     SB_LA = [6, 'SB_LA', 8, 720]  # 48 nodes including iDLs and DP
     RS_LA = [3, 'RS_LA', 15, 720]  # 47 nodes including iDLs and DP
     SB_RS_LA = [5, 'SB_RS_LA', 11, 720]  # 58 nodes including iDLs and DP (now 50)
-    seed_gen = [1756212420844415999, 294783262169012656, 5434789834338051980]
-    for i in range(3):
-        # seed1 = random.randrange(sys.maxsize)
-        seed1 = seed_gen[i]
+    # seed_gen = [5549298441420526995, 1756212420844415999, 294783262169012656, 5434789834338051980]
+    for i in range(10):
+        seed1 = random.randrange(sys.maxsize)
+        # seed1 = seed_gen[i]
         random.seed(seed1)
         print(i, ': seed === ', seed1)
         run(SB, verbose=False)
