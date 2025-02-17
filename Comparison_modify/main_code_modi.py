@@ -18,7 +18,7 @@ def run(city, verbose):
     ins = instance_gen5.generate(ndrones=a, city=b, slot=c, charge=d)
     lp_pyo(ins, verbose)
     nl_pyo(ins, verbose)
-    nl_gurobipy(ins, verbose)
+    # nl_gurobipy(ins, verbose)
     # hexa_data = [a, c, ins[0], ins[4], ins[5], ins[2], ins[1], ins[7], ins[9]]
     # gen_seq = []
     # gen_st = []
@@ -33,7 +33,7 @@ def compare(instance, report):
     assign_list = np.zeros((len(nlp_[2][4]), nlp_[2][3]), dtype=int)
     assign_dues = np.zeros((len(nlp_[2][4]), nlp_[2][3]), dtype=int)
     for ind in nlp_[0].x.index_set():
-        if value(nlp_[0].x[ind]) == 1:
+        if value(nlp_[0].x[ind]) > 0.9999:
             assign_list[ind[2]-1, ind[1]-1] = ind[0]
             assign_dues[ind[2]-1, ind[1]-1] = nlp_[2][1][ind[0]-1]
     nllist_c = sorted(list(nlp_[0].c.index_set()), key=lambda x: x[1])
@@ -57,7 +57,7 @@ def compare(instance, report):
     lassign_list = np.zeros((len(lp_[2][4]), lp_[2][3]), dtype=int)
     lassign_dues = np.zeros((len(lp_[2][4]), lp_[2][3]), dtype=int)
     for ind in lp_[0].x.index_set():
-        if value(lp_[0].x[ind]) == 1:
+        if value(lp_[0].x[ind]) > 0.9999:
             lassign_list[ind[2]-1, ind[1]-1] = ind[0]
             lassign_dues[ind[2]-1, ind[1]-1] = lp_[2][1][ind[0]-1]
     lplist_c = sorted(list(lp_[0].c.index_set()), key=lambda x: x[1])
@@ -177,14 +177,14 @@ if __name__ == '__main__':
     SB_LA = [6, 'SB_LA', 8, 720]  # 48 nodes including iDLs and DP
     RS_LA = [3, 'RS_LA', 15, 720]  # 47 nodes including iDLs and DP
     SB_RS_LA = [5, 'SB_RS_LA', 11, 720]  # 58 nodes including iDLs and DP (now 50)
-    seed_gen = [1756212420844415999, 294783262169012656, 5434789834338051980, 5549298441420526995]
-    for i in range(1):
-        # seed1 = random.randrange(sys.maxsize)
-        seed1 = seed_gen[i]
+    # seed_gen = [5434789834338051980]
+    for i in range(10):
+        seed1 = random.randrange(sys.maxsize)
+        # seed1 = seed_gen[i]
         random.seed(seed1)
         print(i, ': seed === ', seed1)
-        run(RS, verbose=True)
-        compare(RS, report=True)
+        run(SB, verbose=True)
+        compare(SB, report=True)
 
     # Options:
     # Control the verbosity of the solvers by changing the verbose=True/False

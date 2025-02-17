@@ -27,9 +27,9 @@ def lp_pyo(data, verbose):
     m = ConcreteModel(name="Multiple drones LP model")
     m.x = Var(demand_set, slot_set, drones_set, domain=Binary, initialize=0)
     m.y = Var(demand_set, demand_set, slot_set, drones_set, domain=Binary, initialize=0)
-    m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))  # start time of a slot
+    m.s = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))  # start time of a slot
     m.c = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))  # completion time of a slot
-    m.t = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, full_charge))  # remaining charge AFTER visit completion H_{r,i}
+    m.t = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=full_charge, bounds=(0, full_charge))  # remaining charge AFTER visit completion H_{r,i}
 
     m.u1 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # t*x
     m.u2 = Var(slot_set, drones_set, domain=NonNegativeReals, initialize=0)  # c*x
@@ -37,7 +37,7 @@ def lp_pyo(data, verbose):
     m.z = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))  # start time of a node
     m.w = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))  # start time of a node
     m.a = Var(idle, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-    m.g = Var(idle, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
+    # m.g = Var(idle, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
 
     m.lmax = Var(domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))
     m.lmax2 = Var(domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))
@@ -66,13 +66,23 @@ def lp_pyo(data, verbose):
     m.cons5 = ConstraintList()
     for i in drones_set:
         m.cons5.add(m.c[1, i] == sum((t_matrix[0][j - 1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set-idle) + sum(m.a[j, 1, i] for j in idle))
+
+    # constraint: ++++++++++++++++++++++++++++++  (5a__)
+    # m.cons5a = ConstraintList()
+    # for i in drones_set:
+    #     for r in slot_set:
+    #         for j in idle:
+    #             m.cons5a.add(m.a[j, r, i] >= m.g[j, r, i] - UB * (1 - m.x[j, r, i]))
+    #             m.cons5a.add(m.a[j, r, i] <= m.g[j, r, i] + LB * (1 - m.x[j, r, i]))
+    #             m.cons5a.add(m.a[j, r, i] <= UB * m.x[j, r, i])
+
     m.cons5a = ConstraintList()
     for i in drones_set:
         for r in slot_set:
             for j in idle:
-                m.cons5a.add(m.a[j, r, i] >= m.g[j, r, i] - UB * (1 - m.x[j, r, i]))
-                m.cons5a.add(m.a[j, r, i] <= m.g[j, r, i] + LB * (1 - m.x[j, r, i]))
                 m.cons5a.add(m.a[j, r, i] <= UB * m.x[j, r, i])
+                # m.cons5a.add(m.a[j, r, i] >= m.g[j, r, i] + LB * (1 - m.x[j, r, i]))
+                # m.cons5a.add(m.a[j, r, i] <= UB * m.x[j, r, i])
 
     # constraint: ++++++++++++++++++++++++++++++  (6a__)
     m.cons6a = ConstraintList()
@@ -104,7 +114,7 @@ def lp_pyo(data, verbose):
     # constraint: ++++++++++++++++++++++++++++++  (9__)
     m.cons9 = ConstraintList()
     for i in drones_set:
-        m.cons9.add(m.t[1, i] == full_charge - sum(t_matrix[0][j-1] * m.x[j, 1, i] for j in demand_set-idle) - sum(m_time[j-1] * m.x[j, 1, i] for j in demand_set-idle))
+        m.cons9.add(m.t[1, i] == full_charge - sum((t_matrix[0][j-1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set-idle))
 
     # constraint: ++++++++++++++++++++++++++++++  (10a__)
     m.cons10a = ConstraintList()
@@ -197,16 +207,17 @@ def lp_pyo(data, verbose):
     # print('***** Constraints =', num_of_cons)
 
     msolver = SolverFactory('gurobi')
-    msolver.options['Threads'] = 24
-    msolver.options['FeasibilityTol'] = 1e-6
-    msolver.options['OptimalityTol'] = 1e-5
-    msolver.options['MIPFocus'] = 2
-    msolver.options['Cuts'] = 3
-    msolver.options['Heuristics'] = 1
-    msolver.options['RINS'] = 5
-    msolver.options['TimeLimit'] = 3600
-    msolver.options['VarBranch'] = 3
-    msolver.options['Presolve'] = 2
+    # msolver.options['Threads'] = 24
+    # msolver.options['FeasibilityTol'] = 1e-7
+    # msolver.options['OptimalityTol'] = 1e-7
+    # msolver.options['MIPFocus'] = 2
+    # msolver.options['Cuts'] = 3
+    # msolver.options['Heuristics'] = 1
+    # msolver.options['RINS'] = 5
+    # msolver.options['TimeLimit'] = 3600
+    # msolver.options['VarBranch'] = 3
+    # msolver.options['Presolve'] = 2
+
     # msolver.options['PoolSolutions'] = 5
     # msolver.options['SubMIPCuts'] = 2
     # msolver.options['SubMIPNodes'] = 500
