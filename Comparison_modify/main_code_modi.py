@@ -6,7 +6,7 @@ from Comparison_modify import instance_gen5
 from nl_pyomo_modi import nl_pyo
 from lp_pyomo_modi4 import lp_pyo
 from nl_gurobipy import nl_gurobipy
-# from nl_hexaly import hexa
+from nl_hexaly import hexa
 from pyomo.environ import value
 import pickle
 import numpy as np
@@ -16,15 +16,15 @@ def run(city, verbose):
     a, b, c, d = city
     # ins = random_instance.generate(ndrones=a, city=b, slot=c, charge=d, itimes=e)
     ins = instance_gen5.generate(ndrones=a, city=b, slot=c, charge=d)
-    lp_pyo(ins, verbose)
-    nl_pyo(ins, verbose)
+    # lp_pyo(ins, verbose)
+    # nl_pyo(ins, verbose)
     # nl_gurobipy(ins, verbose)
-    # hexa_data = [a, c, ins[0], ins[4], ins[5], ins[2], ins[1], ins[7], ins[9]]
-    # gen_seq = []
-    # gen_st = []
-    # gen_ct = []
-    # bres = []
-    # hexa(hexa_data, gen_seq, gen_st, gen_ct, 60, bres, verbose)
+    hexa_data = [a, c, ins[0], ins[4], ins[5], ins[2], ins[1], ins[7], ins[9]]
+    gen_seq = []
+    gen_st = []
+    gen_ct = []
+    bres = []
+    hexa(hexa_data, gen_seq, gen_st, gen_ct, 60, bres, verbose)
 
 
 def compare(instance, report):

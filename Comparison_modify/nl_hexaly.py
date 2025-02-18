@@ -3,6 +3,13 @@ from operator import indexOf
 import pickle
 import math
 
+from hexaly.optimizer import HxModel
+from networkx.algorithms.flow import cost_of_flow
+from scipy.ndimage import map_coordinates
+
+
+
+
 def expand_list(lst, n, m):
     # return [lst[0]] * n + lst + [lst[-1]] * m
     return lst[1: -1] + list(range(len(lst)-1, len(lst)+n+m-1))
@@ -18,9 +25,23 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
         node_list = list(range(0, n_node))
         node_list = expand_list(node_list, n_drones, idle)
         n_drone_modi = math.ceil(len(node_list) / n_slot)
+
         real_nodes = node_list[0:n_node-2]
         depos = node_list[n_node-2: n_node-2+n_drones]
         idles = node_list[n_node+n_drones-2:]
+
+        real_nodes_array = m.array(real_nodes)
+        idles_array = m.array(idles)
+        depos_array = m.array(depos)
+
+        def map(it, s_depo=depos, s_real=real_nodes, s_idle=idle):
+            if it in s_depo:
+                map_ = 0
+            if it in s_idle:
+                map_ = n_slot[-1]
+            if it in s_real:
+                map_ = it
+            return map_
         drone_charge = m.array([data[3][0]]*n_drone_modi)
         t_matrix = m.array(t_matrix_data)
         earliest = m.array(data[8])
@@ -43,6 +64,7 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
         lateness = [None] * n_drone_modi
         earlness = [None] * n_drone_modi
         route_battery = [None] * n_drone_modi
+        cost_ = [None] * n_drone_modi
 
         for k in range(n_drones):
             sequence = vis_sequences[k]
@@ -51,10 +73,12 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
             for i in depos:
                 m.constraint(sequence[0] != i)
             battery_lambda = m.lambda_function(lambda i, prev:
-                                               m.iif(i in depos, drone_charge[k] - m_time[sequence[i]] - m.at(t_matrix, 0, sequence[i]),
-                                                     m.iif(sequence[i] == 0, drone_charge[k],
-                                                     prev - m.at(t_matrix, sequence[i-1], sequence[i]) - m_time[sequence[i]])))
+                                               m.iif(m.contains(real_nodes_array, sequence[i]),
+                                                     prev - m_time[sequence[i]] - m.at(t_matrix, sequence[i-1], sequence[i]),
+                                                     m.iif(m.contains(idles_array, sequence[i]),
+                                                           prev - m.at(t_matrix, sequence[i-1], sequence[i]), drone_charge[k])))
             route_battery[k] = m.array(m.range(0, c), battery_lambda)
+
             quantity_lambda = m.lambda_function(lambda i: m.or_(route_battery[k][i] >= 0, sequence[i] == 0))
             # quantity_lambda = m.lambda_function(lambda i: route_battery[k][i] >= 0)
             m.constraint(m.and_(m.range(0, c), quantity_lambda))
@@ -71,6 +95,7 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
             earl_lambda = m.lambda_function(lambda i: m.iif(m.or_(i == 0, i == n_node-1), -5000, earliest[sequence[i]] - str_time[k][i]))
             lateness[k] = m.max(m.range(0, c), late_lambda)
             earlness[k] = m.max(m.range(0, c), earl_lambda)
+            cost_[k] = m.sum(lateness[k] , earlness[k])
             # lateness[k] = end_time[k][c]
 
 
@@ -96,7 +121,7 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
         #         m.constraint(jb_time - ic_time <= 1000)
         #         m.constraint(jb_time - ic_time >= 0)
 
-        max_la = m.max(m.array(lateness)) + m.max(m.array(earlness))
+        max_la = m.max(m.array(cost_))
         m.minimize(max_la)
         m.close()
         ls.param.time_limit = int(av_time)
