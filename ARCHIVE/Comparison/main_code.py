@@ -1,8 +1,7 @@
 from datetime import date
 import os
 import random
-import sys
-from Comparison import instance_gen4
+from ARCHIVE.Comparison import instance_gen4
 from nl_pyomo2 import nl_pyo
 from lp_pyomo2 import lp_pyo
 from pyomo.environ import value
