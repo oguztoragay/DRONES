@@ -4,8 +4,7 @@ import pickle
 import math
 
 from hexaly.optimizer import HxModel
-from networkx.algorithms.flow import cost_of_flow
-from scipy.ndimage import map_coordinates
+
 
 
 
@@ -64,7 +63,7 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
         lateness = [None] * n_drone_modi
         earlness = [None] * n_drone_modi
         route_battery = [None] * n_drone_modi
-        cost_ = [None] * n_drone_modi
+        cost_ = [None] * n_drones
 
         for k in range(n_drones):
             sequence = vis_sequences[k]
@@ -95,7 +94,7 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
             earl_lambda = m.lambda_function(lambda i: m.iif(m.or_(i == 0, i == n_node-1), -5000, earliest[sequence[i]] - str_time[k][i]))
             lateness[k] = m.max(m.range(0, c), late_lambda)
             earlness[k] = m.max(m.range(0, c), earl_lambda)
-            cost_[k] = m.sum(lateness[k] , earlness[k])
+            cost_[k] = m.sum(lateness[k], earlness[k])
             # lateness[k] = end_time[k][c]
 
 
