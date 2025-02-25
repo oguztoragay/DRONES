@@ -19,12 +19,11 @@ def run(city, verbose):
     # lp_pyo(ins, verbose)
     # nl_pyo(ins, verbose)
     # nl_gurobipy(ins, verbose)
-    hexa_data = [a, c, ins[0], ins[4], ins[5], ins[2], ins[1], ins[7], ins[9]]
     gen_seq = []
     gen_st = []
     gen_ct = []
     bres = []
-    hexa(hexa_data, gen_seq, gen_st, gen_ct, 60, bres, verbose)
+    hexa(ins[-1], gen_seq, gen_st, gen_ct, 60, bres, verbose)
 
 
 def compare(instance, report):

@@ -12,6 +12,8 @@ from functools import reduce
 from itertools import chain
 import math
 
+from gurobipy.gurobipy import vstack
+from numpy.lib.format import header_data_from_array_1_0
 from numpy.ma.core import zeros
 
 drone_speed = 100  # kilometers per hour
@@ -91,7 +93,7 @@ def generate(ndrones, city, slot, charge):
     charges = np.ones(ndrones) * charge
     membership = []
     f = [i[:-1] for i in families[1:-bura]]
-    he_data = hexa_data(t_matrix, due_date, monitor_times, slots, charges, ndrones)
+    he_data = hexa_data(t_matrix, due_date, due_date2, monitor_times, slots, charges, ndrones)
     return t_matrix, due_date, monitor_times, slots, charges, i_times, membership, families, f, due_date2, len_DL, fs_slot, he_data
 
 def arc_data(arc):
@@ -149,32 +151,25 @@ def centerz(lis):
     sum_y = np.sum(lis[1::2])
     return sum_x/length, sum_y/length, sum_x/length, sum_y/length, 0
 
-def hexa_data(t_matrix, due_date, monitor_times, slots, charges, ndrones):
-    idle = slots * ndrones
+def hexa_data(t_matrix, due_date, due_date2, monitor_times, slots, charges, ndrones):
+    n_drone_modi = 2 * ndrones
+    total_nodes = n_drone_modi * slots
     depos = list(range(1, ndrones+1))
     real_nodes = list(range(depos[-1]+1, len(t_matrix)+ndrones-1))
-    idles = list(range(real_nodes[-1]+1, real_nodes[-1]+1+idle))
+    idles = list(range(real_nodes[-1]+1, total_nodes+1))
     expan = depos+real_nodes+idles
-    # t_expanded = np.vstack([t_matrix[0:1]]*(ndrones-1) + [t_matrix])
-    # t_expanded = np.hstack([t_expanded[:, 0:1]]*(ndrones-1) + [t_expanded])
-    # t_expanded = np.vstack([t_expanded] + [t_expanded[-1, :]]*(len(idles)-1))
-    # t_expanded = np.hstack([t_expanded] + [t_expanded[:, -1]]*(len(idles)-1))
     top_rows = np.vstack([t_matrix[0:1]]*(ndrones-1))
-
-    # Duplicate the last row 3 times (bottom)
     bottom_rows = np.vstack([t_matrix[-1:]]*(len(idles)-1))
-
-    # Add first column 3 times (left)
-    left_cols = np.hstack([A[:, 0:1]] * 3)
-
-    # Add last column 3 times (right)
-    right_cols = np.hstack([A[:, -1:]] * 3)
-
-    # Construct the expanded matrix
-    A_expanded = np.vstack([top_rows, A, bottom_rows])
-    A_expanded = np.hstack([left_cols, A_expanded, right_cols])
-
-    return None
+    t_expanded = np.vstack([top_rows, t_matrix, bottom_rows])
+    left_cols = np.hstack([t_expanded[:, 0:1]] * (ndrones-1))
+    right_cols = np.hstack([t_expanded[:, -1:]] * (len(idles)-1))
+    t_expanded = np.hstack([left_cols, t_expanded, right_cols])
+    due_date_expanded = np.hstack([[due_date[0]]*(ndrones-1), due_date, [due_date[-1]]*(len(idles)-1)])
+    due_date2_expanded = np.hstack([[due_date2[0]] * (ndrones - 1), due_date2, [due_date2[-1]] * (len(idles) - 1)])
+    monitor_times_expanded = np.hstack([[monitor_times[0]] * (ndrones - 1), monitor_times, [monitor_times[-1]] * (len(idles) - 1)])
+    charges_expanded = np.repeat(charges, 2)
+    he_data_= [n_drone_modi, slots, expan, t_expanded, depos, real_nodes, idles, charges_expanded, due_date_expanded, due_date2_expanded, monitor_times_expanded]
+    return he_data_
 
 
 

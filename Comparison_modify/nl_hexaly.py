@@ -3,55 +3,32 @@ from operator import indexOf
 import pickle
 import math
 
-from hexaly.optimizer import HxModel
-
-
-
-
-
-def expand_list(lst, n, m):
-    # return [lst[0]] * n + lst + [lst[-1]] * m
-    return lst[1: -1] + list(range(len(lst)-1, len(lst)+n+m-1))
-
 def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
     with hexaly.optimizer.HexalyOptimizer() as ls:
         m = ls.model
         n_drones = data[0]
-        t_matrix_data = list(data[2])
         n_slot = data[1]
-        n_node = len(data[5])
-        idle = n_slot * n_drones
-        node_list = list(range(0, n_node))
-        node_list = expand_list(node_list, n_drones, idle)
-        n_drone_modi = math.ceil(len(node_list) / n_slot)
-
-        real_nodes = node_list[0:n_node-2]
-        depos = node_list[n_node-2: n_node-2+n_drones]
-        idles = node_list[n_node+n_drones-2:]
-
+        n_node = len(data[2])
+        t_matrix_data = list(data[3])
+        depos = data[4]
+        real_nodes = data[5]
+        idles = data[6]
+        drone_charge = data[7]
         real_nodes_array = m.array(real_nodes)
         idles_array = m.array(idles)
         depos_array = m.array(depos)
 
-        def map(it, s_depo=depos, s_real=real_nodes, s_idle=idle):
-            if it in s_depo:
-                map_ = 0
-            if it in s_idle:
-                map_ = n_slot[-1]
-            if it in s_real:
-                map_ = it
-            return map_
-        drone_charge = m.array([data[3][0]]*n_drone_modi)
+
         t_matrix = m.array(t_matrix_data)
-        earliest = m.array(data[8])
-        latest = m.array(data[6])
-        m_time = m.array(data[5])
+        earliest = m.array(data[9])
+        latest = m.array(data[8])
+        m_time = m.array(data[10])
         # successors_data = [[] for i in range(n_node)]
         # families = list(map(lambda list: [item-1 for item in list], data[7]))
         # for fam in families:
         #     for i in fam:
         #         successors_data[i] = fam[indexOf(fam, i)+1::]
-        vis_sequences = [m.list(node_list[-1]) for k in range(n_drone_modi)]
+        vis_sequences = [m.list(range(1, idles[-1])) for k in range(n_drone_modi)]
         for i in real_nodes:
             m.constraint(((m.contains(vis_sequences[d], i) for d in range(n_drones, n_drone_modi)) == False))
         # for i in real_node_data:
