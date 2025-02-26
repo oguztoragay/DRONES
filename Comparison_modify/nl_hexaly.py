@@ -28,18 +28,18 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
         # for fam in families:
         #     for i in fam:
         #         successors_data[i] = fam[indexOf(fam, i)+1::]
-        vis_sequences = [m.list(range(1, idles[-1])) for k in range(n_drone_modi)]
+        vis_sequences = [m.list(idles[-1]) for k in range(n_drones)]
         for i in real_nodes:
-            m.constraint(((m.contains(vis_sequences[d], i) for d in range(n_drones, n_drone_modi)) == False))
+            m.constraint(((m.contains(vis_sequences[d], i) for d in list(range(int(n_drones/2), n_drones))) == False))
         # for i in real_node_data:
         #     m.constraint(m.sum(m.contains(vis_sequences[k], i) for k in range(n_drones)) == 1)
         m.constraint(m.partition(vis_sequences))
 
-        end_time = [None] * n_drone_modi
-        str_time = [None] * n_drone_modi
-        lateness = [None] * n_drone_modi
-        earlness = [None] * n_drone_modi
-        route_battery = [None] * n_drone_modi
+        end_time = [None] * n_drones
+        str_time = [None] * n_drones
+        lateness = [None] * n_drones
+        earlness = [None] * n_drones
+        route_battery = [None] * n_drones
         cost_ = [None] * n_drones
 
         for k in range(n_drones):
@@ -49,11 +49,11 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
             for i in depos:
                 m.constraint(sequence[0] != i)
             battery_lambda = m.lambda_function(lambda i, prev:
-                                               m.iif(m.contains(real_nodes_array, sequence[i]),
+                                               m.iif(m.contains(real_nodes_array, i),
                                                      prev - m_time[sequence[i]] - m.at(t_matrix, sequence[i-1], sequence[i]),
-                                                     m.iif(m.contains(idles_array, sequence[i]),
+                                                     m.iif(m.contains(idles_array, i),
                                                            prev - m.at(t_matrix, sequence[i-1], sequence[i]), drone_charge[k])))
-            route_battery[k] = m.array(m.range(0, c), battery_lambda)
+            route_battery[k] = m.array(m.range(1, c), battery_lambda)
 
             quantity_lambda = m.lambda_function(lambda i: m.or_(route_battery[k][i] >= 0, sequence[i] == 0))
             # quantity_lambda = m.lambda_function(lambda i: route_battery[k][i] >= 0)

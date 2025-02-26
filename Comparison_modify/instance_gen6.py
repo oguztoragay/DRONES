@@ -12,7 +12,6 @@ from functools import reduce
 from itertools import chain
 import math
 
-from gurobipy.gurobipy import vstack
 from numpy.lib.format import header_data_from_array_1_0
 from numpy.ma.core import zeros
 
