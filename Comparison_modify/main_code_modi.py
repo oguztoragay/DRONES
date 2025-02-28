@@ -191,7 +191,7 @@ if __name__ == '__main__':
             seed1 = random.randrange(sys.maxsize)
             random.seed(seed1)
             print(i, ': seed === ', seed1)
-            run(instance_, verbose=True)
+            run(instance_, verbose=False)
             sol_ = compare(SB, report=False, collective_report= True)
             new_row = {
                 'city': instance_[1], 'Iter': 1+iter_, 'drones': num_drones[i], 'slots': num_slots[i], 'lp_var': sol_['lp_var'], 'lp_cons': sol_['lp_cons'], 'lp_obj': sol_['lp_obj'],
