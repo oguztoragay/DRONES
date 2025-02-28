@@ -8,7 +8,7 @@ from pyomo.core import Model
 # env.start()
 
 def nl_gurobipy(data, verbose):
-    t_matrix, due_dates, m_time, n_slot, drone_charge, i_times, membership, families, f, due2, len_dl, fs_slot = data
+    t_matrix, due_dates, m_time, n_slot, drone_charge, i_times, membership, families, f, due2, len_dl, fs_slot, __ = data
     demand_set = range(1, len(due_dates) + 1)  # Locations (j)
     drones_set = range(1, len(drone_charge) + 1)  # Drones (i)
     slot_set = range(1, n_slot + 1)  # Slots (r)
