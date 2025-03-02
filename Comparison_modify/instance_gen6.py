@@ -92,7 +92,7 @@ def generate(ndrones, city, slot, charge):
     charges = np.ones(ndrones) * charge
     membership = []
     f = [i[:-1] for i in families[1:-bura]]
-    he_data = hexa_data(t_matrix, due_date, due_date2, monitor_times, slots, charges, ndrones)
+    he_data = hexa_data(t_matrix, due_date, due_date2, monitor_times, slots, charges, ndrones, families)
     return t_matrix, due_date, monitor_times, slots, charges, i_times, membership, families, f, due_date2, len_DL, fs_slot, he_data
 
 def arc_data(arc):
@@ -150,7 +150,7 @@ def centerz(lis):
     sum_y = np.sum(lis[1::2])
     return sum_x/length, sum_y/length, sum_x/length, sum_y/length, 0
 
-def hexa_data(t_matrix, due_date, due_date2, monitor_times, slots, charges, ndrones):
+def hexa_data(t_matrix, due_date, due_date2, monitor_times, slots, charges, ndrones, families):
     n_drone_modi = 2 * ndrones
     total_nodes = n_drone_modi * slots
     depos = list(range(1, ndrones+1))
@@ -167,7 +167,8 @@ def hexa_data(t_matrix, due_date, due_date2, monitor_times, slots, charges, ndro
     due_date2_expanded = np.hstack([[due_date2[0]] * (ndrones - 1), due_date2, [due_date2[-1]] * (len(idles) - 1)])
     monitor_times_expanded = np.hstack([[monitor_times[0]] * (ndrones - 1), monitor_times, [monitor_times[-1]] * (len(idles) - 1)])
     charges_expanded = np.repeat(charges, 2)
-    he_data_= [n_drone_modi, slots, expan, t_expanded, depos, real_nodes, idles, charges_expanded, due_date_expanded, due_date2_expanded, monitor_times_expanded]
+    families_expanded = [list(range(i[0]+(len(depos)-1), i[-1]+(len(depos)-1)+1)) for i in families[1:-1]]
+    he_data_= [n_drone_modi, slots, expan, t_expanded, depos, real_nodes, idles, charges_expanded, due_date_expanded, due_date2_expanded, monitor_times_expanded, families_expanded]
     return he_data_
 
 

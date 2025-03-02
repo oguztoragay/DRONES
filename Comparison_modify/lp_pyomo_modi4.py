@@ -187,6 +187,8 @@ def lp_pyo(data, verbose):
                 m.cons11h.add(m.w[j, r, i] <= UB * (m.x[j, r, i]))
                 m.cons11i.add(m.w[j, r, i] >= -UB * (m.x[j, r, i]))
 
+    m.cons12 = Constraint(expr=sum(m.x[j, r, i] for j in demand_set for r in slot_set for i in drones_set) <= len(slot_set)*len(drones_set))
+    m.cons13 = Constraint(expr=sum(m.x[j, r, i] for j in demand_set for r in slot_set for i in drones_set) >= len(demand_set))
 
     # Info about the model:------------------------------------------
     # m.pprint()
@@ -214,7 +216,7 @@ def lp_pyo(data, verbose):
     # msolver.options['Cuts'] = 3
     # msolver.options['Heuristics'] = 1
     # msolver.options['RINS'] = 5
-    # msolver.options['TimeLimit'] = 3600
+    msolver.options['TimeLimit'] = 3600
     # msolver.options['VarBranch'] = 3
     # msolver.options['Presolve'] = 2
 

@@ -100,7 +100,6 @@ def nl_gurobipy(data, verbose):
     # model.Params.FuncNonlinear = 1
 
     model.Params.MIPFocus = 2
-    # model.Params.NoRelHeurWork = 120
     model.Params.NoRelHeurTime = 120
     model.Params.GomoryPasses = 0
 
@@ -122,14 +121,14 @@ def nl_gurobipy(data, verbose):
             print(f"{v.varName}: {v.x:.4f}")
     print(f"Objective Value: {model.objVal:.4f}")
 
-    # pickle_out = open('nlp1.pickle', "wb")
-    # solution_data = {
-    #     "variables": {var.varName: var.X for var in model.getVars()},
-    #     "objective_value": model.ObjVal if model.status == GRB.OPTIMAL else None,
-    #     "num_variables": model.NumVars,
-    #     "num_constraints": model.NumConstrs}
-    #
-    # pickle.dump(solution_data, pickle_out)
-    # pickle_out.close()
-    # print('~~~~~~~~~~ NLP has been finalized ~~~~~~~~~~ -->', model.Status)
+    pickle_out = open('nlpg.pickle', "wb")
+    solution_data = {
+        "variables": {var.varName: var.X for var in model.getVars()},
+        "objective_value": model.ObjVal if model.status == GRB.OPTIMAL else None,
+        "num_variables": model.NumVars,
+        "num_constraints": model.NumConstrs}
+
+    pickle.dump(solution_data, pickle_out)
+    pickle_out.close()
+    print('~~~~~~~~~~ NLP has been finalized ~~~~~~~~~~ -->', model.Status)
     return None
