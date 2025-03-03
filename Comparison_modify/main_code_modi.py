@@ -188,7 +188,7 @@ if __name__ == '__main__':
         for iter_ in range(1):
             # seed1 = random.randrange(sys.maxsize)
             seed1 = 5240850269542194675
-            # random.seed(seed1)
+            random.seed(seed1)
             print(i, ': seed === ', seed1)
             run(instance_, verbose=True)
             sol_ = compare(SB, report=False, collective_report=True)
