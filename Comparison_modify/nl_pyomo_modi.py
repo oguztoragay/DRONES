@@ -125,7 +125,7 @@ def nl_pyo(data, verbose):
     # msolver.set_gurobi_param('LazyConstraints', 1)
 
     msolver = SolverFactory('gurobi')
-    # msolver.options['Threads'] = 24
+    msolver.options['Threads'] = 24
     # msolver.options['FeasibilityTol'] = 1e-6
     # msolver.options['OptimalityTol'] = 1e-5
     # msolver.options['MIPFocus'] = 2
