@@ -4,6 +4,20 @@ from operator import indexOf
 import pickle
 import math
 
+def map_sequence(sequence, depos, real_nodes, idles):
+    depot_set = set(depos)
+    idle_set = set(idles)
+    idle_replacement = max(real_nodes) + 1 -len(depos)+1
+    mapped_sequence = []
+    for node in sequence:
+        if node in depot_set:
+            mapped_sequence.append(1)  # Replace depot nodes with 1
+        elif node in idle_set:
+            mapped_sequence.append(idle_replacement)  # Replace idle nodes with max_real_node + 1
+        else:
+            mapped_sequence.append(node-len(depos)+1)  # Keep real nodes as is
+    return mapped_sequence
+
 def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
     with hexaly.optimizer.HexalyOptimizer() as ls:
         m = ls.model
@@ -11,12 +25,13 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
         n_slot = data[1]
         n_node = len(data[2])
         t_matrix_data = list(data[3])
+
         
         # Convert 1-based indices to 0-based
         depos = [x-1 for x in data[4]]  # Convert depot indices to 0-based
         real_nodes = [x-1 for x in data[5]]  # Convert real node indices to 0-based
         idles = [x-1 for x in data[6]]  # Convert idle node indices to 0-based
-        drone_charge = data[7]
+        drone_charge = [x for x in data[7]]  # Scale battery capacity
         
         print("Problem parameters:")
         print(f"Number of drones: {n_drones}")
@@ -39,27 +54,29 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
         for depot in depos:
             m.constraint(m.contains(depos_set, depot))
 
-        t_matrix = m.array(t_matrix_data)
-        earliest = m.array(data[9])
-        latest = m.array(data[8])
-        m_time = m.array(data[10])
+        t_matrix = m.array([x for x in t_matrix_data])
+        earliest = m.array([x for x in data[9]])
+        latest = m.array([x for x in data[8]])
+        m_time = m.array([x for x in data[10]])
         vis_sequences = [m.list(n_node) for k in range(n_drones)]
         m.constraint(m.partition(vis_sequences))
         
         # Ensure each real node is assigned to a drone in the first half
         for i in real_nodes:
-            m.constraint(m.or_([m.contains(vis_sequences[k], i) for k in range(int(n_drones/2))]))
+            m.constraint(m.or_([m.contains(vis_sequences[k], i) for k in range(int(n_drones/2)-1)]))
         
         # Modify the constraint for real nodes to be less restrictive
-        for d in range(int(n_drones/2)+1, n_drones):
+        for d in range(int(n_drones/2), n_drones):
             for i in real_nodes:
-                m.constraint(m.not_(m.contains(vis_sequences[d], i)))
+                m.constraint(m.not_(m.contains(vis_sequences[d], i-1)))
         
-        # Create variables for time windows - using interval variables
-        time_horizon = 2000  # Assuming 2000 is a reasonable upper bound
+        # Create variables for time windows - using separate start and end times
+        time_horizon = 1440  # Scale the horizon for real number precision
         
-        # Create interval variables for time windows
-        slot_time = [[m.interval(0, time_horizon) for _ in range(n_slot)] for _ in range(n_drones)]
+        # Create start and end time variables
+        start_time = [[m.float(0, time_horizon) for _ in range(n_slot)] for _ in range(n_drones)]
+        end_time = [[m.float(0, time_horizon) for _ in range(n_slot)] for _ in range(n_drones)]
+        
         lateness = [None] * n_drones
         earlness = [None] * n_drones
         route_battery = [None] * n_drones
@@ -80,85 +97,92 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
             m.constraint(m.count(sequence) <= n_slot)
             
             battery_lambda = m.lambda_function(lambda i, prev:
-                m.iif(i == 0,  # First node case
-                    m.iif(m.contains(real_nodes_set, sequence[i]),
-                        drone_charge[k] - m_time[sequence[i]] - m.at(t_matrix, 0, sequence[i]),
-                        drone_charge[k]),  # For first idle node, only initial charge
-                    # For subsequent nodes (i > 0)
-                    m.iif(m.contains(real_nodes_set, sequence[i]),
-                        prev - m_time[sequence[i]] - m.at(t_matrix, sequence[i-1], sequence[i]),
-                        m.iif(m.contains(idles_set, sequence[i]),
-                            prev - m.at(t_matrix, sequence[i-1], sequence[i]),
-                            drone_charge[k]))))
+                                               m.iif(i == 0,
+                                                     # First node in sequence
+                                                     m.iif(m.contains(depos_set, sequence[i]),
+                                                           # If first node is depot, start with full charge
+                                                           drone_charge[k],
+                                                           # If first node is not depot, consume from depot 0
+                                                           drone_charge[k] - m.iif(m.contains(real_nodes_set, sequence[i]),
+                                                                                 m_time[sequence[i]], 0) - m.at(t_matrix, 0, sequence[i])),
+                                                     # Not first node
+                                                     m.iif(m.contains(depos_set, sequence[i]),
+                                                           # If current node is depot, recharge
+                                                           drone_charge[k],
+                                                           # If not depot, consume battery based on type
+                                                           prev - m.iif(m.contains(real_nodes_set, sequence[i]),
+                                                                       m_time[sequence[i]], 0) - m.at(t_matrix, sequence[i-1], sequence[i]))))
+
             route_battery[k] = m.array(m.range(c), battery_lambda)
+            
+            # Battery constraints for each position
+            for pos in range(n_slot):
+                # Only apply constraints to positions that are used (pos < c)
+                m.constraint(m.iif(
+                    pos < c,
+                    # For non-depot nodes, ensure battery is non-negative
+                    m.iif(m.not_(m.contains(depos_set, sequence[pos])),
+                         route_battery[k][pos] >= 0,
+                         # For depot nodes, ensure battery is full charge
+                         route_battery[k][pos] == drone_charge[k]), True))
 
-            quantity_lambda = m.lambda_function(lambda i: m.or_(route_battery[k][i] >= 0, m.contains(depos_set, sequence[i])))
-            m.constraint(m.and_(m.range(c), quantity_lambda))
+                # If this isn't the last position and both positions are used,
+                # ensure battery decreases properly between positions
+                if pos < n_slot - 1:
+                    m.constraint(m.iif(m.and_(pos < c, pos + 1 < c), m.iif(m.contains(depos_set, sequence[pos + 1]),
+                             # Next node is depot, no constraint needed
+                             True,
+                             # Next node is not depot, ensure proper battery consumption
+                             route_battery[k][pos + 1] <= route_battery[k][pos] - 
+                             m.iif(m.contains(real_nodes_set, sequence[pos + 1]),
+                                   m_time[sequence[pos + 1]], 0) - 
+                             m.at(t_matrix, sequence[pos], sequence[pos + 1])),
+                        True
+                    ))
 
-            # Time window constraints using intervals
+            # Time window constraints using start and end times
             for i in range(n_slot):
                 if i == 0:
-                    # First node in sequence
-                    m.constraint(m.iif(
-                        i < c,  # Only if position is within sequence
-                        m.and_(
-                            m.start(slot_time[k][i]) >= 0,
-                            m.end(slot_time[k][i]) >= m.iif(
-                                m.contains(real_nodes_set, sequence[i]),
-                                m.start(slot_time[k][i]) + m_time[sequence[i]],
-                                m.start(slot_time[k][i])
-                            )
-                        ),
-                        m.and_(
-                            m.start(slot_time[k][i]) == 0,
-                            m.end(slot_time[k][i]) == 0
-                        )
-                    ))
+                    # First node starts at time 0
+                    m.constraint(m.iif(i < c, start_time[k][i] == 0, True))
                 else:
-                    # Subsequent nodes
-                    m.constraint(m.iif(
-                        i < c,  # Only if position is within sequence
-                        m.and_(
-                            m.start(slot_time[k][i]) >= m.end(slot_time[k][i-1]),
-                            m.end(slot_time[k][i]) >= m.iif(
-                                m.contains(real_nodes_set, sequence[i]),
-                                m.start(slot_time[k][i]) + m_time[sequence[i]],
-                                m.start(slot_time[k][i])
-                            )
-                        ),
-                        m.and_(
-                            m.start(slot_time[k][i]) == 0,
-                            m.end(slot_time[k][i]) == 0
-                        )
-                    ))
+                    # Subsequent nodes start after previous node ends plus travel time
+                    m.constraint(m.iif(m.and_(i < c, i > 0),
+                        start_time[k][i] >= end_time[k][i-1] + m.at(t_matrix, sequence[i-1], sequence[i]),
+                        True))
 
-                # Travel time constraints
-                m.constraint(m.iif(
-                    m.and_(i < c, i > 0),
-                    m.start(slot_time[k][i]) >= m.end(slot_time[k][i-1]) + m.at(t_matrix, sequence[i-1], sequence[i]),
-                    True
-                ))
+                # End time constraints
+                m.constraint(m.iif(i < c,
+                    end_time[k][i] == start_time[k][i] + m.iif(m.contains(real_nodes_set, sequence[i]),
+                                                              m_time[sequence[i]], 0),
+                    True))
 
                 # Time window bounds for real nodes
-                m.constraint(m.iif(
-                    m.and_(
-                        i < c,
-                        m.contains(real_nodes_set, sequence[i])
-                    ),
-                    m.and_(
-                        m.start(slot_time[k][i]) >= m.at(earliest, sequence[i]),
-                        m.end(slot_time[k][i]) <= m.at(latest, sequence[i])
-                    ),
-                    True
-                ))
+                m.constraint(m.iif(m.and_(i < c, m.contains(real_nodes_set, sequence[i])),
+                    m.and_(start_time[k][i] >= m.at(earliest, sequence[i]),
+                           end_time[k][i] <= m.at(latest, sequence[i])),
+                    True))
 
-            slot_time_array = m.array(slot_time[k])
+            # Calculate lateness and earliness using position-based constraints
+            late_values = []
+            earl_values = []
+            for pos in range(n_slot):
+                # Only calculate for positions that are used and contain real nodes
+                late_expr = m.iif(
+                    m.and_(pos < c, m.contains(real_nodes_set, sequence[pos])),
+                    m.max(end_time[k][pos] - m.at(latest, sequence[pos]), 0),
+                    0
+                )
+                earl_expr = m.iif(
+                    m.and_(pos < c, m.contains(real_nodes_set, sequence[pos])),
+                    m.max(m.at(earliest, sequence[pos]) - start_time[k][pos], 0),
+                    0
+                )
+                late_values.append(late_expr)
+                earl_values.append(earl_expr)
             
-            late_lambda = m.lambda_function(lambda i: m.iif(m.contains(real_nodes_set, sequence[i]), m.end(m.at(slot_time_array, i)) - m.at(latest, sequence[i]), 0))
-            earl_lambda = m.lambda_function(lambda i: m.iif(m.contains(real_nodes_set, sequence[i]), m.at(earliest, sequence[i]) - m.start(m.at(slot_time_array, i)), 0))
-            
-            lateness[k] = m.max(m.range(c), late_lambda)
-            earlness[k] = m.max(m.range(c), earl_lambda)
+            lateness[k] = m.max(m.array(late_values))
+            earlness[k] = m.max(m.array(earl_values))
             cost_[k] = m.sum(lateness[k], earlness[k])
 
             print(f'Drone {k} constraints added')
@@ -167,46 +191,34 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
         for i in range(n_node):
             if i in successors_data and successors_data[i]:
                 for j in successors_data[i]:
-                    # For each drone k
-                    for k in range(n_drones):
-                        sequence = vis_sequences[k]
-                        c = m.count(sequence)
-                        
-                        # Find positions of i and j in the sequence
-                        for pos_i in range(n_slot):
-                            for pos_j in range(n_slot):
-                                # If both i and j are in this sequence, ensure j comes after i
-                                m.constraint(m.iif(
-                                    m.and_(
-                                        pos_i < c,
-                                        pos_j < c,
-                                        sequence[pos_i] == i,
-                                        sequence[pos_j] == j
-                                    ),
-                                    pos_j > pos_i,
-                                    True
-                                ))
-                    
-                    # Cross-drone precedence using time windows
+                    # For each pair of drones
                     for k1 in range(n_drones):
-                        seq1 = vis_sequences[k1]
-                        c1 = m.count(seq1)
+                        sequence1 = vis_sequences[k1]
                         for k2 in range(n_drones):
-                            seq2 = vis_sequences[k2]
-                            c2 = m.count(seq2)
+                            sequence2 = vis_sequences[k2]
                             
-                            for pos1 in range(n_slot):
-                                for pos2 in range(n_slot):
-                                    m.constraint(m.iif(
-                                        m.and_(
-                                            pos1 < c1,
-                                            pos2 < c2,
-                                            seq1[pos1] == i,
-                                            seq2[pos2] == j
-                                        ),
-                                        m.end(slot_time[k1][pos1]) <= m.start(slot_time[k2][pos2]),
+                            # If i is in sequence1 and j is in sequence2
+                            m.constraint(m.iif(
+                                m.and_(m.contains(sequence1, i), m.contains(sequence2, j)),
+                                m.and_(
+                                    # If same drone, ensure j comes after i
+                                    m.iif(k1 == k2,
+                                        m.and_([m.iif(
+                                            m.and_(sequence1[pos1] == i, sequence1[pos2] == j),
+                                            pos2 > pos1,
+                                            True
+                                        ) for pos1 in range(n_slot) for pos2 in range(n_slot)]),
                                         True
-                                    ))
+                                    ),
+                                    # Ensure time precedence
+                                    m.and_([m.iif(
+                                        m.and_(sequence1[pos1] == i, sequence2[pos2] == j),
+                                        end_time[k1][pos1] <= start_time[k2][pos2],
+                                        True
+                                    ) for pos1 in range(n_slot) for pos2 in range(n_slot)])
+                                ),
+                                True
+                            ))
 
         max_la = m.max(m.array(cost_))
         m.minimize(max_la)
@@ -217,8 +229,7 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
         
         solution_status = ls.solution.status
         print('Solution status:', solution_status.name)
-        
-        # Check if solution is valid (not INCONSISTENT or UNKNOWN)
+
         if solution_status.name in ['INCONSISTENT', 'UNKNOWN']:
             print("No valid solution found. Status:", solution_status.name)
             iis = ls.compute_inconsistency()
@@ -237,6 +248,8 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
                     seq_values = vis_sequences[k].value
                     for i1 in seq_values:
                         gen_seq[-1].append(i1+1)  # Convert back to 1-based indices for output
+                    # Map the sequence after creating it
+                    # gen_seq[-1] = map_sequence(gen_seq[-1], data[4], data[5], data[6])
                 except Exception as e:
                     print(f"Error getting sequence values for drone {k}: {e}")
                     continue
@@ -244,9 +257,8 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
                 # Get completion times safely
                 try:
                     for i2 in range(len(seq_values)):
-                        interval = slot_time[k][i2].value
-                        end_time = interval.end() if hasattr(interval, 'end') else interval
-                        gen_ct[-1].append(round(float(end_time), 4))
+                        end_val = end_time[k][i2].value
+                        gen_ct[-1].append(round(float(end_val), 2))
                 except Exception as e:
                     print(f"Error getting completion times for drone {k}: {e}")
                     continue
@@ -254,18 +266,17 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
                 # Get start times safely
                 try:
                     for i3 in range(len(seq_values)):
-                        interval = slot_time[k][i3].value
-                        start_time = interval.start() if hasattr(interval, 'start') else interval
-                        gen_st[-1].append(round(float(start_time), 4))
+                        start_val = start_time[k][i3].value
+                        gen_st[-1].append(round(float(start_val), 2))
                 except Exception as e:
                     print(f"Error getting start times for drone {k}: {e}")
                     continue
                 
-                # Get battery values safely
+                # Get battery values safely - scale back from
                 try:
                     battery_values = route_battery[k].value
                     for i4 in battery_values:
-                        b_res[-1].append(round(i4, 4))
+                        b_res[-1].append(round(float(i4), 2))
                 except Exception as e:
                     print(f"Error getting battery values for drone {k}: {e}")
                     continue
@@ -285,9 +296,11 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
         except Exception as e:
             print(f"Error processing results: {e}")
         print('~~~~~~~~~~')
-        print(gen_seq)
-        print('~~~~~~~~~~')
-        print(gen_st)
-        print('~~~~~~~~~~')
-        print(gen_ct)
+        for i in range(int(n_drones)):
+            print(map_sequence(gen_seq[i], data[4], data[5], data[6]), '\n')
+            print(gen_st[i])
+            print(gen_ct[i])
+            print(b_res[i])
+            print('~~~~~~~~~~')
+
         return gen_seq, gen_st, gen_ct, b_res

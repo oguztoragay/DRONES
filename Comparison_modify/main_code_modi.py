@@ -180,27 +180,28 @@ if __name__ == '__main__':
     RS_LA = [3, 'RS_LA', 15, 720]  # 47 nodes including iDLs and DP
     SB_RS_LA = [5, 'SB_RS_LA', 11, 720]  # 58 nodes including iDLs and DP (now 50)
 
-    num_drones = [3, 4, 5, 6]
-    num_slots = [6, 4, 3, 2]
+    num_drones = [2, 3, 4, 5, 6]
+    num_slots = [7, 5, 4, 3, 2]
     collective_data = pd.DataFrame(columns=['city','Iter','drones','slots','lp_var','lp_cons','lp_obj','lp_time','nlp_var','nlp_cons','nlp_obj','nlp_time', 'i_max', 'seed'])
-    for i in range(len(num_slots)-3):
+    # for i in range(len(num_slots)):
+    for i in [1, 2, 3]:
         instance_ = [num_drones[i], 'SB', num_slots[i], 120]
-        for iter_ in range(1):
+        for iter_ in range(10):
             # seed1 = random.randrange(sys.maxsize)
             seed1 = 5240850269542194675
             random.seed(seed1)
             print(i, ': seed === ', seed1)
             run(instance_, verbose=True)
-            sol_ = compare(SB, report=False, collective_report=True)
-            new_row = {
-                'city': instance_[1], 'Iter': 1+iter_, 'drones': num_drones[i], 'slots': num_slots[i], 'lp_var': sol_['lp_var'], 'lp_cons': sol_['lp_cons'], 'lp_obj': sol_['lp_obj'],
-                'lp_time': sol_['lp_time'], 'nlp_var': sol_['nlp_var'], 'nlp_cons': sol_['nlp_cons'], 'nlp_obj': sol_['nlp_obj'], 'nlp_time': sol_['nlp_time'], 'i_max': str(sol_['i_max']), 'seed': seed1}
-            collective_data = pd.concat([collective_data, pd.DataFrame([new_row])], ignore_index=True)
-            current_directory = os.getcwd()
-            filename = 'collective_data'+'_'+str(date.today())+time.strftime("%H%M%S")+'.csv'
-            file_path = os.path.join(current_directory, filename)
-            collective_data.to_csv(file_path, index=False)
-            collective_data.to_excel("collective_data.xlsx", index=False, engine='openpyxl')
+            # sol_ = compare(SB, report=False, collective_report=False)
+            # new_row = {
+            #     'city': instance_[1], 'Iter': 1+iter_, 'drones': num_drones[i], 'slots': num_slots[i], 'lp_var': sol_['lp_var'], 'lp_cons': sol_['lp_cons'], 'lp_obj': sol_['lp_obj'],
+            #     'lp_time': sol_['lp_time'], 'nlp_var': sol_['nlp_var'], 'nlp_cons': sol_['nlp_cons'], 'nlp_obj': sol_['nlp_obj'], 'nlp_time': sol_['nlp_time'], 'i_max': str(sol_['i_max']), 'seed': seed1}
+            # collective_data = pd.concat([collective_data, pd.DataFrame([new_row])], ignore_index=True)
+            # current_directory = os.getcwd()
+            # filename = 'collective_data'+'_'+str(date.today())+time.strftime("%H%M%S")+'.csv'
+            # file_path = os.path.join(current_directory, filename)
+            # collective_data.to_csv(file_path, index=False)
+            # collective_data.to_excel("collective_data.xlsx", index=False, engine='openpyxl')
 
 
     # Options:
