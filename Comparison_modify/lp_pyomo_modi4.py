@@ -209,7 +209,7 @@ def lp_pyo(data, verbose):
     # print('***** Constraints =', num_of_cons)
 
     msolver = SolverFactory('gurobi')
-    # msolver.options['Threads'] = 24
+    msolver.options['Threads'] = 24
     # msolver.options['FeasibilityTol'] = 1e-7
     # msolver.options['OptimalityTol'] = 1e-7
     # msolver.options['MIPFocus'] = 2
