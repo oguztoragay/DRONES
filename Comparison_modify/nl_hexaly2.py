@@ -118,50 +118,37 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
             # Battery constraints for each position
             for pos in range(n_slot):
                 # Only apply constraints to positions that are used (pos < c)
-                m.constraint(m.iif(
-                    pos < c,
-                    # For non-depot nodes, ensure battery is non-negative
-                    m.iif(m.not_(m.contains(depos_set, sequence[pos])),
-                         route_battery[k][pos] >= 0,
-                         # For depot nodes, ensure battery is full charge
-                         route_battery[k][pos] == drone_charge[k]), True))
+                m.constraint(m.iif(m.not_(m.contains(depos_set, sequence[pos])),
+                                   route_battery[k][pos] >= 0,
+                                   route_battery[k][pos] == drone_charge[k]))
 
                 # If this isn't the last position and both positions are used,
                 # ensure battery decreases properly between positions
                 if pos < n_slot - 1:
-                    m.constraint(m.iif(m.and_(pos < c, pos + 1 < c), m.iif(m.contains(depos_set, sequence[pos + 1]),
-                             # Next node is depot, no constraint needed
-                             True,
-                             # Next node is not depot, ensure proper battery consumption
-                             route_battery[k][pos + 1] <= route_battery[k][pos] - 
+                    m.constraint(m.iif(m.contains(depos_set, sequence[pos + 1]), True,
+                                       route_battery[k][pos + 1] == route_battery[k][pos] -
                              m.iif(m.contains(real_nodes_set, sequence[pos + 1]),
                                    m_time[sequence[pos + 1]], 0) - 
-                             m.at(t_matrix, sequence[pos], sequence[pos + 1])),
-                        True
-                    ))
+                             m.at(t_matrix, sequence[pos], sequence[pos + 1])))
 
             # Time window constraints using start and end times
             for i in range(n_slot):
                 if i == 0:
                     # First node starts at time 0
-                    m.constraint(m.iif(i < c, start_time[k][i] == 0, True))
+                    m.constraint(start_time[k][i] == 0)
                 else:
                     # Subsequent nodes start after previous node ends plus travel time
-                    m.constraint(m.iif(m.and_(i < c, i > 0),
-                        start_time[k][i] >= end_time[k][i-1] + m.at(t_matrix, sequence[i-1], sequence[i]),
-                        True))
+                    m.constraint(start_time[k][i] == end_time[k][i-1] + m.at(t_matrix, sequence[i-1], sequence[i]))
 
                 # End time constraints
-                m.constraint(m.iif(i < c,
-                    end_time[k][i] == start_time[k][i] + m.iif(m.contains(real_nodes_set, sequence[i]),
-                                                              m_time[sequence[i]], 0),
-                    True))
+                m.constraint(end_time[k][i] == start_time[k][i] +
+                             m.iif(m.contains(real_nodes_set, sequence[i]), m_time[sequence[i]], 0))
 
                 # Time window bounds for real nodes
-                m.constraint(m.iif(m.and_(i < c, m.contains(real_nodes_set, sequence[i])),
-                    m.and_(start_time[k][i] >= m.at(earliest, sequence[i]),
-                           end_time[k][i] <= m.at(latest, sequence[i])),
-                    True))
+                # m.constraint(m.iif(m.contains(real_nodes_set, sequence[i])),
+                #     m.and_(start_time[k][i] >= m.at(earliest, sequence[i]),
+                #            end_time[k][i] <= m.at(latest, sequence[i])),
+                #     True))
 
             # Calculate lateness and earliness using position-based constraints
             late_values = []

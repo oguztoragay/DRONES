@@ -184,9 +184,9 @@ if __name__ == '__main__':
     num_slots = [7, 5, 4, 3, 2]
     collective_data = pd.DataFrame(columns=['city','Iter','drones','slots','lp_var','lp_cons','lp_obj','lp_time','nlp_var','nlp_cons','nlp_obj','nlp_time', 'i_max', 'seed'])
     # for i in range(len(num_slots)):
-    for i in [1, 2, 3]:
-        instance_ = [num_drones[i], 'SB', num_slots[i], 120]
-        for iter_ in range(10):
+    for i in [1]:
+        instance_ = [num_drones[i], 'SB', num_slots[i], 30]
+        for iter_ in range(1):
             # seed1 = random.randrange(sys.maxsize)
             seed1 = 5240850269542194675
             random.seed(seed1)
