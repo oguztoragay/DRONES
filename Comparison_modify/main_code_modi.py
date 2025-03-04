@@ -182,21 +182,21 @@ if __name__ == '__main__':
     SB_RS_LA = [5, 'SB_RS_LA', 11, 720]  # 58 nodes including iDLs and DP (now 50)
 
     num_drones = [4, 5, 6, 7, 8]
-    num_slots = [7, 6, 5, 4, 3]
+    num_slots = [10, 8, 7, 6, 5]
     collective_data = pd.DataFrame(columns=['city', 'Iter', 'drones', 'slots', 'lp_var', 'lp_cons', 'lp_obj', 'lp_time', 'nlp_var', 'nlp_cons',
                  'nlp_obj', 'nlp_time', 'i_max', 'seed'])
     # collective_data = pd.DataFrame(columns=['city','Iter','drones','slots','lp_var','lp_cons','lp_obj','lp_time','nlp_var','nlp_cons','nlp_obj','nlp_time'])
-    for i in range(len(num_slots)-4):
-        instance_ = [num_drones[i], 'SB', num_slots[i], 120]
-        for iter_ in range(2):
+    for i in range(len(num_slots)):
+        instance_ = [num_drones[i], 'LA', num_slots[i], 120]
+        for iter_ in range(10):
             seed1 = random.randrange(sys.maxsize)
             random.seed(seed1)
             print(i, ': seed === ', seed1)
             run(instance_, verbose=True)
-            sol_ = compare(SB, report=True, collective_report= True)
+            sol_ = compare(SB, report=False, collective_report= True)
             new_row = {
                 'city': instance_[1], 'Iter': 1+iter_, 'drones': num_drones[i], 'slots': num_slots[i], 'lp_var': sol_['lp_var'], 'lp_cons': sol_['lp_cons'], 'lp_obj': sol_['lp_obj'],
-                'lp_time': sol_['lp_time'], 'nlp_var': sol_['nlp_var'], 'nlp_cons': sol_['nlp_cons'], 'nlp_obj': sol_['nlp_obj'], 'nlp_time': sol_['nlp_time'], 'i_max': str(sol_['i_max']), 'seed': seed1}
+                'lp_time': sol_['lp_time'], 'nlp_var': sol_['nlp_var'], 'nlp_cons': sol_['nlp_cons'], 'nlp_obj': sol_['nlp_obj'], 'nlp_time': sol_['nlp_time'], 'i_max': str(sol_['i_max']), 'seed': str(seed1)}
             collective_data = pd.concat([collective_data, pd.DataFrame([new_row])], ignore_index=True)
             current_directory = os.getcwd()
             filename = 'collective_data'+'_'+time.strftime("%H%M%S")+'.csv'
