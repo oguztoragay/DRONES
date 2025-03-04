@@ -16,7 +16,6 @@ def lp_pyo(data, verbose):
     slot_set = set(range(1, n_slot + 1))  # use index r for R slots in each drone
     demand_set_combin2 = [[i, j] for (i, j) in product(demand_set, demand_set)]
     families = f
-    # idle = len(demand_set)
     idle = set([i for i in range(len(demand_set)-len_dl+1, len(demand_set)+1)])
     indexed_families = list(enumerate(families))
     UB = 1000000
@@ -37,7 +36,6 @@ def lp_pyo(data, verbose):
     m.z = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))  # start time of a node
     m.w = Var(demand_set, slot_set, drones_set, domain=NonNegativeReals, initialize=0, bounds=(0, 1440))  # start time of a node
     m.a = Var(idle, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
-    # m.g = Var(idle, slot_set, drones_set, domain=NonNegativeReals, initialize=0)
 
     m.lmax = Var(domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))
     m.lmax2 = Var(domain=NonNegativeReals, initialize=1440, bounds=(0, 1440))
@@ -68,21 +66,11 @@ def lp_pyo(data, verbose):
         m.cons5.add(m.c[1, i] == sum((t_matrix[0][j - 1] + m_time[j-1]) * m.x[j, 1, i] for j in demand_set-idle) + sum(m.a[j, 1, i] for j in idle))
 
     # constraint: ++++++++++++++++++++++++++++++  (5a__)
-    # m.cons5a = ConstraintList()
-    # for i in drones_set:
-    #     for r in slot_set:
-    #         for j in idle:
-    #             m.cons5a.add(m.a[j, r, i] >= m.g[j, r, i] - UB * (1 - m.x[j, r, i]))
-    #             m.cons5a.add(m.a[j, r, i] <= m.g[j, r, i] + LB * (1 - m.x[j, r, i]))
-    #             m.cons5a.add(m.a[j, r, i] <= UB * m.x[j, r, i])
-
     m.cons5a = ConstraintList()
     for i in drones_set:
         for r in slot_set:
             for j in idle:
                 m.cons5a.add(m.a[j, r, i] <= UB * m.x[j, r, i])
-                # m.cons5a.add(m.a[j, r, i] >= m.g[j, r, i] + LB * (1 - m.x[j, r, i]))
-                # m.cons5a.add(m.a[j, r, i] <= UB * m.x[j, r, i])
 
     # constraint: ++++++++++++++++++++++++++++++  (6a__)
     m.cons6a = ConstraintList()
@@ -210,31 +198,18 @@ def lp_pyo(data, verbose):
 
     msolver = SolverFactory('gurobi')
     msolver.options['Threads'] = 24
-    # msolver.options['FeasibilityTol'] = 1e-7
-    # msolver.options['OptimalityTol'] = 1e-7
-    # msolver.options['MIPFocus'] = 2
-    # msolver.options['Cuts'] = 3
-    # msolver.options['Heuristics'] = 1
-    # msolver.options['RINS'] = 5
+    msolver.options['MIPFocus'] = 2
+    msolver.options['Cuts'] = 2
+    msolver.options['Heuristics'] = 1
+    msolver.options['RINS'] = 5
     msolver.options['TimeLimit'] = 3600
-    # msolver.options['VarBranch'] = 3
-    # msolver.options['Presolve'] = 2
-
-    # msolver.options['PoolSolutions'] = 5
-    # msolver.options['SubMIPCuts'] = 2
-    # msolver.options['SubMIPNodes'] = 500
-    # msolver.options['PreQLinearize'] = 0
-    # msolver.options['BarCorrectors'] = 100
-    # msolver.options['PreMIQCPForm'] = 1
-    # msolver.options['Cutoff'] = 1500
-
+    msolver.options['VarBranch'] = 2
+    msolver.options['Presolve'] = 2
+    msolver.options['Threads'] = 24
+    msolver.options['PreQLinearize'] = 1
+    msolver.options['BarCorrectors'] = 3
+    msolver.options['PreMIQCPForm'] = 1
     solution = msolver.solve(m, tee=verbose)
-    # for constr, body_value, infeasible in find_infeasible_constraints(m):
-    #     print(f"Constraint {constr.name} is infeasible: {constr.expr}")
-    # for i in m.u1.index_set():
-    #     print(i,':', [value(m.u1[i]), value(m.u2[i]), value(m.u3[i]), value(m.t[i])])
-
-
 
     pickle_out = open('lp.pickle', "wb")
     pickle.dump([m, solution, datam, total_var, total_cons], pickle_out)

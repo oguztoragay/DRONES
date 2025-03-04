@@ -16,7 +16,6 @@ def nl_pyo(data, verbose):
     drones_set = set(range(1, len(data[4]) + 1))  # use index i for M drones
     slot_set = set(range(1, n_slot + 1))  # use index r for R slots in each drone
     families = f
-    # idle = len(demand_set)
     idle = set([i for i in range(len(demand_set)-len_dl+1, len(demand_set)+1)])
     indexed_families = list(enumerate(families))
     full_charge = drone_charge[0]
@@ -119,25 +118,19 @@ def nl_pyo(data, verbose):
     # print('***** Variables =', num_of_var)
     # print('***** Constraints =', num_of_cons)
 
-    # msolver = SolverFactory('gurobi_persistent')
-    # msolver.set_instance(m)
-    # msolver.set_gurobi_param('FuncNonlinear', 1)
-    # msolver.set_gurobi_param('LazyConstraints', 1)
-
     msolver = SolverFactory('gurobi')
     msolver.options['Threads'] = 24
-    # msolver.options['FeasibilityTol'] = 1e-6
-    # msolver.options['OptimalityTol'] = 1e-5
-    # msolver.options['MIPFocus'] = 2
-    # msolver.options['Cuts'] = 3
-    # msolver.options['Heuristics'] = 1
-    # msolver.options['RINS'] = 5
-    # msolver.options['PreQLinearize'] = 0
-    # msolver.options['BarCorrectors'] = 3
-    # msolver.options['PreMIQCPForm'] = 1
-    # msolver.options['Presolve'] = 2
+    msolver.options['MIPFocus'] = 2
+    msolver.options['Cuts'] = 2
+    msolver.options['Heuristics'] = 1
+    msolver.options['RINS'] = 5
     msolver.options['TimeLimit'] = 3600
-    # # msolver.options['PoolSolutions'] = 5
+    msolver.options['VarBranch'] = 2
+    msolver.options['Presolve'] = 2
+    msolver.options['Threads'] = 24
+    msolver.options['PreQLinearize'] = 1
+    msolver.options['BarCorrectors'] = 3
+    msolver.options['PreMIQCPForm'] = 1
     solution = msolver.solve(m, tee=verbose)
 
 

@@ -2,9 +2,6 @@ from datetime import date
 import os
 import random
 import sys
-
-from sympy.solvers.ode.single import solver_map
-
 from Comparison_modify import instance_gen6
 from nl_pyomo_modi import nl_pyo
 from lp_pyomo_modi4 import lp_pyo
@@ -91,7 +88,7 @@ def compare(instance, report, collective_report):
 
     print('~~~~~~~~~~~~~~~~~~~ Comparing the results ~~~~~~~~~~~~~~~~~~~')
     print('***** lp_objective:', value(lp_[0].obj_func))
-    # print('***** lp_Sol_time:', round(lp_[1].Solver.Time, 3))
+    # print('***** lp_Sol_time:', round(lp_[1].Solver.Wall_time, 3))
     col_widths = 10
     for i in range(0, lassign_list.shape[0]):
         print('     Drone (' + str(i + 1) + '):')
@@ -103,7 +100,7 @@ def compare(instance, report, collective_report):
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
     print('***** nlp_objective:', value(nlp_[0].obj_func))
-    # print('***** nlp_Sol_time:', round(nlp_[1].Solver.Time, 3))
+    # print('***** nlp_Sol_time:', round(nlp_[1].Solver.Wall_time, 3))
 
     for i in range(0, assign_list.shape[0]):
         print('     Drone (' + str(i + 1) + '):')
@@ -168,8 +165,10 @@ def compare(instance, report, collective_report):
                 file.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
     if collective_report:
         print('I am generating collective report.')
-        ins_data = {'lp_var':lp_[3], 'lp_cons':lp_[4], 'lp_obj':round(value(lp_[0].obj_func), 3), 'lp_time':round(lp_[1].Solver.Time, 3),
-                    'nlp_var':nlp_[3], 'nlp_cons':nlp_[4], 'nlp_obj':round(value(nlp_[0].obj_func), 3), 'nlp_time':round(nlp_[1].Solver.Time, 3)}
+        ins_data = {'lp_var': lp_[3], 'lp_cons': lp_[4], 'lp_obj': round(value(lp_[0].obj_func), 3),
+                    'lp_time': round(lp_[1].Solver.Time, 3),
+                    'nlp_var': nlp_[3], 'nlp_cons': nlp_[4], 'nlp_obj': round(value(nlp_[0].obj_func), 3),
+                    'nlp_time': round(nlp_[1].Solver.Time, 3), 'i_max': lp_[2][5]}
     return ins_data
 
 if __name__ == '__main__':
@@ -184,18 +183,20 @@ if __name__ == '__main__':
 
     num_drones = [4, 5, 6, 7, 8]
     num_slots = [7, 6, 5, 4, 3]
-    collective_data = pd.DataFrame(columns=['city','Iter','drones','slots','lp_var','lp_cons','lp_obj','lp_time','nlp_var','nlp_cons','nlp_obj','nlp_time'])
-    for i in range(len(num_slots)):
-        instance_ = [num_drones[i], 'SB_RS', num_slots[i], 120]
-        for iter_ in range(10):
+    collective_data = pd.DataFrame(columns=['city', 'Iter', 'drones', 'slots', 'lp_var', 'lp_cons', 'lp_obj', 'lp_time', 'nlp_var', 'nlp_cons',
+                 'nlp_obj', 'nlp_time', 'i_max', 'seed'])
+    # collective_data = pd.DataFrame(columns=['city','Iter','drones','slots','lp_var','lp_cons','lp_obj','lp_time','nlp_var','nlp_cons','nlp_obj','nlp_time'])
+    for i in range(len(num_slots)-4):
+        instance_ = [num_drones[i], 'SB', num_slots[i], 120]
+        for iter_ in range(2):
             seed1 = random.randrange(sys.maxsize)
             random.seed(seed1)
             print(i, ': seed === ', seed1)
-            run(instance_, verbose=False)
-            sol_ = compare(SB, report=False, collective_report= True)
+            run(instance_, verbose=True)
+            sol_ = compare(SB, report=True, collective_report= True)
             new_row = {
                 'city': instance_[1], 'Iter': 1+iter_, 'drones': num_drones[i], 'slots': num_slots[i], 'lp_var': sol_['lp_var'], 'lp_cons': sol_['lp_cons'], 'lp_obj': sol_['lp_obj'],
-                'lp_time': sol_['lp_time'], 'nlp_var': sol_['nlp_var'], 'nlp_cons': sol_['nlp_cons'], 'nlp_obj': sol_['nlp_obj'], 'nlp_time': sol_['nlp_time']}
+                'lp_time': sol_['lp_time'], 'nlp_var': sol_['nlp_var'], 'nlp_cons': sol_['nlp_cons'], 'nlp_obj': sol_['nlp_obj'], 'nlp_time': sol_['nlp_time'], 'i_max': str(sol_['i_max']), 'seed': seed1}
             collective_data = pd.concat([collective_data, pd.DataFrame([new_row])], ignore_index=True)
             current_directory = os.getcwd()
             filename = 'collective_data'+'_'+time.strftime("%H%M%S")+'.csv'
