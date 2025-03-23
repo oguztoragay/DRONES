@@ -37,7 +37,8 @@ arcs = {'DP': [34.02889809043227, -117.83417609430023, 34.02889809043227, -117.8
         'SB_iDL': [34.082150272643005, -117.56158799481022, 34.082150272643005, -117.56158799481022, 0],
         'LA_iDL': [34.03829254642072, -118.28026863444143, 34.03829254642072, -118.28026863444143, 0]}
 
-def generate(ndrones, city, slot, charge):
+def generate(ndrones, city, slot, charge, seed):
+    random.seed(seed)
     slots = slot
     # i_times = itimes
     locations, visit_frequency, families, len_DL = city2arc(city)
