@@ -23,8 +23,8 @@ def run(city, verbose, seed):
     bres = []
     hexa(hexa_ins, gen_seq, gen_st, gen_ct, 300, bres, verbose)
     ins = generate(ndrones=a, city=b, slot=c, charge=d, seed=seed)
-    # lp_pyo(ins, verbose)
-    # nl_pyo(ins, verbose)
+    lp_pyo(ins, verbose)
+    nl_pyo(ins, verbose)
 
 def compare(instance, report, collective_report):
     nlp_pickle = open('nlp.pickle', 'rb')
@@ -122,7 +122,7 @@ def compare(instance, report, collective_report):
     print('***** hx_objective:', h_obj_value)
     print('***** hx_Sol_time:', h_sol_time)
 
-    for i in range(0, assign_list.shape[0]):
+    for i in range(0, int(len(hassign_list)/2)):
         print('     Drone (' + str(i + 1) + '):')
         print(''.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in hassign_list[i]))
         print('s_times'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in hs_values[i]))
@@ -191,29 +191,30 @@ def compare(instance, report, collective_report):
         ins_data = {'lp_var': lp_[3], 'lp_cons': lp_[4], 'lp_obj': round(value(lp_[0].obj_func), 3), 'lp_time': round(lp_[1].Solver.Wall_time, 3),
                     'nlp_var': nlp_[3], 'nlp_cons': nlp_[4], 'nlp_obj': round(value(nlp_[0].obj_func), 3), 'nlp_time': round(nlp_[1].Solver.Wall_time, 3),
                     'hx_obj': h_obj_value, 'hx_time': h_sol_time, 'i_max': lp_[2][5]}
-    return ins_data
+        return ins_data
 
 if __name__ == '__main__':
     # instance values = [ndrones, condition, slot, charge)
 
-    SB = [3, 'SB', 5, 180]  # 12 nodes including iDL and DP
-    RS = [3, 'RS', 5, 360]  # 11 nodes including iDL and DP
-    LA = [4, 'LA', 10, 360]  # 27 nodes including iDL and DP
-    SB_RS = [4, 'SB_RS', 7, 360]  # 22 nodes including iDLs and DP
-    SB_LA = [6, 'SB_LA', 8, 720]  # 48 nodes including iDLs and DP
-    RS_LA = [3, 'RS_LA', 15, 720]  # 47 nodes including iDLs and DP
-    SB_RS_LA = [5, 'SB_RS_LA', 11, 720]  # 58 nodes including iDLs and DP (now 50)
+    SB = [3, 'SB', 5, 180]  # 10 Real nodes + 1 iDL + 1 DP
+    RS = [3, 'RS', 5, 360]  # 9 Real nodes + 1 iDL + 1 DP
+    LA = [4, 'LA', 10, 360]  # 27 Real nodes + 1 iDL + 1 DP
+    SB_RS = [4, 'SB_RS', 7, 360]  # 19 Real nodes + 2 iDLs + 1 DP
+    SB_LA = [6, 'SB_LA', 8, 720]  # 37 Real nodes + 2 iDLs + 1 DP
+    RS_LA = [3, 'RS_LA', 15, 720]  # 36 Real nodes + 2 iDLs + 1 DP
+    SB_RS_LA = [5, 'SB_RS_LA', 11, 720]  # 46 Real nodes + 3 iDLs + 1 DP
 
 
-    num_drones = [4, 5, 6, 7]
-    num_slots = [9, 8, 7, 6]
+    num_drones = [3, 4, 5, 7]
+    num_slots = [7, 5, 4, 3]
     collective_data = pd.DataFrame(columns=['city','Iter','drones','slots','lp_var','lp_cons','lp_obj','lp_time','nlp_var','nlp_cons','nlp_obj','nlp_time', 'hx_obj', 'hx_time', 'i_max', 'seed'])
     # for i in range(len(num_slots)):
     for i in range(4):
-        instance_ = [num_drones[i], 'LA', num_slots[i], 360]
-        for iter_ in range(10):
+        instance_ = [num_drones[i], 'SB', num_slots[i], 360]
+        for iter_ in range(5):
             seed1 = random.randrange(sys.maxsize)
-            # seed1 = [7398268232918813430, 5212190717316351545, 1668143899688653983, 2581989939053518379, 2377513126356229062, 9100199037133970413]
+            # seed1 = [7170427300471050159 , 7398268232918813430, 5212190717316351545, 1668143899688653983, 2581989939053518379, 2377513126356229062, 9100199037133970413]
+            # seed1 = 512796876118929846
             random.seed(seed1)
             print(i, ': seed === ', seed1)
             run(instance_, verbose=True, seed=seed1)
