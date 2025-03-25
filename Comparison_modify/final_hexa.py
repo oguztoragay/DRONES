@@ -102,7 +102,7 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
             route_battery[k] = m.array(m.range(0, c), battery_lambda, 0)
             # quantity_lambda = m.lambda_function(lambda i: m.iif(route_battery[k][i] >= 0, True, sequence[i] == 0))
             quantity_lambda = m.lambda_function(lambda i: route_battery[k][i] >= 0)
-            m.constraint(m.and_(m.range(0, c-1), quantity_lambda))
+            m.constraint(m.and_(m.range(0, c), quantity_lambda))
             # m.constraint(m.and_([m.range(0, c), m.iif(route_battery[k][i] >= 0, sequence[i] >=1, True)]))
 
 
