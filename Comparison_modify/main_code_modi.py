@@ -21,7 +21,7 @@ def run(city, verbose, seed):
     gen_st = []
     gen_ct = []
     bres = []
-    hexa(hexa_ins, gen_seq, gen_st, gen_ct, 600, bres, verbose)
+    hexa(hexa_ins, gen_seq, gen_st, gen_ct, 1800, bres, verbose)
     ins = generate(ndrones=a, city=b, slot=c, charge=d, seed=seed)
     lp_pyo(ins, verbose)
     nl_pyo(ins, verbose)
@@ -205,13 +205,13 @@ if __name__ == '__main__':
     # SB_RS_LA = [5, 'SB_RS_LA', 11, 720]  # 46 Real nodes + 3 iDLs + 1 DP
 
 
-    num_drones = [5, 6, 7, 8, 9, 10]
-    num_slots = [10, 9, 8, 7, 6, 5]
+    num_drones = [3, 4, 5, 6, 7]
+    num_slots = [7, 6, 5, 4, 3]
     collective_data = pd.DataFrame(columns=['city','Iter','drones','slots','lp_var','lp_cons','lp_obj','lp_time','nlp_var','nlp_cons','nlp_obj','nlp_time', 'hx_obj', 'hx_time', 'i_max', 'seed'])
     # for i in range(len(num_slots)):
-    for i in range(4):
-        instance_ = [num_drones[i], 'SB_RS_LA', num_slots[i], 360]
-        for iter_ in range(20):
+    for i in range(5):
+        instance_ = [num_drones[i], 'SB_RS', num_slots[i], 360]
+        for iter_ in range(10):
             seed1 = random.randrange(sys.maxsize)
             # seed1 = [7170427300471050159 , 7398268232918813430, 5212190717316351545, 1668143899688653983, 2581989939053518379, 2377513126356229062, 9100199037133970413]
             # seed1 = 512796876118929846

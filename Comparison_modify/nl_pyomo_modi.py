@@ -125,19 +125,17 @@ def nl_pyo(data, verbose):
     # msolver.set_gurobi_param('LazyConstraints', 1)
 
     msolver = SolverFactory('gurobi')
-    # msolver.options['Threads'] = 24
-    # msolver.options['FeasibilityTol'] = 1e-6
-    # msolver.options['OptimalityTol'] = 1e-5
-    # msolver.options['MIPFocus'] = 2
-    # msolver.options['Cuts'] = 3
-    # msolver.options['Heuristics'] = 1
-    # msolver.options['RINS'] = 5
-    # msolver.options['PreQLinearize'] = 0
-    # msolver.options['BarCorrectors'] = 3
-    # msolver.options['PreMIQCPForm'] = 1
-    # msolver.options['Presolve'] = 2
-    msolver.options['TimeLimit'] = 300
-    # # msolver.options['PoolSolutions'] = 5
+    msolver.options['Threads'] = 24
+    msolver.options['MIPFocus'] = 1
+    msolver.options['Cuts'] = 2
+    msolver.options['Heuristics'] = 1
+    msolver.options['RINS'] = 5
+    msolver.options['PreQLinearize'] = 1
+    msolver.options['BarCorrectors'] = 3
+    msolver.options['PreMIQCPForm'] = 1
+    msolver.options['VarBranch'] = 2
+    msolver.options['Presolve'] = 2
+    msolver.options['TimeLimit'] = 1800
     solution = msolver.solve(m, tee=verbose)
 
 
