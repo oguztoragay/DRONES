@@ -13,3 +13,5 @@
 (6) 15 Nov 2024: The idea of time slots (# of visits out of 8, 3-hours slots) for each visit and family specific i_times have been implemented.
 
 (7) 11 Dec 2024: Major update --> Idles does not have fixed visit time. That means drones can stay on idle points as long as they need without losing the remaining charges or getting charge.
+
+(8) 20 May 2025: Runs are almost done. Paper is in progress.
