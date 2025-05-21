@@ -1,0 +1,2 @@
+city,Iter,drones,slots,lp_var,lp_cons,lp_obj,lp_time,nlp_var,nlp_cons,nlp_obj,nlp_time,hx_obj,hx_time,i_max,seed
+LA,1,4,8,29922,55013,134.61,3603.298,1954,253,126.98,3601.599,119.07958017867224,3600,"[390.0, 210.0, 210.0, 570.0, 750.0, 210.0, 210.0, 210.0]",[3741327904272711339]

@@ -1,0 +1,3 @@
+Type: Medium instances
+Time: 1800 seconds
+Cases: SB-RS, LA

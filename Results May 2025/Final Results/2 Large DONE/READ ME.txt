@@ -1,0 +1,3 @@
+Type: Large instances
+Time: 3600 seconds
+Cases: SB-LA, RS-LA, SB-RS-LA

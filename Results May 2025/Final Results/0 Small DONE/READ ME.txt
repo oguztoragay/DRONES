@@ -1,0 +1,3 @@
+Type: Small instances
+Time: 300 seconds
+Cases: SB, RS
