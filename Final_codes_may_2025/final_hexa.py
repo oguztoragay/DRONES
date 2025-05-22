@@ -135,7 +135,7 @@ def hexa(data, gen_seq, gen_st, gen_ct, av_time, b_res, verbose):
         m.close()
         hex.param.time_limit = int(av_time)
         hex.param.verbosity = int(verbose)
-        hex.param.time_between_displays = 60 #seconds
+        hex.param.time_between_displays = 10 #seconds
         hex.param.nb_threads = 24
         hex.solve()
         solution_status = hex.solution.status
