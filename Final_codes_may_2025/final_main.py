@@ -221,13 +221,13 @@ if __name__ == '__main__':
     # SB_RS_LA = 46 Real nodes + 3 iDLs + 1 DP
     # LA: 4,8 and 5,8
     # SB-RS-LA: 8,8 and 9,7
-    num_drones = [4, 5]
-    num_slots = [8, 8]
+    num_drones = [8, 8]
+    num_slots = [9, 7]
     collective_data = pd.DataFrame(columns=['city','Iter','drones','slots','lp_var','lp_cons','lp_obj','lp_time','nlp_var','nlp_cons','nlp_obj','nlp_time', 'hx_obj', 'hx_time', 'i_max', 'seed'])
     # for i in range(len(num_slots)):
     for i in range(2):
-        instance_ = [num_drones[i], 'LA', num_slots[i], 360]
-        for iter_ in range(7):
+        instance_ = [num_drones[i], 'SB_RS_LA', num_slots[i], 360]
+        for iter_ in range(10):
             for jf in ['lp.pickle', 'nlp.pickle', 'hexa.pickle']:
                 if os.path.exists(jf):
                     os.remove(jf)
