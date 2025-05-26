@@ -132,13 +132,13 @@ def compare(instance, report, collective_report):
     print('***** hx_objective:', h_obj_value)
     print('***** hx_Sol_time:', h_sol_time)
 
-    for i in range(0, int(len(hassign_list)/2)):
-        print('     Drone (' + str(i + 1) + '):')
-        print(''.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in hassign_list[i]))
-        print('s_times'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in hs_values[i]))
-        print('c_times'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in hc_values[i]))
-        # print('travels'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in nlptr_values[i]))
-        print('charges'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in ht_values[i]))
+    for h in range(0, int(len(hassign_list)/2)):
+        print('     Drone (' + str(h + 1) + '):')
+        print(''.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in hassign_list[h]))
+        print('s_times'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in hs_values[h]))
+        print('c_times'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in hc_values[h]))
+        # print('travels'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in nlptr_values[h]))
+        print('charges'.ljust(col_widths), " | ".join(str(item).ljust(col_widths) for item in ht_values[h]))
         print('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~')
 
 
@@ -197,18 +197,23 @@ def compare(instance, report, collective_report):
     #             file.write('~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n')
     if collective_report:
         print('I am generating collective report.')
-        ins_data = {'lp_var': 00, 'lp_cons': 00, 'lp_obj': 00, 'lp_time': 00,
-                    'nlp_var': 00, 'nlp_cons': 00, 'nlp_obj': 00, 'nlp_time': 00,
+        ins_data = {'lp_var': 00, 'lp_cons': 00, 'lp_obj': 00, 'lp_time': 00, 'nlp_var': 00, 'nlp_cons': 00, 'nlp_obj': 00, 'nlp_time': 00,
                     'hx_obj': 00, 'hx_time': 00, 'i_max': 00}
-        if lp_ and nlp_ and hx_:
-            ins_data = {'lp_var': lp_[3], 'lp_cons': lp_[4], 'lp_obj': round(value(lp_[0].obj_func), 3), 'lp_time': round(float(lp_[1].Solver.Wall_time), 3),
-                        'nlp_var': nlp_[3], 'nlp_cons': nlp_[4], 'nlp_obj': round(value(nlp_[0].obj_func), 3), 'nlp_time': round(float(nlp_[1].Solver.Wall_time), 3),
-                        'hx_obj': h_obj_value, 'hx_time': h_sol_time, 'i_max': lp_[2][5]}
-        elif hx_:
-            ins_data = {'lp_var': 00, 'lp_cons': 00, 'lp_obj': 00, 'lp_time': 00,
-                        'nlp_var': 00, 'nlp_cons': 00, 'nlp_obj': 00, 'nlp_time': 00,
-                        'hx_obj': h_obj_value, 'hx_time': h_sol_time, 'i_max': i_maxx}
-        return ins_data
+        if lp_:
+            ins_data['lp_var'] = lp_[3]
+            ins_data['lp_cons'] = lp_[4]
+            ins_data['lp_obj'] = round(value(lp_[0].obj_func), 3)
+            ins_data['lp_time'] = round(float(lp_[1].Solver.Wall_time), 3)
+        if nlp_:
+            ins_data['nlp_var'] = nlp_[3]
+            ins_data['nlp_cons'] = nlp_[4]
+            ins_data['nlp_obj'] = round(value(nlp_[0].obj_func), 3)
+            ins_data['nlp_time'] = round(float(nlp_[1].Solver.Wall_time), 3)
+        if hx_:
+            ins_data['hx_obj'] = h_obj_value
+            ins_data['hx_time'] = h_sol_time
+            ins_data['i_max'] = i_maxx
+    return ins_data
 
 if __name__ == '__main__':
 
@@ -221,12 +226,12 @@ if __name__ == '__main__':
     # SB_RS_LA = 46 Real nodes + 3 iDLs + 1 DP
     # LA: 4,8 and 5,8
     # SB-RS-LA: 8,8 and 9,7
-    num_drones = [9, 9]
-    num_slots = [7, 8]
+    num_drones = [3, 4, 5]
+    num_slots = [5, 6, 7]
     collective_data = pd.DataFrame(columns=['city','Iter','drones','slots','lp_var','lp_cons','lp_obj','lp_time','nlp_var','nlp_cons','nlp_obj','nlp_time', 'hx_obj', 'hx_time', 'i_max', 'seed'])
     # for i in range(len(num_slots)):
     for i in range(2):
-        instance_ = [num_drones[i], 'SB_RS_LA', num_slots[i], 360]
+        instance_ = [num_drones[i], 'SB', num_slots[i], 360]
         for iter_ in range(10):
             for jf in ['lp.pickle', 'nlp.pickle', 'hexa.pickle']:
                 if os.path.exists(jf):
@@ -238,7 +243,7 @@ if __name__ == '__main__':
             # seed1 = 4116131705355157001
             random.seed(seed1)
             print('Iteration:', (10*i) + iter_+1, '====> seed = ', seed1)
-            run(instance_, verbose=True, seed=seed1, sol_time=3600)
+            run(instance_, verbose=True, seed=seed1, sol_time=60)
             sol_ = compare(instance_, report=False, collective_report=True)
             new_row = {
                 'city': instance_[1], 'Iter': 1+iter_, 'drones': num_drones[i], 'slots': num_slots[i],
@@ -250,4 +255,4 @@ if __name__ == '__main__':
             filename = 'collective_data'+'_'+str(date.today())+time.strftime("%H%M%S")+'.csv'
             file_path = os.path.join(current_directory, filename)
             collective_data.to_csv(file_path, index=False)
-            collective_data.to_excel("collective_data1.xlsx", index=False, engine='openpyxl')
+            collective_data.to_excel("collective_data.xlsx", index=False, engine='openpyxl')
