@@ -1,3 +1,7 @@
 Type: Large instances
 Time: 3600 seconds
 Cases: SB-LA, RS-LA, SB-RS-LA
+Extra runs:
+SB_LA: 8 drones 6 slots
+RS-LA: 8 drones 6 slots
+SB_RS_LA: 8 drones 9 slots, 9 drones 7 slots, 9 drones 8 slots
