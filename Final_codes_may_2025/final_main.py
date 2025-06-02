@@ -226,12 +226,12 @@ if __name__ == '__main__':
     # SB_RS_LA = 46 Real nodes + 3 iDLs + 1 DP
     # LA: 4,8 and 5,8
     # SB-RS-LA: 8,8 and 9,7
-    num_drones = [3, 4, 5]
-    num_slots = [5, 6, 7]
+    num_drones = [7, 8, 9, 9]
+    num_slots = [9, 9, 8, 7]
     collective_data = pd.DataFrame(columns=['city','Iter','drones','slots','lp_var','lp_cons','lp_obj','lp_time','nlp_var','nlp_cons','nlp_obj','nlp_time', 'hx_obj', 'hx_time', 'i_max', 'seed'])
     # for i in range(len(num_slots)):
-    for i in range(2):
-        instance_ = [num_drones[i], 'SB', num_slots[i], 360]
+    for i in range(4):
+        instance_ = [num_drones[i], 'SB_LA', num_slots[i], 360]
         for iter_ in range(10):
             for jf in ['lp.pickle', 'nlp.pickle', 'hexa.pickle']:
                 if os.path.exists(jf):
@@ -243,7 +243,7 @@ if __name__ == '__main__':
             # seed1 = 4116131705355157001
             random.seed(seed1)
             print('Iteration:', (10*i) + iter_+1, '====> seed = ', seed1)
-            run(instance_, verbose=True, seed=seed1, sol_time=60)
+            run(instance_, verbose=True, seed=seed1, sol_time=3600)
             sol_ = compare(instance_, report=False, collective_report=True)
             new_row = {
                 'city': instance_[1], 'Iter': 1+iter_, 'drones': num_drones[i], 'slots': num_slots[i],
