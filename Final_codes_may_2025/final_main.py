@@ -231,7 +231,7 @@ if __name__ == '__main__':
     collective_data = pd.DataFrame(columns=['city','Iter','drones','slots','lp_var','lp_cons','lp_obj','lp_time','nlp_var','nlp_cons','nlp_obj','nlp_time', 'hx_obj', 'hx_time', 'i_max', 'seed'])
     # for i in range(len(num_slots)):
     for i in range(4):
-        instance_ = [num_drones[i], 'SB_LA', num_slots[i], 360]
+        instance_ = [num_drones[i], 'RS_LA', num_slots[i], 360]
         for iter_ in range(10):
             for jf in ['lp.pickle', 'nlp.pickle', 'hexa.pickle']:
                 if os.path.exists(jf):
