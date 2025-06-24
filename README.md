@@ -1,0 +1,1 @@
+This repository includes the codes and results that are used in the manuscript "A Mixed-Integer Programming Framework for Drone Routing and Scheduling with Flexible Multiple Visits in Highway Traffic Monitoring", which is under review with Mathematics journal. Further information for citing this work will be provided upon acceptance of the manuscript.
